@@ -1,4 +1,4 @@
-import { placeholderImage } from "@/lib/placeholder";
+// import { placeholderImage } from "@/lib/placeholder";
 import type { HeroSlide } from "@/types";
 
 export const heroSlides: HeroSlide[] = [
@@ -25,39 +25,37 @@ export const heroSlides: HeroSlide[] = [
     subtitle: "The pieces everyone's been asking for.",
     ctaLabel: "Shop Best Sellers",
     ctaHref: "/shop?filter=best-sellers",
-    desktopImageUrl: placeholderImage("Best Sellers — Desktop 21:9", {
-      width: 2400,
-      height: 1000,
-      bg: "#e5e5e5",
-      fg: "#404040",
-    }),
-    mobileImageUrl: placeholderImage("Best Sellers — Mobile 4:5", {
-      width: 1000,
-      height: 1250,
-      bg: "#e5e5e5",
-      fg: "#404040",
-    }),
+    desktopImageUrl: "/banner/Banner_2Desktop.png",
+    // No dedicated tablet crop exists yet for this slide (there's no
+    // Banner_2Tablet.png in /public/banner) - leaving tabletImageUrl unset
+    // makes the tablet tier fall back to desktopImageUrl automatically
+    // (see HeroCarousel). Add a real Banner_2Tablet.png + this field once
+    // one's shot.
+    // File on disk is "Baner_2Mobile.png" (missing the second "n", same
+    // typo as slide 1's Baner_1Mobile.png) - pointing at the real filename
+    // instead of renaming it, to match how slide 1 was handled.
+    mobileImageUrl: "/banner/Baner_2Mobile.png",
     theme: "light",
   },
-  {
-    id: "slide-newin",
-    eyebrow: "Just Landed",
-    title: "New In This Week",
-    subtitle: "Fresh fits, restocked daily.",
-    ctaLabel: "Discover New In",
-    ctaHref: "/shop?filter=new",
-    desktopImageUrl: placeholderImage("New In — Desktop 21:9", {
-      width: 2400,
-      height: 1000,
-      bg: "#0a0a0a",
-      fg: "#fafafa",
-    }),
-    mobileImageUrl: placeholderImage("New In — Mobile 4:5", {
-      width: 1000,
-      height: 1250,
-      bg: "#0a0a0a",
-      fg: "#fafafa",
-    }),
-    theme: "dark",
-  },
+  // {
+  //   id: "slide-newin",
+  //   eyebrow: "Just Landed",
+  //   title: "New In This Week",
+  //   subtitle: "Fresh fits, restocked daily.",
+  //   ctaLabel: "Discover New In",
+  //   ctaHref: "/shop?filter=new",
+  //   desktopImageUrl: placeholderImage("New In — Desktop 21:9", {
+  //     width: 2400,
+  //     height: 1000,
+  //     bg: "#0a0a0a",
+  //     fg: "#fafafa",
+  //   }),
+  //   mobileImageUrl: placeholderImage("New In — Mobile 4:5", {
+  //     width: 1000,
+  //     height: 1250,
+  //     bg: "#0a0a0a",
+  //     fg: "#fafafa",
+  //   }),
+  //   theme: "dark",
+  // },
 ];

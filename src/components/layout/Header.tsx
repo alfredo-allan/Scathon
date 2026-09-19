@@ -19,7 +19,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-30 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
-      <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 px-4 py-3 md:px-8 sm:py-4">
+      <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 px-4 py-3 sm:grid-cols-[1fr_auto_1fr] md:px-8 sm:py-4">
         <button
           type="button"
           onClick={() => setDrawerOpen(true)}
@@ -37,15 +37,30 @@ export function Header() {
         </button>
 
         {/*
-          A CSS Grid with auto/1fr/auto columns (instead of a flex row +
-          `absolute left-1/2` logo) keeps the wordmark centered in the
-          space actually left over between the hamburger and the icon
-          cluster. The old absolute-positioning approach centered the
+          Below `sm`: a CSS Grid with auto/1fr/auto columns (instead of a
+          flex row + `absolute left-1/2` logo) keeps the wordmark centered
+          in the space actually left over between the hamburger and the
+          icon cluster. The old absolute-positioning approach centered the
           logo on the *whole* header width, so on narrow/mobile screens -
           where the icon cluster takes up proportionally more room - it
           visually overlapped the icons (and, because absolutely
           positioned elements paint above static ones, could even
-          intercept taps meant for the search button underneath it).
+          intercept taps meant for the search button underneath it). The
+          mobile action cluster is also a single collapsible chip/pill
+          here (see HeaderActions), and letting its `auto` column grow
+          when the pill expands is what eases the logo aside instead of
+          the pill covering it.
+
+          From `sm` up: the icon cluster is a plain always-visible row
+          (search/theme/avatar/cart) that's meaningfully wider than the
+          hamburger, so those two `auto` columns are no longer the same
+          width and the logo - centered only *within* the leftover middle
+          column - visibly drifts toward the hamburger side. Tablet/desktop
+          have the width to spare, so we switch to 1fr/auto/1fr: both side
+          columns claim an equal share of the row (as long as neither
+          side's content needs more than half the remaining width, which
+          holds here), which pins the logo to the header's true center
+          instead of an off-center leftover gap.
         */}
         <Link
           href="/"
