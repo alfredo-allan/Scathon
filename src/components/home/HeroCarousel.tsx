@@ -84,8 +84,13 @@ export function HeroCarousel({ slides, autoPlayMs = 6000 }: HeroCarouselProps) {
             aria-hidden={index !== activeIndex}
             className="relative w-full shrink-0"
           >
-            {/* Mobile: dedicated vertical imagery */}
-            <div className="relative block aspect-[4/5] sm:hidden">
+            {/* Mobile: dedicated vertical imagery. Aspect ratio matches the
+                supplied asset itself (falls back to the classic 4:5 when a
+                slide only ships a placeholder/no real dimensions apply). */}
+            <div
+              className="relative block sm:hidden"
+              style={{ aspectRatio: slide.mobileAspectRatio ?? "4 / 5" }}
+            >
               <Image
                 src={slide.mobileImageUrl}
                 alt={slide.title}
@@ -96,8 +101,19 @@ export function HeroCarousel({ slides, autoPlayMs = 6000 }: HeroCarouselProps) {
                 className="object-cover"
               />
             </div>
-            {/* Tablet: mid-size crop, falls back to the desktop image */}
-            <div className="relative hidden sm:block lg:hidden aspect-[16/10]">
+            {/* Tablet: mid-size crop, falls back to the desktop image. Only
+                borrow desktopAspectRatio when there's no dedicated tablet
+                image (i.e. we're actually rendering the desktop photo here) -
+                otherwise a real tablet image keeps its own default ratio. */}
+            <div
+              className="relative hidden sm:block lg:hidden"
+              style={{
+                aspectRatio:
+                  slide.tabletAspectRatio ??
+                  (slide.tabletImageUrl ? undefined : slide.desktopAspectRatio) ??
+                  "16 / 10",
+              }}
+            >
               <Image
                 src={slide.tabletImageUrl ?? slide.desktopImageUrl}
                 alt={slide.title}
@@ -108,8 +124,14 @@ export function HeroCarousel({ slides, autoPlayMs = 6000 }: HeroCarouselProps) {
                 className="object-cover"
               />
             </div>
-            {/* Desktop: wide-aspect banner */}
-            <div className="relative hidden lg:block lg:aspect-[21/9]">
+            {/* Desktop: wide banner - defaults to a cinematic 21:9 crop, but
+                a slide can pass its real `desktopAspectRatio` (e.g. a
+                near-square source photo) so object-cover doesn't have to
+                chop off half the image to force it into 21:9. */}
+            <div
+              className="relative hidden lg:block"
+              style={{ aspectRatio: slide.desktopAspectRatio ?? "21 / 9" }}
+            >
               <Image
                 src={slide.desktopImageUrl}
                 alt={slide.title}

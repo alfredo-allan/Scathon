@@ -56,6 +56,16 @@ export interface HeroSlide {
    * two-tier (mobile/desktop) behaviour.
    */
   tabletImageUrl?: string;
+  /**
+   * Optional real aspect ratio ("width / height", e.g. "2184 / 1920") for
+   * each tier's source image. When set, the carousel sizes that tier's box
+   * to match instead of forcing its default crop (4:5 mobile / 16:10
+   * tablet / 21:9 desktop) - use this whenever the actual photo isn't cut
+   * to those ratios, so object-cover doesn't crop away part of the image.
+   */
+  mobileAspectRatio?: string;
+  tabletAspectRatio?: string;
+  desktopAspectRatio?: string;
   theme: "light" | "dark";
 }
 

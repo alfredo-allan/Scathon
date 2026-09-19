@@ -14,6 +14,14 @@ export const heroSlides: HeroSlide[] = [
     desktopImageUrl: "/banner/Banner_1Desktop.png",
     tabletImageUrl: "/banner/Banner_1Tablet.png",
     mobileImageUrl: "/banner/Baner_1Mobile.png",
+    // The desktop export is a near-square photo (2184x1920, ~1.14:1), not a
+    // wide cinematic shot. The carousel's default 21:9 desktop crop forced
+    // it to lose about half its height (heads/feet got cut off), so this
+    // slide overrides to a gentler 16:9 - most of the photo stays visible
+    // without making the hero section unreasonably tall. Mobile/tablet
+    // already crop this same photo fine at their defaults (4:5 / 16:10),
+    // so those are left alone.
+    desktopAspectRatio: "16 / 9",
     theme: "dark",
   },
   {
