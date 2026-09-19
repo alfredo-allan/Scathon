@@ -50,6 +50,12 @@ export interface HeroSlide {
   ctaHref: string;
   desktopImageUrl: string;
   mobileImageUrl: string;
+  /**
+   * Optional dedicated tablet crop (~640px-1024px viewports). Falls back to
+   * `desktopImageUrl` when a slide doesn't provide one, matching the old
+   * two-tier (mobile/desktop) behaviour.
+   */
+  tabletImageUrl?: string;
   theme: "light" | "dark";
 }
 

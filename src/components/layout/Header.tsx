@@ -1,13 +1,12 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { useState } from 'react'
-import { CartBadge } from './CartBadge'
-import { CategoryBar } from './CategoryBar'
-import { DrawerMenu } from './DrawerMenu'
-import { SearchOverlay } from './SearchOverlay'
-import { ThemeToggle } from './ThemeToggle'
-import { UserAvatar } from './UserAvatar'
+import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
+import { CategoryBar } from "./CategoryBar";
+import { DrawerMenu } from "./DrawerMenu";
+import { HeaderActions } from "./HeaderActions";
+import { SearchOverlay } from "./SearchOverlay";
 
 /**
  * Sticky site header: hamburger + drawer, wordmark, search trigger,
@@ -15,19 +14,25 @@ import { UserAvatar } from './UserAvatar'
  * bar underneath.
  */
 export function Header() {
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [searchOpen, setSearchOpen] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-30 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
-      <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 px-4 md:px-8 py-4">
+      <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 px-4 py-3 md:px-8 sm:py-4">
         <button
           type="button"
           onClick={() => setDrawerOpen(true)}
           aria-label="Open menu"
-          className="justify-self-start p-1 text-neutral-800 dark:text-neutral-100">
+          className="justify-self-start p-1 text-neutral-800 dark:text-neutral-100"
+        >
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>
-            <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <path
+              d="M4 6h16M4 12h16M4 18h16"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
           </svg>
         </button>
 
@@ -44,25 +49,44 @@ export function Header() {
         */}
         <Link
           href="/"
-          className="min-w-0 justify-self-center truncate text-base sm:text-lg font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-neutral-950 dark:text-neutral-50">
-          Scathon testando mudança !!!!!!!
+          aria-label="Scathon"
+          className="min-w-0 shrink-0 justify-self-center"
+        >
+          {/*
+            Two theme-specific wordmarks, toggled purely with CSS
+            (`dark:` variants) rather than JS - so there's no flash of
+            the wrong logo before hydration/theme detection runs. Each
+            source is the full 500x211 asset; `w-auto` + a fixed height
+            keeps it crisp and scaled proportionally instead of
+            stretched. The filenames name the mark's own color ("Ligth"
+            = white ink, "Dark" = black ink), not which theme they
+            belong to, so the light-mode header (white bg) gets the
+            dark/black-ink mark and the dark-mode header (near-black
+            bg) gets the light/white-ink mark - otherwise the logo
+            would vanish into its own background. Sized deliberately
+            large (h-10/h-14) - the header now hides its secondary
+            controls behind <HeaderActions/> specifically so this mark
+            can own the centre column without competing for space.
+          */}
+          <Image
+            src="/branding/BrandigLogoDark.png"
+            alt="Scathon"
+            width={500}
+            height={211}
+            priority
+            className="block h-10 w-auto object-contain dark:hidden sm:h-14"
+          />
+          <Image
+            src="/branding/BradingLogoLigth.png"
+            alt="Scathon"
+            width={500}
+            height={211}
+            priority
+            className="hidden h-10 w-auto object-contain dark:block sm:h-14"
+          />
         </Link>
 
-        <div className="flex items-center justify-self-end gap-3 sm:gap-4">
-          <button
-            type="button"
-            onClick={() => setSearchOpen(true)}
-            aria-label="Open search"
-            className="p-1 text-neutral-800 dark:text-neutral-100">
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>
-              <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.5" />
-              <path d="m20 20-3.5-3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          </button>
-          <ThemeToggle />
-          <UserAvatar />
-          <CartBadge />
-        </div>
+        <HeaderActions onSearchOpen={() => setSearchOpen(true)} />
       </div>
 
       <CategoryBar />
@@ -70,5 +94,5 @@ export function Header() {
       <DrawerMenu open={drawerOpen} onClose={() => setDrawerOpen(false)} />
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
     </header>
-  )
+  );
 }

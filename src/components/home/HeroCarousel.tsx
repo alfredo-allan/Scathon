@@ -12,9 +12,11 @@ interface HeroCarouselProps {
 
 /**
  * Auto-playing hero banner with manual touch/drag support and indicator
- * dots. Scales to any number of slides. Renders a dedicated 4:5 vertical
- * image on mobile and a wide banner on desktop via the `mobileImageUrl` /
- * `desktopImageUrl` pair, so no cropping/art-direction is lost.
+ * dots. Scales to any number of slides. Renders a dedicated vertical image
+ * on mobile (<640px), a mid-size crop on tablet (640-1024px), and a wide
+ * banner on desktop (1024px+) via the `mobileImageUrl` / `tabletImageUrl` /
+ * `desktopImageUrl` trio, so no cropping/art-direction is lost. Slides
+ * without a `tabletImageUrl` fall back to `desktopImageUrl` for that tier.
  */
 export function HeroCarousel({ slides, autoPlayMs = 6000 }: HeroCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -82,8 +84,8 @@ export function HeroCarousel({ slides, autoPlayMs = 6000 }: HeroCarouselProps) {
             aria-hidden={index !== activeIndex}
             className="relative w-full shrink-0"
           >
-            {/* Mobile: 4:5 vertical imagery */}
-            <div className="relative block aspect-[4/5] md:hidden">
+            {/* Mobile: dedicated vertical imagery */}
+            <div className="relative block aspect-[4/5] sm:hidden">
               <Image
                 src={slide.mobileImageUrl}
                 alt={slide.title}
@@ -94,8 +96,20 @@ export function HeroCarousel({ slides, autoPlayMs = 6000 }: HeroCarouselProps) {
                 className="object-cover"
               />
             </div>
-            {/* Desktop/tablet: wide-aspect banner */}
-            <div className="relative hidden md:block md:aspect-[21/9]">
+            {/* Tablet: mid-size crop, falls back to the desktop image */}
+            <div className="relative hidden sm:block lg:hidden aspect-[16/10]">
+              <Image
+                src={slide.tabletImageUrl ?? slide.desktopImageUrl}
+                alt={slide.title}
+                fill
+                unoptimized
+                priority={index === 0}
+                sizes="100vw"
+                className="object-cover"
+              />
+            </div>
+            {/* Desktop: wide-aspect banner */}
+            <div className="relative hidden lg:block lg:aspect-[21/9]">
               <Image
                 src={slide.desktopImageUrl}
                 alt={slide.title}
