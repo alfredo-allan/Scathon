@@ -5,7 +5,7 @@ export const heroSlides: HeroSlide[] = [
   {
     id: "slide-ss26",
     eyebrow: "SS26 Collection",
-    title: "New Season, New Rules",
+    title: "Nova temporada, novas regras",
     subtitle: "Streetwear built for movement.",
     ctaLabel: "Shop the Drop",
     ctaHref: "/collections/ss26",
@@ -26,7 +26,7 @@ export const heroSlides: HeroSlide[] = [
   {
     id: "slide-bestsellers",
     eyebrow: "Best Sellers",
-    title: "Back in Stock",
+    title: "Navegue pelos mais vendidos",
     subtitle: "The pieces everyone's been asking for.",
     ctaLabel: "Shop Best Sellers",
     ctaHref: "/shop?filter=best-sellers",
@@ -47,7 +47,7 @@ export const heroSlides: HeroSlide[] = [
   {
     id: "slide-newin",
     eyebrow: "Just Landed",
-    title: "New In This Week",
+    title: "Novo Esta Semana",
     subtitle: "Fresh fits, restocked daily.",
     ctaLabel: "Discover New In",
     ctaHref: "/shop?filter=new",

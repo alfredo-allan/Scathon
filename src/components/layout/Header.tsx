@@ -1,13 +1,13 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import { useState } from "react";
-import { CartBadge } from "./CartBadge";
-import { CategoryBar } from "./CategoryBar";
-import { DrawerMenu } from "./DrawerMenu";
-import { SearchOverlay } from "./SearchOverlay";
-import { ThemeToggle } from "./ThemeToggle";
-import { UserAvatar } from "./UserAvatar";
+import Link from 'next/link'
+import { useState } from 'react'
+import { CartBadge } from './CartBadge'
+import { CategoryBar } from './CategoryBar'
+import { DrawerMenu } from './DrawerMenu'
+import { SearchOverlay } from './SearchOverlay'
+import { ThemeToggle } from './ThemeToggle'
+import { UserAvatar } from './UserAvatar'
 
 /**
  * Sticky site header: hamburger + drawer, wordmark, search trigger,
@@ -15,8 +15,8 @@ import { UserAvatar } from "./UserAvatar";
  * bar underneath.
  */
 export function Header() {
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
 
   return (
     <header className="sticky top-0 z-30 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
@@ -25,15 +25,9 @@ export function Header() {
           type="button"
           onClick={() => setDrawerOpen(true)}
           aria-label="Open menu"
-          className="justify-self-start p-1 text-neutral-800 dark:text-neutral-100"
-        >
+          className="justify-self-start p-1 text-neutral-800 dark:text-neutral-100">
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>
-            <path
-              d="M4 6h16M4 12h16M4 18h16"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
+            <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
         </button>
 
@@ -50,9 +44,8 @@ export function Header() {
         */}
         <Link
           href="/"
-          className="min-w-0 justify-self-center truncate text-base sm:text-lg font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-neutral-950 dark:text-neutral-50"
-        >
-          Scathon
+          className="min-w-0 justify-self-center truncate text-base sm:text-lg font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] text-neutral-950 dark:text-neutral-50">
+          Scathon testando mudança !!!!!!!
         </Link>
 
         <div className="flex items-center justify-self-end gap-3 sm:gap-4">
@@ -60,8 +53,7 @@ export function Header() {
             type="button"
             onClick={() => setSearchOpen(true)}
             aria-label="Open search"
-            className="p-1 text-neutral-800 dark:text-neutral-100"
-          >
+            className="p-1 text-neutral-800 dark:text-neutral-100">
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>
               <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.5" />
               <path d="m20 20-3.5-3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -78,5 +70,5 @@ export function Header() {
       <DrawerMenu open={drawerOpen} onClose={() => setDrawerOpen(false)} />
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
     </header>
-  );
+  )
 }
