@@ -101,18 +101,10 @@ export function HeroCarousel({ slides, autoPlayMs = 6000 }: HeroCarouselProps) {
                 className="object-cover"
               />
             </div>
-            {/* Tablet: mid-size crop, falls back to the desktop image. Only
-                borrow desktopAspectRatio when there's no dedicated tablet
-                image (i.e. we're actually rendering the desktop photo here) -
-                otherwise a real tablet image keeps its own default ratio. */}
+            {/* Tablet: mid-size crop, falls back to the desktop image */}
             <div
               className="relative hidden sm:block lg:hidden"
-              style={{
-                aspectRatio:
-                  slide.tabletAspectRatio ??
-                  (slide.tabletImageUrl ? undefined : slide.desktopAspectRatio) ??
-                  "16 / 10",
-              }}
+              style={{ aspectRatio: slide.tabletAspectRatio ?? "16 / 10" }}
             >
               <Image
                 src={slide.tabletImageUrl ?? slide.desktopImageUrl}
@@ -124,14 +116,14 @@ export function HeroCarousel({ slides, autoPlayMs = 6000 }: HeroCarouselProps) {
                 className="object-cover"
               />
             </div>
-            {/* Desktop: wide banner - defaults to a cinematic 21:9 crop, but
-                a slide can pass its real `desktopAspectRatio` (e.g. a
-                near-square source photo) so object-cover doesn't have to
-                chop off half the image to force it into 21:9. */}
-            <div
-              className="relative hidden lg:block"
-              style={{ aspectRatio: slide.desktopAspectRatio ?? "21 / 9" }}
-            >
+            {/* Desktop: the carousel box itself stays a fixed 21:9 - it never
+                grows/shrinks to match whatever photo is dropped in. The
+                image fills that box edge-to-edge (`object-cover`, no bars),
+                cropping whatever overflows. `object-top` anchors the crop to
+                the top of the photo instead of the center, so a portrait-ish
+                source keeps heads/faces in frame and loses leg/footwear
+                space at the bottom instead. */}
+            <div className="relative hidden lg:block lg:aspect-[21/9]">
               <Image
                 src={slide.desktopImageUrl}
                 alt={slide.title}
@@ -139,7 +131,7 @@ export function HeroCarousel({ slides, autoPlayMs = 6000 }: HeroCarouselProps) {
                 unoptimized
                 priority={index === 0}
                 sizes="100vw"
-                className="object-cover"
+                className="object-cover object-top"
               />
             </div>
 
