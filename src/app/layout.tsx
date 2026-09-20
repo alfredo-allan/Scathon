@@ -1,8 +1,9 @@
-import type { Metadata } from 'next'
-import './globals.css'
-import { Providers } from '@/components/providers/Providers'
-import { Header } from '@/components/layout/Header'
-import { Footer } from '@/components/layout/Footer'
+import type { Metadata } from "next";
+import "./globals.css";
+import { Providers } from "@/components/providers/Providers";
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
+import { FloatingDock } from "@/components/layout/FloatingDock";
 
 // Using the system font stack (defined in globals.css) instead of
 // next/font/google (Geist) so the build never depends on reaching
@@ -12,9 +13,9 @@ import { Footer } from '@/components/layout/Footer'
 // access is confirmed, whenever a custom brand typeface is ready.
 
 export const metadata: Metadata = {
-  title: 'Scathon — Streetwear E-commerce',
-  description: 'Minimalist streetwear, built for movement.'
-}
+  title: "Scathon — Streetwear E-commerce",
+  description: "Minimalist streetwear, built for movement.",
+};
 
 // Applies the persisted theme to <html> before React hydrates, so there is
 // no flash of the wrong theme on load. Kept as a plain string (not JSX) so
@@ -30,11 +31,16 @@ const themeInitScript = `
       document.documentElement.style.colorScheme = theme;
     } catch (e) {}
   })();
-`
+`;
 
-export default function RootLayout({ children }: LayoutProps<'/'>) {
+export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="pt-BR" data-scroll-behavior="smooth" className="h-full antialiased" suppressHydrationWarning>
+    <html
+      lang="pt-BR"
+      data-scroll-behavior="smooth"
+      className="h-full antialiased"
+      suppressHydrationWarning
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
@@ -43,8 +49,14 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />
+          {/*
+            Fixed-position, so it doesn't matter that it lives outside the
+            document's normal header/main/footer flow - see FloatingDock's
+            own doc comment for how it hands off with <Header/> on scroll.
+          */}
+          <FloatingDock />
         </Providers>
       </body>
     </html>
-  )
+  );
 }

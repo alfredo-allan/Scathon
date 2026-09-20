@@ -9,6 +9,7 @@ import {
 } from "react";
 import type { User } from "@/types";
 import { createPersistedStore } from "@/lib/createPersistedStore";
+import { placeholderAvatar } from "@/lib/placeholder";
 
 interface AuthSession {
   token: string | null;
@@ -25,7 +26,29 @@ interface AuthContextValue {
 }
 
 const EMPTY_SESSION: AuthSession = { token: null, user: null };
-const authStore = createPersistedStore<AuthSession>("scathon:session", EMPTY_SESSION);
+
+// Mock signed-in session used as the *default* (pre-login) state so
+// <UserAvatar/> - in the header and in <FloatingDock/> - previews its
+// real end state (an actual photo) instead of the generic sign-in glyph,
+// before real accounts/auth exist. This is only the fallback: it's what
+// a fresh browser sees before any explicit login/logout persists a real
+// value to localStorage. Calling `logout()` still writes a real
+// `EMPTY_SESSION` (token: null, user: null) so the signed-out state - and
+// the header's actual sign-in link - can still be tested on demand.
+// Delete this mock and go back to `EMPTY_SESSION` as the default once a
+// real login flow exists.
+const MOCK_SESSION: AuthSession = {
+  token: "mock-token",
+  user: {
+    id: "mock-user",
+    displayName: "Cliente Scathon",
+    email: "cliente@scathon.com",
+    avatarUrl: placeholderAvatar(),
+    role: "customer",
+  },
+};
+
+const authStore = createPersistedStore<AuthSession>("scathon:session", MOCK_SESSION);
 
 export const AuthContext = createContext<AuthContextValue | undefined>(
   undefined,
