@@ -14,6 +14,12 @@ export interface ColorVariant {
   imageUrl: string;
 }
 
+export interface ProductReview {
+  author: string;
+  rating: number;
+  comment: string;
+}
+
 export interface Product {
   id: string;
   slug: string;
@@ -23,7 +29,36 @@ export interface Product {
   currency: string;
   imageUrl: string;
   hoverImageUrl?: string;
+  /**
+   * Extra gallery photos for the product detail page
+   * (`/shop/[category]/[product]`). Optional on purpose: when a product
+   * doesn't provide one yet, `<ProductGallery/>` derives a small gallery
+   * from `imageUrl`/`hoverImageUrl`/the active color's own photo instead,
+   * so a newly-added product renders a complete detail page immediately -
+   * a real photoshoot's multiple angles just slot in here later.
+   */
+  images?: string[];
   colors: ColorVariant[];
+  /**
+   * Available sizes ("P"/"M"/"G" for apparel, numeric for pants/jeans).
+   * Omit entirely for one-size items (beanies, bags) to hide the size
+   * selector on the detail page rather than showing an empty one.
+   */
+  sizes?: string[];
+  /** Style/SKU code shown in the detail page's spec list (e.g. "SCT-HW01-001"). */
+  styleCode?: string;
+  /**
+   * Longer marketing copy for the detail page's "Descrição" section.
+   * Supports blank-line-separated paragraphs. Falls back to a generic
+   * paragraph built from the title when omitted.
+   */
+  description?: string;
+  /**
+   * A handful of written reviews to show under the aggregate rating.
+   * Optional - most products only carry the aggregate `rating`/
+   * `reviewCount` for now; add real reviews here as they come in.
+   */
+  reviews?: ProductReview[];
   rating: number;
   reviewCount: number;
   isNew?: boolean;

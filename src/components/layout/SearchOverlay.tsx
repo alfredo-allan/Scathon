@@ -106,7 +106,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
                 {products.slice(0, 3).map((product) => (
                   <Link
                     key={product.id}
-                    href={`/product/${product.slug}`}
+                    href={`/shop/${product.category}/${product.slug}`}
                     onClick={handleClose}
                     className="group"
                   >
@@ -137,7 +137,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
               {results.map((product) => (
                 <li key={product.id}>
                   <Link
-                    href={`/product/${product.slug}`}
+                    href={`/shop/${product.category}/${product.slug}`}
                     onClick={handleClose}
                     className="flex items-center gap-4 py-3"
                   >

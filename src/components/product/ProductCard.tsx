@@ -28,11 +28,12 @@ export function ProductCard({ product }: ProductCardProps) {
   const baseImage = activeVariant?.imageUrl ?? product.imageUrl;
   const swapImage = product.hoverImageUrl ?? baseImage;
   const showSwap = isHovered && !activeVariant;
+  const productHref = `/shop/${product.category}/${product.slug}`;
 
   return (
     <div className="group relative flex flex-col bg-neutral-100/50 dark:bg-neutral-900/50 p-4 rounded-none transition-colors">
       <Link
-        href={`/product/${product.slug}`}
+        href={productHref}
         className="relative block aspect-[3/4] overflow-hidden bg-neutral-200 dark:bg-neutral-800"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -52,7 +53,7 @@ export function ProductCard({ product }: ProductCardProps) {
         />
       </Link>
 
-      <Link href={`/product/${product.slug}`}>
+      <Link href={productHref}>
         <p className="text-sm font-medium tracking-tight mt-3 text-neutral-900 dark:text-neutral-100">
           {product.title}
         </p>
