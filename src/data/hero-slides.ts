@@ -4,10 +4,10 @@ import type { HeroSlide } from "@/types";
 export const heroSlides: HeroSlide[] = [
   {
     id: "slide-ss26",
-    eyebrow: "SS26 Collection",
-    title: "New Season, New Rules",
-    subtitle: "Streetwear built for movement.",
-    ctaLabel: "Shop the Drop",
+    eyebrow: "Coleção SS26",
+    title: "Nova Temporada, Novas Regras",
+    subtitle: "Streetwear feito para o movimento.",
+    ctaLabel: "Ver o Drop",
     ctaHref: "/collections/ss26",
     // Real banner artwork (test render) - swap these back to placeholderImage(...)
     // calls if the real assets are ever pulled from /public/banner.
@@ -20,10 +20,10 @@ export const heroSlides: HeroSlide[] = [
   },
   {
     id: "slide-bestsellers",
-    eyebrow: "Best Sellers",
-    title: "Back in Stock",
-    subtitle: "The pieces everyone's been asking for.",
-    ctaLabel: "Shop Best Sellers",
+    eyebrow: "Mais Vendidos",
+    title: "De Volta ao Estoque",
+    subtitle: "As peças que todo mundo estava pedindo.",
+    ctaLabel: "Ver Mais Vendidos",
     ctaHref: "/shop?filter=best-sellers",
     desktopImageUrl: "/banner/Banner_2Desktop.png",
     // No dedicated tablet crop exists yet for this slide (there's no
@@ -39,18 +39,18 @@ export const heroSlides: HeroSlide[] = [
   },
   // {
   //   id: "slide-newin",
-  //   eyebrow: "Just Landed",
-  //   title: "New In This Week",
-  //   subtitle: "Fresh fits, restocked daily.",
-  //   ctaLabel: "Discover New In",
+  //   eyebrow: "Acabou de Chegar",
+  //   title: "Novidades da Semana",
+  //   subtitle: "Looks novos, reposição diária.",
+  //   ctaLabel: "Ver Novidades",
   //   ctaHref: "/shop?filter=new",
-  //   desktopImageUrl: placeholderImage("New In — Desktop 21:9", {
+  //   desktopImageUrl: placeholderImage("Novidades — Desktop 21:9", {
   //     width: 2400,
   //     height: 1000,
   //     bg: "#0a0a0a",
   //     fg: "#fafafa",
   //   }),
-  //   mobileImageUrl: placeholderImage("New In — Mobile 4:5", {
+  //   mobileImageUrl: placeholderImage("Novidades — Mobile 4:5", {
   //     width: 1000,
   //     height: 1250,
   //     bg: "#0a0a0a",

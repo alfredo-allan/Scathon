@@ -4,9 +4,9 @@ import type { DividerSlide } from "@/types";
 export const dividerSlides: DividerSlide[] = [
   {
     id: "divider-hoodies",
-    title: "Hoodies & Fleece",
-    href: "/shop/hoodies",
-    imageUrl: placeholderImage("Hoodies", {
+    title: "Moletons e Fleece",
+    href: "/shop/moletons",
+    imageUrl: placeholderImage("Moletons", {
       width: 1200,
       height: 700,
       bg: "#d4d4d4",
@@ -15,9 +15,9 @@ export const dividerSlides: DividerSlide[] = [
   },
   {
     id: "divider-outerwear",
-    title: "Outerwear",
-    href: "/shop/outerwear",
-    imageUrl: placeholderImage("Outerwear", {
+    title: "Casacos",
+    href: "/shop/casacos",
+    imageUrl: placeholderImage("Casacos", {
       width: 1200,
       height: 700,
       bg: "#a3a3a3",
@@ -26,9 +26,9 @@ export const dividerSlides: DividerSlide[] = [
   },
   {
     id: "divider-accessories",
-    title: "Accessories",
-    href: "/shop/accessories",
-    imageUrl: placeholderImage("Accessories", {
+    title: "Acessórios",
+    href: "/shop/acessorios",
+    imageUrl: placeholderImage("Acessórios", {
       width: 1200,
       height: 700,
       bg: "#737373",

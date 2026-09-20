@@ -13,8 +13,8 @@ import { FloatingDock } from "@/components/layout/FloatingDock";
 // access is confirmed, whenever a custom brand typeface is ready.
 
 export const metadata: Metadata = {
-  title: "Scathon — Streetwear E-commerce",
-  description: "Minimalist streetwear, built for movement.",
+  title: "Scathon — Loja de Streetwear",
+  description: "Streetwear minimalista, feito para o movimento.",
 };
 
 // Applies the persisted theme to <html> before React hydrates, so there is

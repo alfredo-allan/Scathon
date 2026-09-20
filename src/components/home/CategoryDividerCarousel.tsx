@@ -31,7 +31,7 @@ export function CategoryDividerCarousel({ slides }: CategoryDividerCarouselProps
   if (slides.length === 0) return null;
 
   return (
-    <section aria-label="Browse categories" className="relative w-full overflow-hidden">
+    <section aria-label="Navegar por categorias" className="relative w-full overflow-hidden">
       <div
         className="flex transition-transform duration-500 ease-out"
         style={{ transform: `translateX(-${activeIndex * 100}%)` }}
@@ -65,7 +65,7 @@ export function CategoryDividerCarousel({ slides }: CategoryDividerCarouselProps
             <button
               key={slide.id}
               type="button"
-              aria-label={`Go to ${slide.title}`}
+              aria-label={`Ir para ${slide.title}`}
               onClick={() => setActiveIndex(index)}
               className={`h-1.5 rounded-full transition-all ${
                 index === activeIndex ? "w-6 bg-white" : "w-1.5 bg-white/50"

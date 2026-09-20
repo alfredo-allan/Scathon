@@ -65,7 +65,7 @@ export function HeroCarousel({ slides, autoPlayMs = 6000 }: HeroCarouselProps) {
   return (
     <section
       aria-roledescription="carousel"
-      aria-label="Featured collections"
+      aria-label="Coleções em destaque"
       className="relative w-full overflow-hidden select-none touch-pan-y"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
@@ -174,7 +174,7 @@ export function HeroCarousel({ slides, autoPlayMs = 6000 }: HeroCarouselProps) {
             <button
               key={slide.id}
               type="button"
-              aria-label={`Go to slide ${index + 1}`}
+              aria-label={`Ir para o slide ${index + 1}`}
               aria-current={index === activeIndex}
               onClick={() => goTo(index)}
               className={`h-1.5 rounded-full transition-all ${

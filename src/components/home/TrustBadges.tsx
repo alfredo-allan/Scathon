@@ -1,7 +1,7 @@
 const badges = [
-  { label: "Worldwide Shipping" },
-  { label: "14 Day Returns" },
-  { label: "65,000+ Customers" },
+  { label: "Envio para Todo o Mundo" },
+  { label: "Devolução em 14 Dias" },
+  { label: "Mais de 65.000 Clientes" },
 ];
 
 /**
@@ -10,7 +10,7 @@ const badges = [
 export function TrustBadges() {
   return (
     <section
-      aria-label="Why shop with us"
+      aria-label="Por que comprar conosco"
       className="grid grid-cols-3 gap-4 py-8 text-center text-xs tracking-wider border-y border-neutral-100 dark:border-neutral-800 px-4"
     >
       {badges.map((badge) => (

@@ -16,7 +16,7 @@ export function UserAvatar() {
     return (
       <Link
         href="/login"
-        aria-label="Sign in"
+        aria-label="Entrar"
         className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400"
       >
         <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden>
@@ -30,7 +30,7 @@ export function UserAvatar() {
   }
 
   return (
-    <Link href="/account" aria-label={`${user.displayName}'s account`}>
+    <Link href="/account" aria-label={`Conta de ${user.displayName}`}>
       {user.avatarUrl ? (
         <Image
           src={user.avatarUrl}

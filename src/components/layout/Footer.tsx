@@ -14,15 +14,15 @@ const sections: FooterSection[] = [
     id: "menu",
     title: "Menu",
     links: [
-      { label: "Shop All", href: "/shop" },
-      { label: "New In", href: "/shop?filter=new" },
-      { label: "Best Sellers", href: "/shop?filter=best-sellers" },
+      { label: "Todos os Produtos", href: "/shop" },
+      { label: "Novidades", href: "/shop?filter=new" },
+      { label: "Mais Vendidos", href: "/shop?filter=best-sellers" },
       { label: "SS26", href: "/collections/ss26" },
     ],
   },
   {
     id: "support",
-    title: "Support",
+    title: "Suporte",
     links: [
       { label: "Contato", href: "/support/contact" },
       { label: "Trocas e Devoluções", href: "/support/returns" },
@@ -32,7 +32,7 @@ const sections: FooterSection[] = [
   },
   {
     id: "business",
-    title: "Business",
+    title: "Empresa",
     links: [
       { label: "Sobre Nós", href: "/about" },
       { label: "Atacado", href: "/wholesale" },

@@ -16,7 +16,7 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={toggleTheme}
-      aria-label="Toggle theme"
+      aria-label="Alternar tema"
       className="flex h-8 w-8 items-center justify-center text-neutral-600 dark:text-neutral-400"
     >
       {!mounted ? (

@@ -39,7 +39,7 @@ export function ProductCard({ product }: ProductCardProps) {
       >
         {product.isNew && (
           <span className="absolute left-2 top-2 z-10 bg-neutral-900 dark:bg-neutral-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-neutral-100 dark:text-neutral-900">
-            New
+            Novo
           </span>
         )}
         <Image

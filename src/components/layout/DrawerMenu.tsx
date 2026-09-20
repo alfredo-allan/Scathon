@@ -53,7 +53,7 @@ export function DrawerMenu({ open, onClose }: DrawerMenuProps) {
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close menu"
+            aria-label="Fechar menu"
             className="p-1 text-neutral-600 dark:text-neutral-400"
           >
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>

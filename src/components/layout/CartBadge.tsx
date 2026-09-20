@@ -10,7 +10,7 @@ export function CartBadge() {
   const { cartCount } = useCart();
 
   return (
-    <Link href="/cart" aria-label={`Cart, ${cartCount} items`} className="relative flex items-center justify-center">
+    <Link href="/cart" aria-label={`Carrinho, ${cartCount} ${cartCount === 1 ? "item" : "itens"}`} className="relative flex items-center justify-center">
       <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden>
         <path
           d="M6 8h12l-1 12H7L6 8Z"

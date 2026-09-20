@@ -45,7 +45,7 @@ export function Header() {
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
-            aria-label="Open menu"
+            aria-label="Abrir menu"
             className="justify-self-start p-1 text-neutral-800 dark:text-neutral-100"
           >
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>

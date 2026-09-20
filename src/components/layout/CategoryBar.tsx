@@ -7,7 +7,7 @@ import { categories } from "@/data/categories";
 export function CategoryBar() {
   return (
     <nav
-      aria-label="Categories"
+      aria-label="Categorias"
       className="flex gap-6 overflow-x-auto no-scrollbar text-xs font-medium tracking-widest uppercase py-3 border-b border-neutral-200 dark:border-neutral-800 px-4 md:px-8"
     >
       {categories.map((category) => (

@@ -16,15 +16,15 @@ export default function Home() {
       <HeroCarousel slides={heroSlides} />
       <TrustBadges />
 
-      <ProductGrid title="Best Sellers" products={bestSellers} />
+      <ProductGrid title="Mais Vendidos" products={bestSellers} />
 
       <CategoryDividerCarousel slides={dividerSlides} />
 
-      <ProductGrid title="New In" products={newArrivals} />
+      <ProductGrid title="Novidades" products={newArrivals} />
 
       <CategoryDividerCarousel slides={[...dividerSlides].reverse()} />
 
-      <ProductGrid title="Shop All" products={products} />
+      <ProductGrid title="Todos os Produtos" products={products} />
 
       {/* Right above <Footer/>, which layout.tsx renders after {children}. */}
       <TestimonialsCarousel />

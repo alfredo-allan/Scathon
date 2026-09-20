@@ -49,7 +49,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Search"
+      aria-label="Buscar"
       className="fixed inset-0 z-50 bg-white dark:bg-neutral-900 p-4 sm:p-6 overflow-y-auto animate-slide-down"
     >
       <div className="mx-auto flex max-w-3xl flex-col gap-6 sm:gap-8">
@@ -69,7 +69,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
           <button
             type="button"
             onClick={handleClose}
-            aria-label="Close search"
+            aria-label="Fechar busca"
             className="p-1 text-neutral-600 dark:text-neutral-400"
           >
             <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" aria-hidden>
