@@ -180,6 +180,51 @@ export const products: Product[] = [
     ],
   },
   {
+    id: "p-009",
+    slug: "cathedral-t-shirt-preta",
+    title: "Camiseta Cathedral Preta",
+    price: 159.9,
+    currency: "BRL",
+    category: "camisetas",
+    rating: 4.8,
+    reviewCount: 12,
+    isNew: true,
+    styleCode: "SCT-CT09-001",
+    description:
+      "Camiseta Cathedral, estampa gráfica de inspiração gótica em toda a extensão da frente.\n\nMalha 100% algodão penteado, gramatura média e caimento reto - a base perfeita pra deixar a estampa ser o centro das atenções.",
+    sizes: ["P", "M", "G", "GG", "XG"],
+    // Real photography (see `Product.coverImage`/`specimenImages`), not the
+    // placeholder generator - `imageUrl`/`hoverImageUrl` below are just a
+    // same-shaped fallback for anywhere that hasn't been switched to prefer
+    // `coverImage` yet.
+    imageUrl: "/category/shirt/BlackCathedral-T-shirt.jpeg",
+    coverImage: "/category/shirt/BlackCathedral-T-shirt.jpeg",
+    specimenImages: [
+      "/specimen/BlackModelCathedral-T-shirt.jpeg",
+      "/specimen/BlackModel_1Cathedral-T-shirt.jpeg",
+    ],
+    colors: [{ name: "Preto", hex: "#171717", imageUrl: "/category/shirt/BlackCathedral-T-shirt.jpeg" }],
+  },
+  {
+    id: "p-010",
+    slug: "cathedral-t-shirt-branca",
+    title: "Camiseta Cathedral Branca",
+    price: 159.9,
+    currency: "BRL",
+    category: "camisetas",
+    rating: 4.8,
+    reviewCount: 9,
+    isNew: true,
+    styleCode: "SCT-CT10-002",
+    description:
+      "Camiseta Cathedral, estampa gráfica de inspiração gótica em toda a extensão da frente.\n\nMalha 100% algodão penteado, gramatura média e caimento reto - a base perfeita pra deixar a estampa ser o centro das atenções.",
+    sizes: ["P", "M", "G", "GG", "XG"],
+    imageUrl: "/category/shirt/WhiteCathedral-T-shirt.jpeg",
+    coverImage: "/category/shirt/WhiteCathedral-T-shirt.jpeg",
+    specimenImages: ["/specimen/WhiteModelCathedral-T-shirt.jpeg"],
+    colors: [{ name: "Branco", hex: "#fafafa", imageUrl: "/category/shirt/WhiteCathedral-T-shirt.jpeg" }],
+  },
+  {
     id: "p-008",
     slug: "nylon-crossbody-bag",
     title: "Bolsa Transversal de Nylon",

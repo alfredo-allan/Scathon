@@ -25,7 +25,12 @@ export function ProductCard({ product }: ProductCardProps) {
     [product.colors, activeColor],
   );
 
-  const baseImage = activeVariant?.imageUrl ?? product.imageUrl;
+  // Real photography (`coverImage`) wins over the legacy placeholder
+  // `imageUrl` once a product sets it - see the doc comment on
+  // `Product.coverImage`. `activeVariant` (a picked color swatch) still
+  // wins over both, so a placeholder product's color-swap behavior is
+  // unaffected.
+  const baseImage = activeVariant?.imageUrl ?? product.coverImage ?? product.imageUrl;
   const swapImage = product.hoverImageUrl ?? baseImage;
   const showSwap = isHovered && !activeVariant;
   const productHref = `/shop/${product.category}/${product.slug}`;

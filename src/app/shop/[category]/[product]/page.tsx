@@ -57,5 +57,12 @@ export default async function ProductPage({
     notFound();
   }
 
-  return <ProductDetail product={product} category={category} />;
+  // "Você também pode gostar" rail: same-category products first (most
+  // relevant), padded out with anything else if the category is thin - caps
+  // at 4 so it stays a quick horizontal glance, not another grid.
+  const sameCategory = products.filter((p) => p.id !== product.id && p.category === product.category);
+  const otherCategories = products.filter((p) => p.id !== product.id && p.category !== product.category);
+  const relatedProducts = [...sameCategory, ...otherCategories].slice(0, 4);
+
+  return <ProductDetail product={product} category={category} relatedProducts={relatedProducts} />;
 }

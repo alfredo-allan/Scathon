@@ -112,7 +112,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
                   >
                     <div className="relative aspect-[3/4] overflow-hidden bg-neutral-100 dark:bg-neutral-800">
                       <Image
-                        src={product.imageUrl}
+                        src={product.coverImage ?? product.imageUrl}
                         alt={product.title}
                         fill
                         unoptimized
@@ -143,7 +143,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
                   >
                     <div className="relative h-16 w-12 shrink-0 overflow-hidden bg-neutral-100 dark:bg-neutral-800">
                       <Image
-                        src={product.imageUrl}
+                        src={product.coverImage ?? product.imageUrl}
                         alt={product.title}
                         fill
                         unoptimized

@@ -38,6 +38,30 @@ export interface Product {
    * a real photoshoot's multiple angles just slot in here later.
    */
   images?: string[];
+  /**
+   * Real product photography cover image, following the asset convention
+   * `public/category/[categoria]/[arquivo]` (e.g.
+   * "/category/shirt/BlackCathedral-T-shirt.jpeg" for a file at
+   * `public/category/shirt/BlackCathedral-T-shirt.jpeg` - anything under
+   * `public/` is served from the site root, so the leading `/category/...`
+   * *is* the URL). Deliberately kept separate from `imageUrl` (the
+   * placeholder-era cover) rather than replacing it: when a product sets
+   * `coverImage`, every cover/thumbnail spot (`<ProductCard/>`, the detail
+   * page's gallery fallback) prefers it over `imageUrl` and `colors[].
+   * imageUrl`; when it's omitted, those keep working exactly as before.
+   * This lets real photography and placeholder products coexist in the
+   * same catalog without a forced migration.
+   */
+  coverImage?: string;
+  /**
+   * Real product photography for the detail page gallery ("specimen"/model
+   * photos), following the asset convention `public/specimen/[arquivo]`
+   * (e.g. "/specimen/BlackModelCathedral-T-shirt.jpeg"). When present, this
+   * takes priority over `images` (and over the placeholder-derived
+   * fallback) in `<ProductGallery/>` - same additive relationship as
+   * `coverImage` above.
+   */
+  specimenImages?: string[];
   colors: ColorVariant[];
   /**
    * Available sizes ("P"/"M"/"G" for apparel, numeric for pants/jeans).

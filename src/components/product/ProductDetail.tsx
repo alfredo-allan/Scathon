@@ -12,6 +12,9 @@ import { ShippingEstimator } from "./ShippingEstimator";
 interface ProductDetailProps {
   product: Product;
   category: Category;
+  /** Cross-sell rail shown where a per-product color picker used to be -
+   * see the comment above that section for why. */
+  relatedProducts: Product[];
 }
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
@@ -46,11 +49,17 @@ const LETTER_SIZE_CHART: Record<string, { chest: string; length: string }> = {
  * exists, nothing is shown as sold out, since there's no inventory count to
  * back that up).
  */
-export function ProductDetail({ product, category }: ProductDetailProps) {
+export function ProductDetail({ product, category, relatedProducts }: ProductDetailProps) {
   const { addItem } = useCart();
   const { isSaved, toggleSaved } = useWishlist();
 
-  const [activeColor, setActiveColor] = useState(product.colors[0]?.name ?? "");
+  // Color is no longer a pickable variant here - this catalog's only real
+  // per-product variety is size. `colors[0]` is kept as the product's
+  // informational/default color (shown in the spec list below), and the
+  // slot that used to hold a color-swatch picker now shows other products
+  // instead (see the "Você também pode gostar" section).
+  const defaultColor = product.colors[0];
+
   const [activeSize, setActiveSize] = useState<string | null>(null);
   const [sizeError, setSizeError] = useState(false);
   const [addedFeedback, setAddedFeedback] = useState(false);
@@ -59,20 +68,19 @@ export function ProductDetail({ product, category }: ProductDetailProps) {
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const [reviewsOpen, setReviewsOpen] = useState(false);
 
-  const activeColorVariant = useMemo(
-    () => product.colors.find((color) => color.name === activeColor),
-    [product.colors, activeColor],
-  );
-
   const galleryImages = useMemo(() => {
+    // Real photography wins: `specimenImages` (model photos) first, then
+    // the older placeholder-era `images` gallery, then a small fallback
+    // built from whatever single photos the product does have.
+    if (product.specimenImages && product.specimenImages.length > 0) return product.specimenImages;
     if (product.images && product.images.length > 0) return product.images;
     const fallback = [
-      activeColorVariant?.imageUrl ?? product.imageUrl,
+      product.coverImage ?? defaultColor?.imageUrl ?? product.imageUrl,
       product.imageUrl,
       product.hoverImageUrl,
     ].filter((src): src is string => Boolean(src));
     return Array.from(new Set(fallback));
-  }, [product.images, product.imageUrl, product.hoverImageUrl, activeColorVariant]);
+  }, [product.specimenImages, product.images, product.coverImage, product.imageUrl, product.hoverImageUrl, defaultColor]);
 
   const discountPercent = product.compareAtPrice
     ? Math.round((1 - product.price / product.compareAtPrice) * 100)
@@ -82,7 +90,7 @@ export function ProductDetail({ product, category }: ProductDetailProps) {
 
   const descriptionParagraphs = (
     product.description ??
-    `${product.title} - streetwear Scathon feito pra durar. Confira as fotos e escolha sua cor e tamanho favoritos.`
+    `${product.title} - streetwear Scathon feito pra durar. Confira as fotos e escolha seu tamanho.`
   )
     .split("\n\n")
     .filter(Boolean);
@@ -101,8 +109,8 @@ export function ProductDetail({ product, category }: ProductDetailProps) {
       slug: product.slug,
       title: product.title,
       price: product.price,
-      imageUrl: activeColorVariant?.imageUrl ?? product.imageUrl,
-      color: activeColor,
+      imageUrl: product.coverImage ?? defaultColor?.imageUrl ?? product.imageUrl,
+      color: defaultColor?.name ?? "",
       size: activeSize ?? "Único",
     });
     setAddedFeedback(true);
@@ -201,38 +209,34 @@ export function ProductDetail({ product, category }: ProductDetailProps) {
             ou 10x de {currencyFormatter.format(installmentValue)} sem juros
           </p>
 
-          {product.colors.length > 1 && (
+          {relatedProducts.length > 0 && (
             <div className="mt-6">
               <span className="text-xs font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">
-                Cores e modelos
+                Você também pode gostar
               </span>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {product.colors.map((color) => {
-                  const isActive = color.name === activeColor;
-                  return (
-                    <button
-                      key={color.name}
-                      type="button"
-                      onClick={() => setActiveColor(color.name)}
-                      aria-pressed={isActive}
-                      title={color.name}
-                      className={`relative h-16 w-16 shrink-0 overflow-hidden border transition-colors ${
-                        isActive
-                          ? "border-neutral-950 dark:border-neutral-100"
-                          : "border-neutral-200 dark:border-neutral-800"
-                      }`}
-                    >
+              <div className="mt-3 flex gap-3 overflow-x-auto pb-1">
+                {relatedProducts.map((related) => (
+                  <Link
+                    key={related.id}
+                    href={`/shop/${related.category}/${related.slug}`}
+                    title={related.title}
+                    className="group w-16 shrink-0 lg:w-20"
+                  >
+                    <div className="relative aspect-[3/4] overflow-hidden bg-neutral-100 dark:bg-neutral-900">
                       <Image
-                        src={color.imageUrl}
-                        alt={color.name}
+                        src={related.coverImage ?? related.imageUrl}
+                        alt={related.title}
                         fill
                         unoptimized
-                        sizes="64px"
-                        className="object-cover"
+                        sizes="80px"
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
                       />
-                    </button>
-                  );
-                })}
+                    </div>
+                    <p className="mt-1.5 line-clamp-2 text-[11px] leading-tight text-neutral-600 dark:text-neutral-400">
+                      {related.title}
+                    </p>
+                  </Link>
+                ))}
               </div>
             </div>
           )}
@@ -332,19 +336,23 @@ export function ProductDetail({ product, category }: ProductDetailProps) {
               className="flex w-full items-center justify-center gap-2 border border-neutral-300 py-3.5 text-xs font-semibold uppercase tracking-widest text-neutral-900 transition-colors hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-500"
             >
               {saved ? "Salvo nos favoritos" : "Salvar como favoritos"}
-              <svg
-                viewBox="0 0 24 24"
-                className="h-4 w-4"
-                fill={saved ? "currentColor" : "none"}
-                aria-hidden
-              >
-                <path
-                  d="M12 20s-7-4.35-9.5-8.5C1 8.5 2.5 5 6 5c2 0 3.5 1.2 4 2.5C10.5 6.2 12 5 14 5c3.5 0 5 3.5 3.5 6.5C19 15.65 12 20 12 20Z"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              {saved ? (
+                // Filled heart - a well-tested, symmetric path (the earlier
+                // hand-drawn one rendered visibly lopsided/warped).
+                <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="currentColor" aria-hidden>
+                  <path d="M11.645 20.91a.75.75 0 0 1-.704 0c-.22-.12-.402-.223-.552-.313a25.175 25.175 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17c-.15.09-.331.194-.552.313l-.001.001Z" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" aria-hidden>
+                  <path
+                    d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              )}
             </button>
           </div>
 
@@ -400,7 +408,7 @@ export function ProductDetail({ product, category }: ProductDetailProps) {
             )}
 
             <ul className="mt-4 flex flex-col gap-1 text-sm text-neutral-600 dark:text-neutral-400">
-              <li>Cor: {activeColor}</li>
+              {defaultColor && <li>Cor: {defaultColor.name}</li>}
               {product.styleCode && <li>Estilo: {product.styleCode}</li>}
             </ul>
           </div>
