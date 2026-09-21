@@ -22,6 +22,15 @@ interface ProductGalleryProps {
  *  - Mobile (<md): a full-bleed, swipeable, infinite-loop carousel - swipe
  *    past the last photo and it wraps to the first (and vice-versa), so
  *    browsing never dead-ends. Dot indicators double as direct-jump taps.
+ *
+ * Tile background is `bg-neutral-300 dark:bg-neutral-700` - a deliberately
+ * mid-toned choice, not the lighter/darker `100`/`900` used elsewhere. Real
+ * product photos with their background removed get flattened to solid white
+ * (no alpha in .jpeg), so a white garment shot on a near-white tile (or a
+ * black garment shot on a near-black tile in dark mode) nearly disappears.
+ * Pulling both themes' tile shade toward the middle keeps it "following the
+ * theme" while staying visible against either a white or black cutout - an
+ * opaque photo that already fills the tile edge-to-edge is unaffected.
  */
 export function ProductGallery({ images, title }: ProductGalleryProps) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -79,7 +88,7 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
                 onClick={() => setActiveIndex(index)}
                 aria-current={index === activeIndex}
                 aria-label={`Ver foto ${index + 1} de ${title}`}
-                className={`relative aspect-[3/4] overflow-hidden bg-neutral-100 transition-opacity dark:bg-neutral-900 ${
+                className={`relative aspect-[3/4] overflow-hidden bg-neutral-300 transition-opacity dark:bg-neutral-700 ${
                   index === activeIndex ? "" : "opacity-60 hover:opacity-100"
                 }`}
               >
@@ -88,14 +97,14 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
             ))}
           </div>
         )}
-        <div className="relative max-h-[calc(100vh-8rem)] flex-1 aspect-[3/4] overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+        <div className="relative max-h-[calc(100vh-8rem)] w-full max-w-2xl flex-1 aspect-[3/4] overflow-hidden bg-neutral-300 dark:bg-neutral-700">
           <Image
             src={images[activeIndex]}
             alt={`${title} - foto ${activeIndex + 1}`}
             fill
             unoptimized
             priority
-            sizes="(min-width: 1024px) 45vw, 55vw"
+            sizes="(min-width: 1024px) 42rem, 55vw"
             className="object-cover"
           />
         </div>
@@ -105,7 +114,7 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
       <div className="md:hidden">
         <div
           ref={trackRef}
-          className="relative aspect-[3/4] touch-pan-y select-none overflow-hidden bg-neutral-100 dark:bg-neutral-900"
+          className="relative aspect-[3/4] touch-pan-y select-none overflow-hidden bg-neutral-300 dark:bg-neutral-700"
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={endDrag}

@@ -222,7 +222,7 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
                     title={related.title}
                     className="group w-16 shrink-0 lg:w-20"
                   >
-                    <div className="relative aspect-[3/4] overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+                    <div className="relative aspect-[3/4] overflow-hidden bg-neutral-300 dark:bg-neutral-700">
                       <Image
                         src={related.coverImage ?? related.imageUrl}
                         alt={related.title}

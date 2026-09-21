@@ -199,7 +199,13 @@ export const products: Product[] = [
     // `coverImage` yet.
     imageUrl: "/category/shirt/BlackCathedral-T-shirt.jpeg",
     coverImage: "/category/shirt/BlackCathedral-T-shirt.jpeg",
+    // Flat frente/verso shots (background removed, flattened to white since
+    // .jpeg has no alpha channel) first, lifestyle/model photos after - the
+    // usual e-commerce order: a clean, quick-scan product view leads, the
+    // "how it's worn" context follows.
     specimenImages: [
+      "/category/shirt/BlackCathedral-T-shirt.jpeg",
+      "/category/shirt/BlackCathedral-T-shirt_1.jpeg",
       "/specimen/BlackModelCathedral-T-shirt.jpeg",
       "/specimen/BlackModel_1Cathedral-T-shirt.jpeg",
     ],
@@ -221,7 +227,11 @@ export const products: Product[] = [
     sizes: ["P", "M", "G", "GG", "XG"],
     imageUrl: "/category/shirt/WhiteCathedral-T-shirt.jpeg",
     coverImage: "/category/shirt/WhiteCathedral-T-shirt.jpeg",
-    specimenImages: ["/specimen/WhiteModelCathedral-T-shirt.jpeg"],
+    specimenImages: [
+      "/category/shirt/WhiteCathedral-T-shirt.jpeg",
+      "/category/shirt/WhiteCathedral-T-shirt_1.jpeg",
+      "/specimen/WhiteModelCathedral-T-shirt.jpeg",
+    ],
     colors: [{ name: "Branco", hex: "#fafafa", imageUrl: "/category/shirt/WhiteCathedral-T-shirt.jpeg" }],
   },
   {

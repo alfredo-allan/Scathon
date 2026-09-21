@@ -39,7 +39,7 @@ export function ProductCard({ product }: ProductCardProps) {
     <div className="group relative flex flex-col bg-neutral-100/50 dark:bg-neutral-900/50 p-4 rounded-none transition-colors">
       <Link
         href={productHref}
-        className="relative block aspect-[3/4] overflow-hidden bg-neutral-200 dark:bg-neutral-800"
+        className="relative block aspect-[3/4] overflow-hidden bg-neutral-300 dark:bg-neutral-700"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
