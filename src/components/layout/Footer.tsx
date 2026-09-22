@@ -9,35 +9,43 @@ interface FooterSection {
   links: { label: string; href: string }[];
 }
 
+// Every internal href in this file is "/" on purpose - none of these
+// pages exist yet (no all-products listing, no SS26 collection page, no
+// support/about/wholesale/careers/press pages), and they used to 404 from
+// the footer. No resources yet to build all of that out, so every one of
+// these sends the visitor home instead of into a dead end - same fix
+// applied to the header's CategoryBar (`@/data/categories`) and to
+// `<ProductDetail/>`'s "Relatar problema" link. Point each one at its real
+// destination once that page exists; only the hrefs need to change.
 const sections: FooterSection[] = [
   {
     id: "menu",
     title: "Menu",
     links: [
-      { label: "Todos os Produtos", href: "/shop" },
-      { label: "Novidades", href: "/shop?filter=new" },
-      { label: "Mais Vendidos", href: "/shop?filter=best-sellers" },
-      { label: "SS26", href: "/collections/ss26" },
+      { label: "Todos os Produtos", href: "/" },
+      { label: "Novidades", href: "/" },
+      { label: "Mais Vendidos", href: "/" },
+      { label: "SS26", href: "/" },
     ],
   },
   {
     id: "support",
     title: "Suporte",
     links: [
-      { label: "Contato", href: "/support/contact" },
-      { label: "Trocas e Devoluções", href: "/support/returns" },
-      { label: "Guia de Medidas", href: "/support/size-guide" },
-      { label: "Rastrear Pedido", href: "/support/track-order" },
+      { label: "Contato", href: "/" },
+      { label: "Trocas e Devoluções", href: "/" },
+      { label: "Guia de Medidas", href: "/" },
+      { label: "Rastrear Pedido", href: "/" },
     ],
   },
   {
     id: "business",
     title: "Empresa",
     links: [
-      { label: "Sobre Nós", href: "/about" },
-      { label: "Atacado", href: "/wholesale" },
-      { label: "Trabalhe Conosco", href: "/careers" },
-      { label: "Imprensa", href: "/press" },
+      { label: "Sobre Nós", href: "/" },
+      { label: "Atacado", href: "/" },
+      { label: "Trabalhe Conosco", href: "/" },
+      { label: "Imprensa", href: "/" },
     ],
   },
 ];
@@ -83,7 +91,11 @@ export function Footer() {
                 }`}
               >
                 {section.links.map((link) => (
-                  <li key={link.href}>
+                  // Keyed by label, not href - several links in the same
+                  // section now share the placeholder href "/" (see the
+                  // doc comment on `sections` above), so href alone is no
+                  // longer unique. Labels are unique within a section.
+                  <li key={link.label}>
                     <Link href={link.href} className="hover:text-neutral-900 dark:hover:text-neutral-100">
                       {link.label}
                     </Link>

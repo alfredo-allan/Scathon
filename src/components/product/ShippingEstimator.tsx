@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 /**
@@ -86,9 +87,12 @@ export function ShippingEstimator() {
 
       <p className="mt-3 text-xs text-neutral-500 dark:text-neutral-400">
         Confira a nossa{" "}
-        <a href="/politica-de-frete" className="underline underline-offset-2 hover:text-neutral-900 dark:hover:text-neutral-100">
+        {/* No dedicated policy page yet - points home rather than 404ing
+            (same fix as the rest of the site's still-missing pages; see
+            `@/data/categories`'s doc comment). */}
+        <Link href="/" className="underline underline-offset-2 hover:text-neutral-900 dark:hover:text-neutral-100">
           Política de Frete e Entregas
-        </a>
+        </Link>
         .
       </p>
     </div>

@@ -78,6 +78,13 @@ export function DrawerMenu({ open, onClose }: DrawerMenuProps) {
             ))}
           </ul>
 
+          {/*
+            "Minha Conta" and "Entrar / Criar Conta" now point at real
+            pages (`/account`, `/login`). "Painel Admin" still goes to `/`
+            for now - there's no admin backend/data to build a real panel
+            against yet, so that one hardcoded href stays a placeholder
+            until there's something real to link to.
+          */}
           <div className="mt-8 border-t border-neutral-200 dark:border-neutral-800 pt-4 flex flex-col gap-3 text-sm">
             {isAuthenticated ? (
               <>
@@ -88,7 +95,7 @@ export function DrawerMenu({ open, onClose }: DrawerMenuProps) {
                   Minha Conta
                 </Link>
                 {isAdmin && (
-                  <Link href="/admin" onClick={onClose}>
+                  <Link href="/" onClick={onClose}>
                     Painel Admin
                   </Link>
                 )}

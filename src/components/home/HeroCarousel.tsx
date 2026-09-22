@@ -168,7 +168,7 @@ export function HeroCarousel({ slides, autoPlayMs = 6000 }: HeroCarouselProps) {
         ))}
       </div>
 
-      {slides.length > 1 && (
+      {/* {slides.length > 1 && (
         <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
           {slides.map((slide, index) => (
             <button
@@ -185,7 +185,7 @@ export function HeroCarousel({ slides, autoPlayMs = 6000 }: HeroCarouselProps) {
             />
           ))}
         </div>
-      )}
+      )} */}
     </section>
   );
 }

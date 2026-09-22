@@ -9,7 +9,6 @@ import {
 } from "react";
 import type { User } from "@/types";
 import { createPersistedStore } from "@/lib/createPersistedStore";
-import { placeholderAvatar } from "@/lib/placeholder";
 
 interface AuthSession {
   token: string | null;
@@ -27,25 +26,35 @@ interface AuthContextValue {
 
 const EMPTY_SESSION: AuthSession = { token: null, user: null };
 
-// Mock signed-in session used as the *default* (pre-login) state so
-// <UserAvatar/> - in the header and in <FloatingDock/> - previews its
+// Mock customer identity - the *default* (pre-login) session below uses it
+// so <UserAvatar/> - in the header and in <FloatingDock/> - previews its
 // real end state (an actual photo) instead of the generic sign-in glyph,
-// before real accounts/auth exist. This is only the fallback: it's what
-// a fresh browser sees before any explicit login/logout persists a real
-// value to localStorage. Calling `logout()` still writes a real
-// `EMPTY_SESSION` (token: null, user: null) so the signed-out state - and
-// the header's actual sign-in link - can still be tested on demand.
-// Delete this mock and go back to `EMPTY_SESSION` as the default once a
-// real login flow exists.
+// before real accounts/auth exist. Exported (not just used inline) so
+// `/login`'s mock sign-in/sign-up form (`<LoginView/>`) can build on the
+// same identity instead of inventing a second one - the avatar photo in
+// particular stays consistent with what the rest of the app already shows.
+export const MOCK_CUSTOMER: User = {
+  id: "mock-user",
+  displayName: "Cliente Scathon",
+  email: "cliente@scathon.com",
+  // Real avatar asset (`public/avatar.jpg`) rather than the generated
+  // initials-circle placeholder - wherever this mock identity's photo
+  // shows up (header, floating dock, /login's "already signed in" state,
+  // /account), it's now the actual brand avatar instead of a stand-in.
+  avatarUrl: "/avatar.jpg",
+  role: "customer",
+};
+
+// This is only the fallback: it's what a fresh browser sees before any
+// explicit login/logout persists a real value to localStorage. Calling
+// `logout()` still writes a real `EMPTY_SESSION` (token: null, user: null)
+// so the signed-out state - and `/login`'s actual sign-in form - can still
+// be reached and tested on demand. Delete this mock and go back to
+// `EMPTY_SESSION` as the default once there's a real backend session to
+// check on load instead.
 const MOCK_SESSION: AuthSession = {
   token: "mock-token",
-  user: {
-    id: "mock-user",
-    displayName: "Cliente Scathon",
-    email: "cliente@scathon.com",
-    avatarUrl: placeholderAvatar(),
-    role: "customer",
-  },
+  user: MOCK_CUSTOMER,
 };
 
 const authStore = createPersistedStore<AuthSession>("scathon:session", MOCK_SESSION);

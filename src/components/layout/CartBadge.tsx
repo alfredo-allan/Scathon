@@ -5,12 +5,18 @@ import { useCart } from "@/hooks/useCart";
 
 /**
  * Cart trigger showing the total item count as an active counter badge.
+ *
+ * Links to `/` instead of `/cart` for now - there's no cart/checkout page
+ * built yet (no resources for that flow at the moment), and a header icon
+ * pointing at a 404 is worse than one that just goes home. `cartCount`
+ * still reads live from `useCart()`, so the badge itself keeps working;
+ * swap the href back to `/cart` once that page exists.
  */
 export function CartBadge() {
   const { cartCount } = useCart();
 
   return (
-    <Link href="/cart" aria-label={`Carrinho, ${cartCount} ${cartCount === 1 ? "item" : "itens"}`} className="relative flex items-center justify-center">
+    <Link href="/" aria-label={`Carrinho, ${cartCount} ${cartCount === 1 ? "item" : "itens"}`} className="relative flex items-center justify-center">
       <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden>
         <path
           d="M6 8h12l-1 12H7L6 8Z"

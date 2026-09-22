@@ -5,10 +5,13 @@ export const heroSlides: HeroSlide[] = [
   {
     id: "slide-ss26",
     eyebrow: "Coleção SS26",
-    title: "Nova Temporada, Novas Regras",
-    subtitle: "Streetwear feito para o movimento.",
+    title: "",
+    subtitle: "",
     ctaLabel: "Ver o Drop",
-    ctaHref: "/collections/ss26",
+    // "" used to be an empty/dead href - there's no dedicated drop page
+    // yet, so this points home instead (same fix as the rest of the site's
+    // still-missing pages; see `@/data/categories`'s doc comment).
+    ctaHref: "/",
     // Real banner artwork (test render) - swap these back to placeholderImage(...)
     // calls if the real assets are ever pulled from /public/banner.
     desktopImageUrl: "/banner/Banner_1Desktop.png",
@@ -21,10 +24,10 @@ export const heroSlides: HeroSlide[] = [
   {
     id: "slide-bestsellers",
     eyebrow: "Mais Vendidos",
-    title: "De Volta ao Estoque",
-    subtitle: "As peças que todo mundo estava pedindo.",
+    title: "",
+    subtitle: "",
     ctaLabel: "Ver Mais Vendidos",
-    ctaHref: "/shop?filter=best-sellers",
+    ctaHref: "/",
     desktopImageUrl: "/banner/Banner_2Desktop.png",
     // No dedicated tablet crop exists yet for this slide (there's no
     // Banner_2Tablet.png in /public/banner) - leaving tabletImageUrl unset

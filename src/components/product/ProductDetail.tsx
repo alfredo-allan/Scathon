@@ -8,6 +8,7 @@ import { useCart } from "@/hooks/useCart";
 import { useWishlist } from "@/hooks/useWishlist";
 import { ProductGallery } from "./ProductGallery";
 import { ShippingEstimator } from "./ShippingEstimator";
+import { NotifyMeButton } from "./NotifyMeButton";
 
 interface ProductDetailProps {
   product: Product;
@@ -143,6 +144,7 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
   }
 
   const saved = isSaved(product.id);
+  const isComingSoon = product.availability === "coming_soon";
 
   return (
     <div className="px-4 md:px-8 py-6">
@@ -174,18 +176,24 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
             {product.title}
           </h1>
 
-          <button
-            type="button"
-            onClick={() => setReviewsOpen(true)}
-            className="mt-1.5 flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-400"
-          >
-            <span aria-hidden className="flex text-neutral-900 dark:text-neutral-100">
-              {Array.from({ length: 5 }, (_, index) => (
-                <span key={index}>{index < Math.round(product.rating) ? "★" : "☆"}</span>
-              ))}
+          {isComingSoon ? (
+            <span className="mt-1.5 inline-block border border-neutral-300 px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-neutral-600 dark:border-neutral-700 dark:text-neutral-400">
+              Em breve
             </span>
-            {product.rating.toFixed(1)} · {product.reviewCount} avaliações
-          </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setReviewsOpen(true)}
+              className="mt-1.5 flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-400"
+            >
+              <span aria-hidden className="flex text-neutral-900 dark:text-neutral-100">
+                {Array.from({ length: 5 }, (_, index) => (
+                  <span key={index}>{index < Math.round(product.rating) ? "★" : "☆"}</span>
+                ))}
+              </span>
+              {product.rating.toFixed(1)} · {product.reviewCount} avaliações
+            </button>
+          )}
 
           <div className="mt-4 flex flex-wrap items-baseline gap-2">
             <span className="text-2xl font-semibold text-neutral-950 dark:text-neutral-50">
@@ -321,13 +329,23 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
           )}
 
           <div className="mt-6 flex flex-col gap-3">
-            <button
-              type="button"
-              onClick={handleAddToCart}
-              className="w-full bg-neutral-950 py-3.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
-            >
-              {addedFeedback ? "Adicionado ao carrinho ✓" : "Adicionar ao carrinho"}
-            </button>
+            {isComingSoon ? (
+              <NotifyMeButton
+                productId={product.id}
+                productTitle={product.title}
+                size="lg"
+                selectedSize={activeSize}
+                defaultOpen
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                className="w-full bg-neutral-950 py-3.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
+              >
+                {addedFeedback ? "Adicionado ao carrinho ✓" : "Adicionar ao carrinho"}
+              </button>
+            )}
 
             <button
               type="button"
@@ -381,7 +399,7 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
             </button>
           </div>
 
-          <ShippingEstimator />
+          {!isComingSoon && <ShippingEstimator />}
 
           <div className="border-t border-neutral-200 dark:border-neutral-800 py-6">
             <h2 className="text-sm font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">
@@ -413,6 +431,7 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
             </ul>
           </div>
 
+          {!isComingSoon && (
           <div className="border-t border-neutral-200 dark:border-neutral-800 py-6">
             <button
               type="button"
@@ -467,9 +486,13 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
               </div>
             )}
           </div>
+          )}
 
+          {/* No support/contact page yet - points home rather than 404ing
+              (same fix as the rest of the site's still-missing pages; see
+              `@/data/categories`'s doc comment). */}
           <Link
-            href="/support/contact"
+            href="/"
             className="text-xs text-neutral-500 underline underline-offset-2 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
           >
             Relatar problema

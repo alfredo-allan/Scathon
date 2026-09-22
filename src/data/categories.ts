@@ -1,10 +1,18 @@
 import type { Category } from "@/types";
 
+// Every href below is "/" on purpose: these four used to point at pages
+// that don't exist yet (`/shop` as an all-products listing with query-
+// string filters, `/collections/ss26`) and 404'd in the actual header -
+// see the CategoryBar screenshot that flagged this. No resources yet for
+// building those out for real, so every quick-nav label in this bar sends
+// the visitor home instead of into a dead end. Point these at their real
+// destinations once those pages exist; the labels/ids don't need to
+// change, only the hrefs.
 export const categories: Category[] = [
-  { id: "shop-all", label: "Todos os Produtos", href: "/shop" },
-  { id: "new-in", label: "Novidades", href: "/shop?filter=new" },
-  { id: "best-sellers", label: "Mais Vendidos", href: "/shop?filter=best-sellers" },
-  { id: "ss26", label: "SS26", href: "/collections/ss26" },
+  { id: "shop-all", label: "Todos os Produtos", href: "/" },
+  { id: "new-in", label: "Novidades", href: "/" },
+  { id: "best-sellers", label: "Mais Vendidos", href: "/" },
+  { id: "ss26", label: "SS26", href: "/" },
 ];
 
 // The id doubles as the URL slug (see `/shop/[category]`), and is derived

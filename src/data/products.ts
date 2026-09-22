@@ -1,184 +1,12 @@
-import { placeholderImage } from "@/lib/placeholder";
 import type { Product } from "@/types";
 
-function productImages(label: string, colorLabel: string, bg: string) {
-  return {
-    imageUrl: placeholderImage(`${label}\n${colorLabel}`, { bg }),
-    hoverImageUrl: placeholderImage(`${label}\n${colorLabel} (alt)`, {
-      bg,
-      fg: "#171717",
-    }),
-  };
-}
-
+// The placeholder-generator helper that used to live here (`productImages`,
+// built on `@/lib/placeholder`) went unused once the last placeholder-only
+// products were replaced by real photography below - every product in the
+// catalog now sets its own `imageUrl`/`coverImage` directly. Bring back
+// `import { placeholderImage } from "@/lib/placeholder"` if a new product
+// ever needs to ship before its real photos are ready.
 export const products: Product[] = [
-  {
-    id: "p-001",
-    slug: "oversized-heavyweight-hoodie",
-    title: "Moletom Oversized Pesado",
-    price: 349.9,
-    compareAtPrice: 429.9,
-    currency: "BRL",
-    category: "moletons",
-    rating: 4.7,
-    reviewCount: 128,
-    isNew: true,
-    styleCode: "SCT-HW01-001",
-    description:
-      "O moletom oversized definitivo para quem não abre mão de conforto sem perder a atitude de rua.\n\nTecido moletom peso pesado (400g/m²), gola careca reforçada e caimento solto do jeito que pede o streetwear. Ideal para compor looks em camadas nas estações mais frias.",
-    sizes: ["P", "M", "G", "GG"],
-    ...productImages("Moletom Pesado", "Preto", "#d4d4d4"),
-    // Demo gallery for this product only - see the `images` field's doc
-    // comment on `Product`: everything else in the catalog omits it on
-    // purpose, to prove <ProductGallery/>'s fallback also looks complete.
-    images: [
-      placeholderImage("Moletom Pesado\nVista Frontal", { bg: "#d4d4d4" }),
-      placeholderImage("Moletom Pesado\nVista Traseira", { bg: "#dad9d0", fg: "#171717" }),
-      placeholderImage("Moletom Pesado\nDetalhe da Gola", { bg: "#e7e5e4" }),
-      placeholderImage("Moletom Pesado\nDetalhe do Tecido", { bg: "#d6d3d1", fg: "#171717" }),
-    ],
-    reviews: [
-      {
-        author: "Bianca S.",
-        rating: 5,
-        comment: "Muito mais grosso do que eu esperava, veste super bem no oversized. Já é o segundo que compro.",
-      },
-      {
-        author: "Diego M.",
-        rating: 4,
-        comment: "Caimento excelente, só achei o comprimento das mangas um pouco longo pro meu gosto.",
-      },
-      {
-        author: "Renata F.",
-        rating: 5,
-        comment: "Tecido pesado de verdade, esquenta bem e não desbota depois de várias lavagens.",
-      },
-    ],
-    colors: [
-      { name: "Preto", hex: "#171717", imageUrl: placeholderImage("Moletom\nPreto", { bg: "#d4d4d4" }) },
-      { name: "Pedra", hex: "#d6d3d1", imageUrl: placeholderImage("Moletom\nPedra", { bg: "#e7e5e4" }) },
-      { name: "Verde Oliva", hex: "#4d5339", imageUrl: placeholderImage("Moletom\nVerde Oliva", { bg: "#dad9d0" }) },
-    ],
-  },
-  {
-    id: "p-002",
-    slug: "boxy-fit-tee",
-    title: "Camiseta Boxy Estampada",
-    price: 149.9,
-    currency: "BRL",
-    category: "camisetas",
-    rating: 4.5,
-    reviewCount: 84,
-    styleCode: "SCT-TB02-100",
-    description:
-      "A camiseta boxy que virou queridinha do closet Scathon: modelagem ampla, ombros caídos e estampa exclusiva na frente.\n\nMalha 100% algodão penteado, gramatura média para não marcar e não esquentar. Combina com qualquer coisa - do cargo ao jeans reto.",
-    sizes: ["P", "M", "G", "GG", "XG"],
-    ...productImages("Camiseta Boxy", "Branco", "#f5f5f5"),
-    colors: [
-      { name: "Branco", hex: "#fafafa", imageUrl: placeholderImage("Camiseta\nBranco", { bg: "#f5f5f5" }) },
-      { name: "Preto", hex: "#171717", imageUrl: placeholderImage("Camiseta\nPreto", { bg: "#e5e5e5" }) },
-    ],
-  },
-  {
-    id: "p-003",
-    slug: "cargo-utility-pants",
-    title: "Calça Cargo Utilitária",
-    price: 389.9,
-    currency: "BRL",
-    category: "calcas",
-    rating: 4.8,
-    reviewCount: 201,
-    isNew: true,
-    styleCode: "SCT-CP03-200",
-    description:
-      "Calça cargo utilitária com seis bolsos funcionais e cadarço de ajuste na barra, pensada pra quem vive na rua.\n\nTecido sarja reforçado, resistente ao uso diário, com elastano suficiente pra não travar o movimento. Cintura com regulagem interna.",
-    sizes: ["38", "40", "42", "44", "46"],
-    ...productImages("Calça Cargo", "Caqui", "#e7e5e4"),
-    colors: [
-      { name: "Caqui", hex: "#a8a29e", imageUrl: placeholderImage("Cargo\nCaqui", { bg: "#e7e5e4" }) },
-      { name: "Preto", hex: "#171717", imageUrl: placeholderImage("Cargo\nPreto", { bg: "#d4d4d4" }) },
-    ],
-  },
-  {
-    id: "p-004",
-    slug: "coach-shell-jacket",
-    title: "Jaqueta Coach Corta-Vento",
-    price: 549.9,
-    compareAtPrice: 649.9,
-    currency: "BRL",
-    category: "casacos",
-    rating: 4.6,
-    reviewCount: 57,
-    styleCode: "SCT-CJ04-300",
-    description:
-      "A jaqueta coach que não sai do gancho: corta-vento leve, forro em malha e fechamento em botões de pressão.\n\nProteção real contra vento e garoa sem pesar no visual. Bolsos frontais amplos e caimento reto, perfeita pra usar por cima de qualquer look.",
-    sizes: ["P", "M", "G", "GG"],
-    ...productImages("Jaqueta Coach", "Azul-Marinho", "#d1d5db"),
-    colors: [
-      { name: "Azul-Marinho", hex: "#1e293b", imageUrl: placeholderImage("Jaqueta\nAzul-Marinho", { bg: "#d1d5db" }) },
-      { name: "Preto", hex: "#171717", imageUrl: placeholderImage("Jaqueta\nPreto", { bg: "#d4d4d4" }) },
-    ],
-  },
-  {
-    id: "p-005",
-    slug: "ribbed-beanie",
-    title: "Touca de Tricô Canelada",
-    price: 89.9,
-    currency: "BRL",
-    category: "acessorios",
-    rating: 4.9,
-    reviewCount: 312,
-    styleCode: "SCT-BN05-010",
-    description:
-      "Touca de tricô canelado, básica e essencial pra fechar qualquer produção no frio.\n\nFio acrílico macio, dupla camada nas bordas pra não desfiar e caimento levemente slouchy - nem justo, nem largo demais. Tamanho único, serve na maioria das cabeças.",
-    // No `sizes` - one-size accessory, so the detail page's size selector
-    // is hidden entirely rather than showing a single disabled option.
-    ...productImages("Touca", "Chumbo", "#e5e5e5"),
-    colors: [
-      { name: "Chumbo", hex: "#404040", imageUrl: placeholderImage("Touca\nChumbo", { bg: "#e5e5e5" }) },
-      { name: "Creme", hex: "#f5f0e6", imageUrl: placeholderImage("Touca\nCreme", { bg: "#f5f5f4" }) },
-      { name: "Ferrugem", hex: "#9a3412", imageUrl: placeholderImage("Touca\nFerrugem", { bg: "#e7e5e4" }) },
-    ],
-  },
-  {
-    id: "p-006",
-    slug: "relaxed-denim-jeans",
-    title: "Calça Jeans Modelagem Relaxada",
-    price: 329.9,
-    currency: "BRL",
-    category: "calcas",
-    rating: 4.4,
-    reviewCount: 96,
-    styleCode: "SCT-DN06-050",
-    description:
-      "Jeans de modelagem relaxada, lavagem exclusiva e caimento que não aperta em lugar nenhum.\n\nDenim 100% algodão com processo de lavagem stone wash, bolsos reforçados e barra reta pronta pra dobrar ou usar solta.",
-    sizes: ["38", "40", "42", "44", "46"],
-    ...productImages("Jeans", "Azul Lavado", "#dbeafe"),
-    colors: [
-      { name: "Azul Lavado", hex: "#60a5fa", imageUrl: placeholderImage("Jeans\nAzul Lavado", { bg: "#dbeafe" }) },
-      { name: "Preto", hex: "#171717", imageUrl: placeholderImage("Jeans\nPreto", { bg: "#d4d4d4" }) },
-    ],
-  },
-  {
-    id: "p-007",
-    slug: "logo-crewneck-sweatshirt",
-    title: "Moletom Careca com Logo",
-    price: 279.9,
-    currency: "BRL",
-    category: "moletons",
-    rating: 4.6,
-    reviewCount: 143,
-    isNew: true,
-    styleCode: "SCT-CN07-002",
-    description:
-      "Moletom careca com logo bordado no peito - o básico definitivo pra girar o closet inteiro.\n\nMoletom flanelado por dentro, punho e barra em ribana reforçada. Corte reto, nem oversized nem justo.",
-    sizes: ["P", "M", "G", "GG"],
-    ...productImages("Careca", "Cinza Mescla", "#e5e7eb"),
-    colors: [
-      { name: "Cinza Mescla", hex: "#9ca3af", imageUrl: placeholderImage("Careca\nCinza", { bg: "#e5e7eb" }) },
-      { name: "Preto", hex: "#171717", imageUrl: placeholderImage("Careca\nPreto", { bg: "#d4d4d4" }) },
-    ],
-  },
   {
     id: "p-009",
     slug: "cathedral-t-shirt-preta",
@@ -209,7 +37,18 @@ export const products: Product[] = [
       "/specimen/BlackModelCathedral-T-shirt.jpeg",
       "/specimen/BlackModel_1Cathedral-T-shirt.jpeg",
     ],
-    colors: [{ name: "Preto", hex: "#171717", imageUrl: "/category/shirt/BlackCathedral-T-shirt.jpeg" }],
+    colors: [
+      {
+        name: "Preto",
+        hex: "#171717",
+        imageUrl: "/category/shirt/BlackCathedral-T-shirt.jpeg",
+      },
+    ],
+    // Curated into the home page's "Mais Vendidos" rail (see `isBestSeller`
+    // on `Product` and `getBestSellers()`) - not because it has the most
+    // reviews yet (it's a new product with 12), but because it's one of the
+    // four products picked to headline that section.
+    isBestSeller: true,
   },
   {
     id: "p-010",
@@ -232,31 +71,195 @@ export const products: Product[] = [
       "/category/shirt/WhiteCathedral-T-shirt_1.jpeg",
       "/specimen/WhiteModelCathedral-T-shirt.jpeg",
     ],
-    colors: [{ name: "Branco", hex: "#fafafa", imageUrl: "/category/shirt/WhiteCathedral-T-shirt.jpeg" }],
+    colors: [
+      {
+        name: "Branco",
+        hex: "#fafafa",
+        imageUrl: "/category/shirt/WhiteCathedral-T-shirt.jpeg",
+      },
+    ],
+    isBestSeller: true,
   },
   {
-    id: "p-008",
-    slug: "nylon-crossbody-bag",
-    title: "Bolsa Transversal de Nylon",
-    price: 199.9,
+    id: "p-011",
+    slug: "moletom-basico-preto",
+    title: "Moletom Básico Preto",
+    price: 259.9,
     currency: "BRL",
-    category: "acessorios",
-    rating: 4.3,
-    reviewCount: 41,
-    styleCode: "SCT-BG08-001",
+    category: "moletons",
+    rating: 0,
+    reviewCount: 0,
+    styleCode: "SCT-SW11-001",
+    // Not orderable yet - see `Product.availability`. `<ProductCard/>` and
+    // `<ProductDetail/>` both swap their buy affordances for
+    // `<NotifyMeButton/>` when this is set, so there's nothing else to wire
+    // up per-product to get the waitlist behavior.
+    availability: "coming_soon",
+    isBestSeller: true,
     description:
-      "Bolsa transversal em nylon resistente à água, compartimento principal com zíper e bolso frontal rápido.\n\nAlça ajustável e removível, cabe tranquilo o essencial do dia: carteira, chaves e celular.",
-    // One-size accessory - no `sizes` here either.
-    ...productImages("Bolsa Transversal", "Preto", "#d4d4d4"),
+      "Moletom careca básico, corte reto e visual limpo pra ir com tudo no closet.\n\nMoletom flanelado por dentro, punho e barra em ribana. Sem estampa - só o essencial bem feito.",
+    sizes: ["P", "M", "G", "GG"],
+    imageUrl: "/category/sweatshirt/BlackSweatshitBasic.jpeg",
+    coverImage: "/category/sweatshirt/BlackSweatshitBasic.jpeg",
+    specimenImages: [
+      "/category/sweatshirt/BlackSweatshitBasic.jpeg",
+      "/category/sweatshirt/BlackSweatshitBasic_1.jpeg",
+    ],
     colors: [
-      { name: "Preto", hex: "#171717", imageUrl: placeholderImage("Bolsa\nPreto", { bg: "#d4d4d4" }) },
-      { name: "Verde Oliva", hex: "#4d5339", imageUrl: placeholderImage("Bolsa\nVerde Oliva", { bg: "#dad9d0" }) },
+      {
+        name: "Preto",
+        hex: "#171717",
+        imageUrl: "/category/sweatshirt/BlackSweatshitBasic.jpeg",
+      },
+    ],
+  },
+  {
+    id: "p-012",
+    slug: "bermuda-moletom-cinza",
+    title: "Bermuda de Moletom Cinza",
+    price: 179.9,
+    currency: "BRL",
+    category: "calcas",
+    rating: 0,
+    reviewCount: 0,
+    styleCode: "SCT-SS12-001",
+    availability: "coming_soon",
+    isBestSeller: true,
+    description:
+      "Bermuda de moletom básica, cintura com elástico e cordão de ajuste, bolsos laterais funcionais.\n\nMesmo tecido flanelado dos moletons da casa - o conforto de moletom no formato bermuda.",
+    sizes: ["P", "M", "G", "GG"],
+    imageUrl: "/category/sweat-shorts/GraySweatShortsBasic.jpeg",
+    coverImage: "/category/sweat-shorts/GraySweatShortsBasic.jpeg",
+    specimenImages: [
+      "/category/sweat-shorts/GraySweatShortsBasic.jpeg",
+      "/specimen/GrayModelSweatShortsBasic.jpeg",
+    ],
+    colors: [
+      {
+        name: "Cinza",
+        hex: "#9ca3af",
+        imageUrl: "/category/sweat-shorts/GraySweatShortsBasic.jpeg",
+      },
+    ],
+  },
+  {
+    id: "p-013",
+    slug: "bermuda-moletom-preta",
+    title: "Bermuda de Moletom Preta",
+    price: 179.9,
+    currency: "BRL",
+    category: "calcas",
+    rating: 0,
+    reviewCount: 0,
+    styleCode: "SCT-SS13-002",
+    // Same not-yet-in-stock treatment as the rest of this "moletom básico"
+    // line (see `Product.availability`) - real photography exists, but
+    // there's no inventory to sell yet.
+    availability: "coming_soon",
+    description:
+      "Bermuda de moletom básica, cintura com elástico e cordão de ajuste, bolsos laterais funcionais.\n\nMesmo tecido flanelado dos moletons da casa - o conforto de moletom no formato bermuda, agora em preto.",
+    sizes: ["P", "M", "G", "GG"],
+    imageUrl: "/category/sweat-shorts/BlackSweatShortsBasic.jpeg",
+    coverImage: "/category/sweat-shorts/BlackSweatShortsBasic.jpeg",
+    specimenImages: ["/category/sweat-shorts/BlackSweatShortsBasic.jpeg"],
+    colors: [
+      {
+        name: "Preto",
+        hex: "#171717",
+        imageUrl: "/category/sweat-shorts/BlackSweatShortsBasic.jpeg",
+      },
+    ],
+  },
+  {
+    id: "p-014",
+    slug: "calca-moletom-preta",
+    title: "Calça de Moletom Preta",
+    price: 229.9,
+    currency: "BRL",
+    category: "calcas",
+    rating: 0,
+    reviewCount: 0,
+    styleCode: "SCT-SP14-001",
+    availability: "coming_soon",
+    description:
+      "Calça de moletom básica, cintura com elástico e cordão de ajuste, punhos em ribana no tornozelo.\n\nMesmo tecido flanelado dos moletons da casa - conforto de moletom pra usar do sofá à rua.",
+    sizes: ["P", "M", "G", "GG"],
+    imageUrl: "/category/sweatpants/BlackSweatPantsBasic.jpeg",
+    coverImage: "/category/sweatpants/BlackSweatPantsBasic.jpeg",
+    specimenImages: ["/category/sweatpants/BlackSweatPantsBasic.jpeg"],
+    colors: [
+      {
+        name: "Preto",
+        hex: "#171717",
+        imageUrl: "/category/sweatpants/BlackSweatPantsBasic.jpeg",
+      },
+    ],
+  },
+  {
+    id: "p-015",
+    slug: "calca-moletom-cinza",
+    title: "Calça de Moletom Cinza",
+    price: 229.9,
+    currency: "BRL",
+    category: "calcas",
+    rating: 0,
+    reviewCount: 0,
+    styleCode: "SCT-SP15-002",
+    availability: "coming_soon",
+    description:
+      "Calça de moletom básica, cintura com elástico e cordão de ajuste, punhos em ribana no tornozelo.\n\nMesmo tecido flanelado dos moletons da casa - conforto de moletom pra usar do sofá à rua, agora em cinza mescla.",
+    sizes: ["P", "M", "G", "GG"],
+    imageUrl: "/category/sweatpants/GraySweatPantsBasic.jpeg",
+    coverImage: "/category/sweatpants/GraySweatPantsBasic.jpeg",
+    specimenImages: ["/category/sweatpants/GraySweatPantsBasic.jpeg"],
+    colors: [
+      {
+        name: "Cinza",
+        hex: "#9ca3af",
+        imageUrl: "/category/sweatpants/GraySweatPantsBasic.jpeg",
+      },
+    ],
+  },
+  {
+    id: "p-016",
+    slug: "moletom-basico-cinza",
+    title: "Moletom Básico Cinza",
+    price: 259.9,
+    currency: "BRL",
+    category: "moletons",
+    rating: 0,
+    reviewCount: 0,
+    styleCode: "SCT-SW16-002",
+    availability: "coming_soon",
+    description:
+      "Moletom careca básico, corte reto e visual limpo pra ir com tudo no closet.\n\nMoletom flanelado por dentro, punho e barra em ribana. Sem estampa - só o essencial bem feito, na versão cinza mescla.",
+    sizes: ["P", "M", "G", "GG"],
+    imageUrl: "/category/sweatshirt/GraySweatshitBasic.jpeg",
+    coverImage: "/category/sweatshirt/GraySweatshitBasic.jpeg",
+    specimenImages: [
+      "/category/sweatshirt/GraySweatshitBasic.jpeg",
+      "/category/sweatshirt/GraySweatshitBasic_1.jpeg",
+    ],
+    colors: [
+      {
+        name: "Cinza",
+        hex: "#9ca3af",
+        imageUrl: "/category/sweatshirt/GraySweatshitBasic.jpeg",
+      },
     ],
   },
 ];
 
 export function getBestSellers() {
-  return [...products].sort((a, b) => b.reviewCount - a.reviewCount).slice(0, 4);
+  // A curated pick (`isBestSeller`) wins when one exists - this is how a
+  // `coming_soon` product with 0 reviews can still headline the "Mais
+  // Vendidos" rail. Falls back to the old reviewCount-sorted behavior so
+  // the rail still shows something sensible before any product is curated.
+  const curated = products.filter((product) => product.isBestSeller);
+  if (curated.length > 0) return curated;
+  return [...products]
+    .sort((a, b) => b.reviewCount - a.reviewCount)
+    .slice(0, 4);
 }
 
 export function getNewArrivals() {
@@ -281,4 +284,14 @@ export function getProductsByCategory(categorySlug: string) {
  */
 export function getProductBySlug(slug: string) {
   return products.find((product) => product.slug === slug);
+}
+
+/**
+ * Looks up a single product by its catalog id (`Product.id`, e.g.
+ * "p-009") rather than its URL slug. Backs anything that only has the id
+ * to work with - the wishlist ("curtir") store just remembers ids, and
+ * `/wishlist` uses this to turn those back into full `Product`s to render.
+ */
+export function getProductById(id: string) {
+  return products.find((product) => product.id === id);
 }

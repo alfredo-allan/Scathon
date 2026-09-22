@@ -86,6 +86,24 @@ export interface Product {
   rating: number;
   reviewCount: number;
   isNew?: boolean;
+  /**
+   * When `"coming_soon"`, the product isn't orderable yet: `<ProductCard/>`
+   * shows an "Em breve" badge instead of/alongside "Novo" and swaps its
+   * color/rating row for a `<NotifyMeButton/>`, and the detail page replaces
+   * "Adicionar ao carrinho" (and the shipping estimator) with the same
+   * waitlist control. Omit entirely - or set `"in_stock"` explicitly, same
+   * effect - for a normal, purchasable product; this is additive so every
+   * existing product keeps working unchanged.
+   */
+  availability?: "in_stock" | "coming_soon";
+  /**
+   * Marks a product for the home page's "Mais Vendidos" curated rail (see
+   * `getBestSellers()`); when at least one product sets this, that rail
+   * shows exactly the flagged products instead of the reviewCount-sorted
+   * fallback, so specific products (including a `coming_soon` one with no
+   * reviews yet) can be featured there deliberately.
+   */
+  isBestSeller?: boolean;
   category: string;
 }
 
@@ -137,7 +155,19 @@ export interface DividerSlide {
   id: string;
   title: string;
   href: string;
-  imageUrl: string;
+  /**
+   * Wide banner shown from the `md` breakpoint up (tablet and desktop share
+   * this one image, unlike `HeroSlide` which splits tablet out too - these
+   * banners are shot/cropped as a single 21:9 asset meant to cover both).
+   * Rendered with `object-cover` inside a fixed `aspect-[21/9]` box.
+   */
+  desktopImageUrl: string;
+  /**
+   * Dedicated portrait crop shown below `md`. Rendered inside a fixed
+   * `aspect-[9/16]` box, matching the real assets' own crop (1536×2752)
+   * rather than an arbitrary default.
+   */
+  mobileImageUrl: string;
 }
 
 export interface Testimonial {
