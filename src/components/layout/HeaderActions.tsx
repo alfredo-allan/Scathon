@@ -17,19 +17,41 @@ function MoreGlyph() {
   )
 }
 
+/** "Collapse the pill" glyph - the toggle's expanded state (see below). */
+function CloseGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
+      <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 /**
  * Visual-only cart glyph + live count, mirroring what `<CartBadge/>`
  * shows - but with no link of its own, since this sits inside the
  * toggle button (whose job is always to open the pill, never to jump
  * straight to /cart; the real, clickable `<CartBadge/>` lives in the
- * revealed row below).
+ * revealed row below). Only ever shown while the pill is collapsed -
+ * see the toggle button's own doc comment for why.
  */
 function CartGlyph({ count }: { count: number }) {
   return (
     <span className="relative flex h-4 w-4 items-center justify-center">
-      <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden>
-        <path d="M6 8h12l-1 12H7L6 8Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-        <path d="M9 8V6a3 3 0 0 1 6 0v2" stroke="currentColor" strokeWidth="1.5" />
+      {/* Same shopping-cart path as `<CartBadge/>` (see its own comment) -
+          this glyph is meant to mirror it exactly, just at chip size. */}
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        className="h-4 w-4"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
+        <path d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121 0 2.085-.758 2.348-1.85l1.3-5.419A1.125 1.125 0 0 0 20.316 5.75H5.106M7.5 14.25l-1.002-4.008" />
+        <circle cx="7.5" cy="19.5" r="1.4" fill="currentColor" />
+        <circle cx="18" cy="19.5" r="1.4" fill="currentColor" />
       </svg>
       <span
         aria-hidden
@@ -129,21 +151,36 @@ export function HeaderActions({ onSearchOpen }: HeaderActionsProps) {
           (pr-4) is sized to fully contain the real `<CartBadge/>`
           count, which - like any badge - pokes outside its icon's own
           box; a rounded corner clipping straight through that badge is
-          exactly the bug this split avoids.
+          exactly the bug this split avoids. It's also given the full
+          `h-10` of the pill itself (not left to size to its own
+          content, which is shorter than the badge's own reach) so the
+          badge has headroom above the icon too - without it, the
+          badge's top sliver got clipped by this same `overflow-hidden`.
         */}
         <button
           type="button"
           onClick={() => setExpanded((current) => !current)}
           aria-expanded={expanded}
           aria-label={
-            cartCount > 0 ? `Carrinho, ${cartCount} ${cartCount === 1 ? 'item' : 'itens'} - abrir menu de ações` : 'Abrir menu de ações'
+            expanded
+              ? 'Fechar menu de ações'
+              : cartCount > 0
+                ? `Carrinho, ${cartCount} ${cartCount === 1 ? 'item' : 'itens'} - abrir menu de ações`
+                : 'Abrir menu de ações'
           }
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-neutral-800 dark:text-neutral-100">
-          {cartCount > 0 ? <CartGlyph count={cartCount} /> : <MoreGlyph />}
+          {/*
+            Once expanded, the real `<CartBadge/>` is already visible at the
+            end of the revealed row below - showing `<CartGlyph/>` here too
+            would just be the same count doubled up on screen. Collapsed,
+            this button IS the cart's only visible representation, so the
+            glyph (with its live count) earns its place back.
+          */}
+          {expanded ? <CloseGlyph /> : cartCount > 0 ? <CartGlyph count={cartCount} /> : <MoreGlyph />}
         </button>
 
         <div
-          className={`flex items-center gap-2 overflow-hidden transition-[width] duration-300 ease-out ${
+          className={`flex h-10 items-center gap-2 overflow-hidden transition-[width] duration-300 ease-out ${
             expanded ? 'w-[156px] pr-4' : 'pointer-events-none w-0 pr-0'
           }`}>
           <SearchButton
@@ -159,12 +196,33 @@ export function HeaderActions({ onSearchOpen }: HeaderActionsProps) {
         </div>
       </div>
 
-      {/* Tablet/desktop: no collapsing, icons sit side by side as usual. */}
-      <div className="hidden justify-self-end sm:flex sm:items-center sm:gap-4">
-        <SearchButton onClick={onSearchOpen} className="p-1 text-neutral-800 dark:text-neutral-100" iconClassName="h-5 w-5" />
-        <ThemeToggle />
-        <UserAvatar />
-        <CartBadge />
+      {/* Tablet/desktop: no collapsing, icons sit side by side as usual -
+          just noticeably bigger than before. `<SearchButton/>` already
+          takes a size prop, so that one's sized directly; `<ThemeToggle/>`,
+          `<UserAvatar/>` and `<CartBadge/>` don't (they're shared - the
+          same three components render inside the mobile pill above *and*
+          inside `<FloatingDock/>`, both deliberately kept at their own
+          sizes), so each gets wrapped in its own `scale-*` transform
+          instead of touching the shared component. Exactly the same
+          technique `<FloatingDock/>` already uses to size these same three
+          components up on its own. `origin-right` (they're the last thing
+          in a `justify-self-end` column) grows each one back toward the
+          wordmark instead of pushing past the header's own right edge. */}
+      <div className="hidden justify-self-end sm:flex sm:items-center sm:gap-5 lg:gap-7">
+        <SearchButton
+          onClick={onSearchOpen}
+          className="p-1.5 text-neutral-800 dark:text-neutral-100 lg:p-2"
+          iconClassName="h-6 w-6 lg:h-7 lg:w-7"
+        />
+        <div className="origin-right scale-125 lg:scale-150">
+          <ThemeToggle />
+        </div>
+        <div className="origin-right scale-125 lg:scale-150">
+          <UserAvatar />
+        </div>
+        <div className="origin-right scale-125 lg:scale-150">
+          <CartBadge />
+        </div>
       </div>
     </>
   )

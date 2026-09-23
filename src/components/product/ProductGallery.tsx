@@ -1,11 +1,11 @@
-"use client";
+'use client'
 
-import Image from "next/image";
-import { useState } from "react";
+import Image from 'next/image'
+import { useState } from 'react'
 
 interface ProductGalleryProps {
-  images: string[];
-  title: string;
+  images: string[]
+  title: string
 }
 
 /**
@@ -34,8 +34,8 @@ interface ProductGalleryProps {
  * opaque photo that already fills the tile edge-to-edge is unaffected.
  */
 export function ProductGallery({ images, title }: ProductGalleryProps) {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const total = images.length;
+  const [activeIndex, setActiveIndex] = useState(0)
+  const total = images.length
 
   return (
     <div>
@@ -67,16 +67,13 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
               aria-current={index === activeIndex}
               aria-label={`Ver foto ${index + 1} de ${title}`}
               className={`relative aspect-[3/4] flex-1 overflow-hidden bg-neutral-300 transition-opacity dark:bg-neutral-700 ${
-                index === activeIndex
-                  ? "ring-1 ring-neutral-950 dark:ring-neutral-50"
-                  : "opacity-60 hover:opacity-100"
-              }`}
-            >
+                index === activeIndex ? 'ring-1 ring-neutral-950 dark:ring-neutral-50' : 'opacity-60 hover:opacity-100'
+              }`}>
               <Image src={src} alt="" fill unoptimized sizes="25vw" className="object-cover" />
             </button>
           ))}
         </div>
       )}
     </div>
-  );
+  )
 }

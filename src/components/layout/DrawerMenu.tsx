@@ -79,11 +79,11 @@ export function DrawerMenu({ open, onClose }: DrawerMenuProps) {
           </ul>
 
           {/*
-            "Minha Conta" and "Entrar / Criar Conta" now point at real
-            pages (`/account`, `/login`). "Painel Admin" still goes to `/`
-            for now - there's no admin backend/data to build a real panel
-            against yet, so that one hardcoded href stays a placeholder
-            until there's something real to link to.
+            "Minha Conta", "Entrar / Criar Conta" and "Painel Admin" all
+            point at real pages now (`/account`, `/login`, `/admin`) -
+            `<AdminView/>` guards that last one against non-admin accounts
+            on its own, so this link only needs to stay hidden from signed-
+            out/non-admin visitors as a matter of UX, not security.
           */}
           <div className="mt-8 border-t border-neutral-200 dark:border-neutral-800 pt-4 flex flex-col gap-3 text-sm">
             {isAuthenticated ? (
@@ -95,7 +95,7 @@ export function DrawerMenu({ open, onClose }: DrawerMenuProps) {
                   Minha Conta
                 </Link>
                 {isAdmin && (
-                  <Link href="/" onClick={onClose}>
+                  <Link href="/admin" onClick={onClose}>
                     Painel Admin
                   </Link>
                 )}

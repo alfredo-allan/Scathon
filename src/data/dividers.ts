@@ -14,13 +14,13 @@ import type { DividerSlide } from "@/types";
 // `@/data/categories` and `<Footer/>`'s doc comments) rather than just
 // these two: point each at its real collection page once one exists.
 export const dividerSlides: DividerSlide[] = [
-  {
-    id: "divider-banner-3",
-    title: "Autenticidade Scathon",
-    href: "/",
-    desktopImageUrl: "/banner/Banner_3Desktop.jpeg",
-    mobileImageUrl: "/banner/Banner_3Moblie.jpeg",
-  },
+  // {
+  //   id: "divider-banner-3",
+  //   title: "Autenticidade Scathon",
+  //   href: "/",
+  //   desktopImageUrl: "/banner/Banner_3Desktop.jpeg",
+  //   mobileImageUrl: "/banner/Banner_3Moblie.jpeg",
+  // },
   {
     id: "divider-banner-4",
     title: "Peças Essenciais",

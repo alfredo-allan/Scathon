@@ -116,6 +116,38 @@ export function AccountView() {
             <path d="m9 6 6 6-6 6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </Link>
+
+        <Link
+          href="/account/addresses"
+          className={`group flex items-center justify-between border border-neutral-200 p-4 transition-colors hover:border-neutral-400 dark:border-neutral-800 dark:hover:border-neutral-600 ${isAdmin ? "" : "sm:col-span-2"}`}
+        >
+          <div>
+            <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Meus Endereços</p>
+            <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+              Salve mais de um endereço para sua preferência de entrega
+            </p>
+          </div>
+          <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5" fill="none" aria-hidden>
+            <path d="m9 6 6 6-6 6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </Link>
+
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className="group flex items-center justify-between border border-neutral-200 p-4 transition-colors hover:border-neutral-400 dark:border-neutral-800 dark:hover:border-neutral-600"
+          >
+            <div>
+              <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Painel Admin</p>
+              <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+                Pedidos, estoque, clientes, frete e integrações
+              </p>
+            </div>
+            <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5" fill="none" aria-hidden>
+              <path d="m9 6 6 6-6 6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Link>
+        )}
       </div>
 
       <div className="mt-8 border-t border-neutral-200 pt-6 dark:border-neutral-800">
@@ -131,6 +163,12 @@ export function AccountView() {
             <dt className="text-neutral-500 dark:text-neutral-400">E-mail</dt>
             <dd className="text-neutral-900 dark:text-neutral-100">{user.email}</dd>
           </div>
+          {user.phone && (
+            <div className="flex justify-between gap-4 border-b border-neutral-100 pb-2 dark:border-neutral-900">
+              <dt className="text-neutral-500 dark:text-neutral-400">Telefone</dt>
+              <dd className="text-neutral-900 dark:text-neutral-100">{user.phone}</dd>
+            </div>
+          )}
         </dl>
       </div>
 

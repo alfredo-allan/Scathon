@@ -71,7 +71,7 @@ export function FloatingDock() {
       }`}>
       {/* `rounded-3xl` - mantido com border-radius maior conforme solicitado.
           Altura ajustada para h-14 / sm:h-16 / lg:h-20 para ser sutilmente menor. */}
-      <div className="mx-auto flex h-14 w-full max-w-[1200px] items-center justify-between rounded-3xl border border-black/5 bg-neutral-100/90 px-6 shadow-lg shadow-black/10 backdrop-blur-md dark:border-white/10 dark:bg-neutral-900/80 sm:h-16 sm:px-10 lg:h-20 lg:px-16">
+      <div className="mx-auto flex h-12 w-full max-w-[800px] items-center justify-between rounded-2xl border border-black/5 bg-neutral-100/90 px-6 shadow-lg shadow-black/10 backdrop-blur-md dark:border-white/10 dark:bg-neutral-900/80 sm:h-16 sm:px-10 lg:h-[55px] lg:px-16">
         <Link
           href="/account/orders"
           aria-label="Últimas compras"

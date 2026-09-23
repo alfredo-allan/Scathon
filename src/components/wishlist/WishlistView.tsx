@@ -1,10 +1,10 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import { useMemo } from "react";
-import { getProductById } from "@/data/products";
-import { useWishlist } from "@/hooks/useWishlist";
-import { ProductCard } from "@/components/product/ProductCard";
+import Link from 'next/link'
+import { useMemo } from 'react'
+import { getProductById } from '@/data/products'
+import { useWishlist } from '@/hooks/useWishlist'
+import { ProductCard } from '@/components/product/ProductCard'
 
 /**
  * `/wishlist` page body - just the list of products the customer curtiu
@@ -13,12 +13,9 @@ import { ProductCard } from "@/components/product/ProductCard";
  * page is the single place either one leads back to).
  */
 export function WishlistView() {
-  const { savedIds } = useWishlist();
+  const { savedIds } = useWishlist()
 
-  const savedProducts = useMemo(
-    () => savedIds.map((id) => getProductById(id)).filter((product) => product !== undefined),
-    [savedIds],
-  );
+  const savedProducts = useMemo(() => savedIds.map((id) => getProductById(id)).filter((product) => product !== undefined), [savedIds])
 
   return (
     <div className="px-4 md:px-8 py-6">
@@ -35,10 +32,7 @@ export function WishlistView() {
       </nav>
 
       <h1 className="text-xl font-semibold tracking-tight text-neutral-950 dark:text-neutral-50 md:text-2xl">
-        Curtidos{" "}
-        <span className="text-base font-normal text-neutral-500 dark:text-neutral-400">
-          ({savedProducts.length})
-        </span>
+        Curtidos <span className="text-base font-normal text-neutral-500 dark:text-neutral-400">({savedProducts.length})</span>
       </h1>
 
       {savedProducts.length === 0 ? (
@@ -51,8 +45,7 @@ export function WishlistView() {
               `@/data/categories`'s doc comment). */}
           <Link
             href="/"
-            className="text-xs font-semibold uppercase tracking-widest text-neutral-900 underline underline-offset-4 dark:text-neutral-100"
-          >
+            className="text-xs font-semibold uppercase tracking-widest text-neutral-900 underline underline-offset-4 dark:text-neutral-100">
             Ver produtos
           </Link>
         </div>
@@ -64,5 +57,5 @@ export function WishlistView() {
         </div>
       )}
     </div>
-  );
+  )
 }

@@ -12,7 +12,7 @@ export const categories: Category[] = [
   { id: "shop-all", label: "Todos os Produtos", href: "/" },
   { id: "new-in", label: "Novidades", href: "/" },
   { id: "best-sellers", label: "Mais Vendidos", href: "/" },
-  { id: "ss26", label: "SS26", href: "/" },
+  // { id: "ss26", label: "SS26", href: "/" },
 ];
 
 // The id doubles as the URL slug (see `/shop/[category]`), and is derived
@@ -25,7 +25,7 @@ export const popularCategories: Category[] = [
   { id: "camisetas", label: "Camisetas", href: "/shop/camisetas" },
   { id: "casacos", label: "Casacos", href: "/shop/casacos" },
   { id: "calcas", label: "Calças", href: "/shop/calcas" },
-  { id: "acessorios", label: "Acessórios", href: "/shop/acessorios" },
+  // { id: "acessorios", label: "Acessórios", href: "/shop/acessorios" },
 ];
 
 /**

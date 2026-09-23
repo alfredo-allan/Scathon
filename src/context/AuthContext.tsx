@@ -9,6 +9,7 @@ import {
 } from "react";
 import type { User } from "@/types";
 import { createPersistedStore } from "@/lib/createPersistedStore";
+import { SEED_ACCOUNT } from "@/lib/accounts";
 
 interface AuthSession {
   token: string | null;
@@ -30,19 +31,25 @@ const EMPTY_SESSION: AuthSession = { token: null, user: null };
 // so <UserAvatar/> - in the header and in <FloatingDock/> - previews its
 // real end state (an actual photo) instead of the generic sign-in glyph,
 // before real accounts/auth exist. Exported (not just used inline) so
-// `/login`'s mock sign-in/sign-up form (`<LoginView/>`) can build on the
+// `/login`'s real sign-in/sign-up form (`<LoginView/>`) can build on the
 // same identity instead of inventing a second one - the avatar photo in
 // particular stays consistent with what the rest of the app already shows.
+//
+// Built from `@/lib/accounts`'s `SEED_ACCOUNT` (not the other way around)
+// so there's exactly one place that defines "cliente@scathon.com" - the
+// identity previewed everywhere before login and the one `/login` actually
+// authenticates against (cliente@scathon.com / senha123) can't drift apart.
 export const MOCK_CUSTOMER: User = {
   id: "mock-user",
-  displayName: "Cliente Scathon",
-  email: "cliente@scathon.com",
+  displayName: SEED_ACCOUNT.displayName,
+  email: SEED_ACCOUNT.email,
   // Real avatar asset (`public/avatar.jpg`) rather than the generated
   // initials-circle placeholder - wherever this mock identity's photo
   // shows up (header, floating dock, /login's "already signed in" state,
   // /account), it's now the actual brand avatar instead of a stand-in.
-  avatarUrl: "/avatar.jpg",
-  role: "customer",
+  avatarUrl: SEED_ACCOUNT.avatarUrl,
+  phone: SEED_ACCOUNT.phone,
+  role: SEED_ACCOUNT.role,
 };
 
 // This is only the fallback: it's what a fresh browser sees before any

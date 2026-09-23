@@ -5,6 +5,8 @@ export interface User {
   displayName: string;
   email: string;
   avatarUrl: string | null;
+  /** Optional - older/mock sessions created before this field existed simply omit it. */
+  phone?: string | null;
   role: UserRole;
 }
 
