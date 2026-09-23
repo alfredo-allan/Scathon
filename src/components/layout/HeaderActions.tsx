@@ -1,10 +1,10 @@
-"use client";
+'use client'
 
-import { useEffect, useRef, useState } from "react";
-import { useCart } from "@/hooks/useCart";
-import { CartBadge } from "./CartBadge";
-import { ThemeToggle } from "./ThemeToggle";
-import { UserAvatar } from "./UserAvatar";
+import { useEffect, useRef, useState } from 'react'
+import { useCart } from '@/hooks/useCart'
+import { CartBadge } from './CartBadge'
+import { ThemeToggle } from './ThemeToggle'
+import { UserAvatar } from './UserAvatar'
 
 /** Generic "more actions" glyph - the mobile chip's default, cart-less state. */
 function MoreGlyph() {
@@ -14,7 +14,7 @@ function MoreGlyph() {
       <circle cx="12" cy="12" r="1.6" fill="currentColor" />
       <circle cx="19" cy="12" r="1.6" fill="currentColor" />
     </svg>
-  );
+  )
 }
 
 /**
@@ -28,33 +28,27 @@ function CartGlyph({ count }: { count: number }) {
   return (
     <span className="relative flex h-4 w-4 items-center justify-center">
       <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden>
-        <path
-          d="M6 8h12l-1 12H7L6 8Z"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinejoin="round"
-        />
+        <path d="M6 8h12l-1 12H7L6 8Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
         <path d="M9 8V6a3 3 0 0 1 6 0v2" stroke="currentColor" strokeWidth="1.5" />
       </svg>
       <span
         aria-hidden
-        className="absolute -right-2.5 -top-2.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-neutral-900 px-1 text-[10px] font-semibold leading-none text-neutral-100 dark:bg-neutral-100 dark:text-neutral-900"
-      >
-        {count > 99 ? "99+" : count}
+        className="absolute -right-2.5 -top-2.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-neutral-900 px-1 text-[10px] font-semibold leading-none text-neutral-100 dark:bg-neutral-100 dark:text-neutral-900">
+        {count > 99 ? '99+' : count}
       </span>
     </span>
-  );
+  )
 }
 
 /** Shared search-trigger button, sized independently from its hit area. */
 function SearchButton({
   onClick,
   className,
-  iconClassName = "h-4 w-4",
+  iconClassName = 'h-4 w-4'
 }: {
-  onClick: () => void;
-  className: string;
-  iconClassName?: string;
+  onClick: () => void
+  className: string
+  iconClassName?: string
 }) {
   return (
     <button type="button" onClick={onClick} aria-label="Buscar" className={className}>
@@ -63,11 +57,11 @@ function SearchButton({
         <path d="m20 20-3.5-3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
     </button>
-  );
+  )
 }
 
 interface HeaderActionsProps {
-  onSearchOpen: () => void;
+  onSearchOpen: () => void
 }
 
 /**
@@ -95,29 +89,29 @@ interface HeaderActionsProps {
  * instead of the pill sitting on top of it.
  */
 export function HeaderActions({ onSearchOpen }: HeaderActionsProps) {
-  const [expanded, setExpanded] = useState(false);
-  const { cartCount } = useCart();
-  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [expanded, setExpanded] = useState(false)
+  const { cartCount } = useCart()
+  const wrapperRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!expanded) return;
+    if (!expanded) return
 
     function handlePointerDown(event: PointerEvent) {
       if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
-        setExpanded(false);
+        setExpanded(false)
       }
     }
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setExpanded(false);
+      if (event.key === 'Escape') setExpanded(false)
     }
 
-    document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
     return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [expanded]);
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [expanded])
 
   return (
     <>
@@ -125,9 +119,8 @@ export function HeaderActions({ onSearchOpen }: HeaderActionsProps) {
       <div
         ref={wrapperRef}
         className={`flex h-10 shrink-0 items-center justify-self-end rounded-full bg-neutral-100 transition-[width] duration-300 ease-out dark:bg-neutral-800 sm:hidden ${
-          expanded ? "w-[196px]" : "w-10 justify-center"
-        }`}
-      >
+          expanded ? 'w-[196px]' : 'w-10 justify-center'
+        }`}>
         {/*
           The rounded pill background has no `overflow-hidden` of its
           own, so it never clips anything sitting on top of it - only
@@ -143,24 +136,20 @@ export function HeaderActions({ onSearchOpen }: HeaderActionsProps) {
           onClick={() => setExpanded((current) => !current)}
           aria-expanded={expanded}
           aria-label={
-            cartCount > 0
-              ? `Carrinho, ${cartCount} ${cartCount === 1 ? "item" : "itens"} - abrir menu de ações`
-              : "Abrir menu de ações"
+            cartCount > 0 ? `Carrinho, ${cartCount} ${cartCount === 1 ? 'item' : 'itens'} - abrir menu de ações` : 'Abrir menu de ações'
           }
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-neutral-800 dark:text-neutral-100"
-        >
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-neutral-800 dark:text-neutral-100">
           {cartCount > 0 ? <CartGlyph count={cartCount} /> : <MoreGlyph />}
         </button>
 
         <div
           className={`flex items-center gap-2 overflow-hidden transition-[width] duration-300 ease-out ${
-            expanded ? "w-[156px] pr-4" : "pointer-events-none w-0 pr-0"
-          }`}
-        >
+            expanded ? 'w-[156px] pr-4' : 'pointer-events-none w-0 pr-0'
+          }`}>
           <SearchButton
             onClick={() => {
-              onSearchOpen();
-              setExpanded(false);
+              onSearchOpen()
+              setExpanded(false)
             }}
             className="flex h-8 w-8 shrink-0 items-center justify-center text-neutral-700 dark:text-neutral-200"
           />
@@ -172,15 +161,11 @@ export function HeaderActions({ onSearchOpen }: HeaderActionsProps) {
 
       {/* Tablet/desktop: no collapsing, icons sit side by side as usual. */}
       <div className="hidden justify-self-end sm:flex sm:items-center sm:gap-4">
-        <SearchButton
-          onClick={onSearchOpen}
-          className="p-1 text-neutral-800 dark:text-neutral-100"
-          iconClassName="h-5 w-5"
-        />
+        <SearchButton onClick={onSearchOpen} className="p-1 text-neutral-800 dark:text-neutral-100" iconClassName="h-5 w-5" />
         <ThemeToggle />
         <UserAvatar />
         <CartBadge />
       </div>
     </>
-  );
+  )
 }

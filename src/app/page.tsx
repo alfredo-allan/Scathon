@@ -1,5 +1,6 @@
 import { HeroCarousel } from "@/components/home/HeroCarousel";
 import { TrustBadges } from "@/components/home/TrustBadges";
+import { BrandMarquee } from "@/components/home/BrandMarquee";
 import { CategoryDividerCarousel } from "@/components/home/CategoryDividerCarousel";
 import { ProductGrid } from "@/components/home/ProductGrid";
 import { TestimonialsCarousel } from "@/components/home/TestimonialsCarousel";
@@ -27,6 +28,14 @@ export default function Home() {
     <>
       <HeroCarousel slides={heroSlides} />
       <TrustBadges />
+
+      {/* Placed right after <TrustBadges/> - Alfredo pointed at that
+          section when asking for this, and it reads as a natural ramp-up
+          in energy: quiet reassurance text, then a bold brand statement,
+          before the product grids start. Easy to move elsewhere (e.g.
+          right under the hero, or just above <Footer/>) if a different
+          spot reads better once it's live. */}
+      <BrandMarquee />
 
       <ProductGrid title="Mais Vendidos" products={bestSellers} />
 

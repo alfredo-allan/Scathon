@@ -4,7 +4,7 @@ import type { HeroSlide } from "@/types";
 export const heroSlides: HeroSlide[] = [
   {
     id: "slide-ss26",
-    eyebrow: "Coleção SS26",
+    eyebrow: "",
     title: "",
     subtitle: "",
     ctaLabel: "Ver o Drop",
@@ -23,7 +23,7 @@ export const heroSlides: HeroSlide[] = [
   },
   {
     id: "slide-bestsellers",
-    eyebrow: "Mais Vendidos",
+    eyebrow: "",
     title: "",
     subtitle: "",
     ctaLabel: "Ver Mais Vendidos",
