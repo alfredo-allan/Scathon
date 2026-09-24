@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "@/hooks/useCart";
+import { CartLineItem } from "./CartLineItem";
 import { useCheckoutShipping } from "@/hooks/useCheckoutShipping";
 import { useSavedAddresses } from "@/hooks/useSavedAddresses";
 import { saveAddress } from "@/lib/addresses";
@@ -167,55 +167,13 @@ export function CartView() {
         {/* Line items */}
         <div className="flex flex-col divide-y divide-neutral-100 border-t border-neutral-200 dark:divide-neutral-900 dark:border-neutral-800">
           {items.map((item) => (
-            <div key={`${item.productId}-${item.color}-${item.size}`} className="flex gap-4 py-5">
-              <div className="relative h-28 w-[88px] shrink-0 overflow-hidden bg-neutral-200 dark:bg-neutral-800">
-                <Image src={item.imageUrl} alt={item.title} fill unoptimized sizes="88px" className="object-cover" />
-              </div>
-
-              <div className="flex min-w-0 flex-1 flex-col justify-between">
-                <div>
-                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{item.title}</p>
-                  <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
-                    Cor: {item.color} · Tam: {item.size}
-                  </p>
-                  <p className="mt-1 text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                    {currencyFormatter.format(item.price)}
-                  </p>
-                </div>
-
-                <div className="mt-2 flex items-center justify-between">
-                  <div className="flex items-center border border-neutral-300 dark:border-neutral-700">
-                    <button
-                      type="button"
-                      aria-label={`Diminuir quantidade de ${item.title}`}
-                      onClick={() => updateQuantity(item.productId, item.color, item.size, item.quantity - 1)}
-                      className="flex h-8 w-8 items-center justify-center text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-900"
-                    >
-                      −
-                    </button>
-                    <span className="w-8 text-center text-sm text-neutral-900 dark:text-neutral-100">
-                      {item.quantity}
-                    </span>
-                    <button
-                      type="button"
-                      aria-label={`Aumentar quantidade de ${item.title}`}
-                      onClick={() => updateQuantity(item.productId, item.color, item.size, item.quantity + 1)}
-                      className="flex h-8 w-8 items-center justify-center text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-900"
-                    >
-                      +
-                    </button>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => removeItem(item.productId, item.color, item.size)}
-                    className="text-xs text-neutral-500 underline underline-offset-2 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
-                  >
-                    Remover
-                  </button>
-                </div>
-              </div>
-            </div>
+            <CartLineItem
+              key={`${item.productId}-${item.color}-${item.size}`}
+              item={item}
+              onIncrease={() => updateQuantity(item.productId, item.color, item.size, item.quantity + 1)}
+              onDecrease={() => updateQuantity(item.productId, item.color, item.size, item.quantity - 1)}
+              onRemove={() => removeItem(item.productId, item.color, item.size)}
+            />
           ))}
         </div>
 

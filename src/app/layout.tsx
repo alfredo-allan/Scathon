@@ -5,6 +5,7 @@ import { Providers } from "@/components/providers/Providers";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { FloatingDock } from "@/components/layout/FloatingDock";
+import { CartDrawer } from "@/components/cart/CartDrawer";
 import { MetaPixelRouteTracker } from "@/components/analytics/MetaPixelRouteTracker";
 
 // Meta (Facebook/Instagram) Pixel ID - used to load the tracking script below
@@ -105,6 +106,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             own doc comment for how it hands off with <Header/> on scroll.
           */}
           <FloatingDock />
+          {/*
+            Lives at the root, alongside <Header/>'s own <DrawerMenu/> and
+            <SearchOverlay/>, since it needs to open from any page the
+            moment `addItem` runs (see <CartContext/> and <CartDrawer/>'s
+            own doc comments) - not just from wherever the "add to cart"
+            button happens to be.
+          */}
+          <CartDrawer />
         </Providers>
       </body>
     </html>

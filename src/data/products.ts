@@ -19,7 +19,7 @@ export const products: Product[] = [
     isNew: true,
     styleCode: "SCT-CT09-001",
     description:
-      "Camiseta Cathedral, estampa gráfica de inspiração gótica em toda a extensão da frente.\n\nMalha 100% algodão penteado, gramatura média e caimento reto - a base perfeita pra deixar a estampa ser o centro das atenções.",
+      "A camiseta Cathedral foi projetada como uma peça para combinar com qualquer estilo. A camiseta apresenta um caimento uniforme em todo o corpo com uma forma equilibrada, ideal para todas as ocasiões.\n\nConfeccionada em algodão 100% de 240 gms, o tecido foi desenvolvido para ser respirável, macio e confortável, mantendo um caimento impecável durante o uso.\n\nAcabamento com gola canelada e a assinatura Scathon.",
     sizes: ["P", "M", "G", "GG", "XG"],
     // Real photography (see `Product.coverImage`/`specimenImages`), not the
     // placeholder generator - `imageUrl`/`hoverImageUrl` below are just a
@@ -35,7 +35,7 @@ export const products: Product[] = [
       "/category/shirt/BlackCathedral-T-shirt.jpeg",
       "/category/shirt/BlackCathedral-T-shirt_1.jpeg",
       "/specimen/BlackModelCathedral-T-shirt.jpeg",
-      "/specimen/BlackModel_1Cathedral-T-shirt.jpeg",
+      // "/specimen/BlackModel_1Cathedral-T-shirt.jpeg",
     ],
     colors: [
       {
@@ -62,7 +62,7 @@ export const products: Product[] = [
     isNew: true,
     styleCode: "SCT-CT10-002",
     description:
-      "Camiseta Cathedral, estampa gráfica de inspiração gótica em toda a extensão da frente.\n\nMalha 100% algodão penteado, gramatura média e caimento reto - a base perfeita pra deixar a estampa ser o centro das atenções.",
+      "A camiseta Cathedral foi projetada como uma peça para combinar com qualquer estilo. A camiseta apresenta um caimento uniforme em todo o corpo com uma forma equilibrada, ideal para todas as ocasiões.\n\nConfeccionada em algodão 100% de 240 gms, o tecido foi desenvolvido para ser respirável, macio e confortável, mantendo um caimento impecável durante o uso.\n\nAcabamento com gola canelada e a assinatura Scathon.",
     sizes: ["P", "M", "G", "GG", "XG"],
     imageUrl: "/category/shirt/WhiteCathedral-T-shirt.jpeg",
     coverImage: "/category/shirt/WhiteCathedral-T-shirt.jpeg",
@@ -119,7 +119,7 @@ export const products: Product[] = [
     title: "Bermuda de Moletom Cinza",
     price: 179.9,
     currency: "BRL",
-    category: "calcas",
+    category: "bermudas",
     rating: 0,
     reviewCount: 0,
     styleCode: "SCT-SS12-001",
@@ -148,7 +148,7 @@ export const products: Product[] = [
     title: "Bermuda de Moletom Preta",
     price: 179.9,
     currency: "BRL",
-    category: "calcas",
+    category: "bermudas",
     rating: 0,
     reviewCount: 0,
     styleCode: "SCT-SS13-002",

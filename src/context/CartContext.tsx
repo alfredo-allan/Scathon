@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useMemo,
+  useState,
   useSyncExternalStore,
   type ReactNode,
 } from "react";
@@ -23,6 +24,16 @@ interface CartContextValue {
     quantity: number,
   ) => void;
   clearCart: () => void;
+  /**
+   * Mini-cart drawer visibility (see `<CartDrawer/>`). Lives here, not in
+   * its own context, specifically so `addItem` can flip it on directly
+   * below - every call site that adds a product gets the "here's what
+   * just happened" drawer for free, structurally, instead of each one
+   * having to remember to open it itself.
+   */
+  isDrawerOpen: boolean;
+  openCartDrawer: () => void;
+  closeCartDrawer: () => void;
 }
 
 const cartStore = createPersistedStore<CartItem[]>("scathon:cart", []);
@@ -42,6 +53,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     cartStore.getServerSnapshot,
   );
 
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const openCartDrawer = useCallback(() => setIsDrawerOpen(true), []);
+  const closeCartDrawer = useCallback(() => setIsDrawerOpen(false), []);
+
   const addItem = useCallback<CartContextValue["addItem"]>(
     (item, quantity = 1) => {
       cartStore.setValue((prev) => {
@@ -58,6 +73,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }
         return [...prev, { ...item, quantity }];
       });
+      // Every add-to-cart opens the mini-cart drawer - the whole point of
+      // it (see `<CartDrawer/>`'s doc comment) is instant "here's what you
+      // just added" feedback, so this isn't optional per call site.
+      setIsDrawerOpen(true);
     },
     [],
   );
@@ -106,8 +125,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
       removeItem,
       updateQuantity,
       clearCart,
+      isDrawerOpen,
+      openCartDrawer,
+      closeCartDrawer,
     }),
-    [items, cartCount, totalAmount, addItem, removeItem, updateQuantity, clearCart],
+    [
+      items,
+      cartCount,
+      totalAmount,
+      addItem,
+      removeItem,
+      updateQuantity,
+      clearCart,
+      isDrawerOpen,
+      openCartDrawer,
+      closeCartDrawer,
+    ],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
