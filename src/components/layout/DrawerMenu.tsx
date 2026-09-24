@@ -121,7 +121,7 @@ export function DrawerMenu({ open, onClose }: DrawerMenuProps) {
         <button
           type="button"
           onClick={toggleTheme}
-          className="m-4 flex items-center justify-between rounded-none border border-neutral-200 dark:border-neutral-800 px-4 py-3 text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-400"
+          className="m-4 flex items-center justify-between rounded-app border border-neutral-200 dark:border-neutral-800 px-4 py-3 text-xs uppercase tracking-widest text-neutral-600 dark:text-neutral-400"
         >
           <span>Tema</span>
           <span>{theme === "dark" ? "Escuro" : "Claro"}</span>

@@ -46,7 +46,7 @@ export function AdminOrdersTab() {
             key={option.id}
             type="button"
             onClick={() => setFilter(option.id)}
-            className={`border px-3 py-1.5 text-xs font-semibold uppercase tracking-widest transition-colors ${
+            className={`rounded-app border px-3 py-1.5 text-xs font-semibold uppercase tracking-widest transition-colors ${
               filter === option.id
                 ? "border-neutral-950 bg-neutral-950 text-neutral-50 dark:border-neutral-100 dark:bg-neutral-100 dark:text-neutral-950"
                 : "border-neutral-300 text-neutral-600 hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-400"
@@ -59,7 +59,7 @@ export function AdminOrdersTab() {
 
       <div className="flex flex-col gap-4">
         {filteredOrders.map((order) => (
-          <div key={order.id} className="border border-neutral-200 dark:border-neutral-800">
+          <div key={order.id} className="overflow-hidden rounded-app border border-neutral-200 dark:border-neutral-800">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200 px-4 py-3 dark:border-neutral-800">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">
@@ -70,7 +70,7 @@ export function AdminOrdersTab() {
                 </p>
               </div>
               <span
-                className={`border px-2 py-1 text-[10px] font-semibold uppercase tracking-widest ${ORDER_STATUS_STYLE[order.status]}`}
+                className={`rounded-app border px-2 py-1 text-[10px] font-semibold uppercase tracking-widest ${ORDER_STATUS_STYLE[order.status]}`}
               >
                 {ORDER_STATUS_LABEL[order.status]}
               </span>
@@ -79,7 +79,7 @@ export function AdminOrdersTab() {
             <div className="flex flex-col divide-y divide-neutral-100 dark:divide-neutral-900">
               {order.items.map((item, index) => (
                 <div key={`${order.id}-${index}`} className="flex items-center gap-3 px-4 py-3">
-                  <span className="relative block h-14 w-11 shrink-0 overflow-hidden bg-neutral-200 dark:bg-neutral-800">
+                  <span className="relative block h-14 w-11 shrink-0 overflow-hidden rounded-app bg-neutral-200 dark:bg-neutral-800">
                     <Image src={item.imageUrl} alt={item.title} fill unoptimized sizes="44px" className="object-cover" />
                   </span>
                   <div className="min-w-0 flex-1">

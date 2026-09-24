@@ -27,6 +27,11 @@ export const products: Product[] = [
     // `coverImage` yet.
     imageUrl: "/category/shirt/BlackCathedral-T-shirt.jpeg",
     coverImage: "/category/shirt/BlackCathedral-T-shirt.jpeg",
+    // Desktop hover setup: hovering the card in `<ProductCard/>` swaps the
+    // flat photo above for this "on-model" shot. To reuse this on another
+    // product, just point its own `hoverImageUrl` at that product's model
+    // photo - no code changes needed (see `ProductCard.tsx`'s `showSwap`).
+    hoverImageUrl: "/specimen/BlackModelCathedral-T-shirt.jpeg",
     // Flat frente/verso shots (background removed, flattened to white since
     // .jpeg has no alpha channel) first, lifestyle/model photos after - the
     // usual e-commerce order: a clean, quick-scan product view leads, the
@@ -35,7 +40,7 @@ export const products: Product[] = [
       "/category/shirt/BlackCathedral-T-shirt.jpeg",
       "/category/shirt/BlackCathedral-T-shirt_1.jpeg",
       "/specimen/BlackModelCathedral-T-shirt.jpeg",
-      // "/specimen/BlackModel_1Cathedral-T-shirt.jpeg",
+      "/specimen/BlackModel_1Cathedral-T-shirt.jpeg",
     ],
     colors: [
       {
@@ -66,6 +71,8 @@ export const products: Product[] = [
     sizes: ["P", "M", "G", "GG", "XG"],
     imageUrl: "/category/shirt/WhiteCathedral-T-shirt.jpeg",
     coverImage: "/category/shirt/WhiteCathedral-T-shirt.jpeg",
+    // Desktop hover setup - see the matching comment on p-009 above.
+    hoverImageUrl: "/specimen/WhiteModelCathedral-T-shirt.jpeg",
     specimenImages: [
       "/category/shirt/WhiteCathedral-T-shirt.jpeg",
       "/category/shirt/WhiteCathedral-T-shirt_1.jpeg",
@@ -119,7 +126,7 @@ export const products: Product[] = [
     title: "Bermuda de Moletom Cinza",
     price: 179.9,
     currency: "BRL",
-    category: "bermudas",
+    category: "calcas",
     rating: 0,
     reviewCount: 0,
     styleCode: "SCT-SS12-001",
@@ -148,7 +155,7 @@ export const products: Product[] = [
     title: "Bermuda de Moletom Preta",
     price: 179.9,
     currency: "BRL",
-    category: "bermudas",
+    category: "calcas",
     rating: 0,
     reviewCount: 0,
     styleCode: "SCT-SS13-002",

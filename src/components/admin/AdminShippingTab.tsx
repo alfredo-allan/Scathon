@@ -51,7 +51,7 @@ export function AdminShippingTab() {
             onChange={(event) => setOriginCep(formatCep(event.target.value))}
             placeholder="00000-000"
             maxLength={9}
-            className="w-full border border-neutral-300 bg-transparent px-3 py-2.5 text-sm font-normal normal-case tracking-normal text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
+            className="w-full rounded-app border border-neutral-300 bg-transparent px-3 py-2.5 text-sm font-normal normal-case tracking-normal text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
           />
         </label>
 
@@ -64,7 +64,7 @@ export function AdminShippingTab() {
             onChange={(event) => setDestinationCep(formatCep(event.target.value))}
             placeholder="00000-000"
             maxLength={9}
-            className="w-full border border-neutral-300 bg-transparent px-3 py-2.5 text-sm font-normal normal-case tracking-normal text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
+            className="w-full rounded-app border border-neutral-300 bg-transparent px-3 py-2.5 text-sm font-normal normal-case tracking-normal text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
           />
         </label>
 
@@ -76,7 +76,7 @@ export function AdminShippingTab() {
             step="0.1"
             value={weight}
             onChange={(event) => setWeight(event.target.value)}
-            className="w-full border border-neutral-300 bg-transparent px-3 py-2.5 text-sm font-normal normal-case tracking-normal text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
+            className="w-full rounded-app border border-neutral-300 bg-transparent px-3 py-2.5 text-sm font-normal normal-case tracking-normal text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
           />
         </label>
 
@@ -84,7 +84,7 @@ export function AdminShippingTab() {
           type="button"
           onClick={handleCalculate}
           disabled={!canCalculate}
-          className="mt-1 border border-neutral-950 bg-neutral-950 px-3 py-2.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 disabled:opacity-40 dark:border-neutral-100 dark:bg-neutral-100 dark:text-neutral-950"
+          className="mt-1 rounded-app border border-neutral-950 bg-neutral-950 px-3 py-2.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 disabled:opacity-40 dark:border-neutral-100 dark:bg-neutral-100 dark:text-neutral-950"
         >
           {status === "loading" ? "Calculando..." : "Calcular despacho"}
         </button>
@@ -104,7 +104,7 @@ export function AdminShippingTab() {
             Informe origem, destino e peso pra ver as opções de envio.
           </p>
         ) : (
-          <div className="mt-3 flex flex-col divide-y divide-neutral-100 border border-neutral-200 dark:divide-neutral-900 dark:border-neutral-800">
+          <div className="mt-3 flex flex-col divide-y divide-neutral-100 rounded-app border border-neutral-200 dark:divide-neutral-900 dark:border-neutral-800">
             {quotes.map((quote) => (
               <div key={quote.id} className="flex items-center justify-between gap-3 px-4 py-3">
                 <div>

@@ -204,13 +204,13 @@ export function LoginView() {
         <div className="flex flex-wrap items-center justify-center gap-3">
           <Link
             href="/account"
-            className="bg-neutral-950 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950">
+            className="rounded-app bg-neutral-950 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950">
             Minha Conta
           </Link>
           <button
             type="button"
             onClick={() => logout()}
-            className="border border-neutral-300 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-900 transition-colors hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-500">
+            className="rounded-app border border-neutral-300 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-900 transition-colors hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-500">
             Sair
           </button>
         </div>
@@ -294,7 +294,7 @@ export function LoginView() {
                   value={name}
                   onChange={(event) => setName(event.target.value)}
                   placeholder="Seu nome completo"
-                  className="w-full border border-neutral-300 bg-transparent px-3 py-3 text-sm font-normal normal-case tracking-normal text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
+                  className="w-full rounded-app border border-neutral-300 bg-transparent px-3 py-3 text-sm font-normal normal-case tracking-normal text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
                 />
               </label>
             </>
@@ -308,7 +308,7 @@ export function LoginView() {
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="seu@email.com"
-              className="w-full border border-neutral-300 bg-transparent px-3 py-3 text-sm font-normal normal-case tracking-normal text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
+              className="w-full rounded-app border border-neutral-300 bg-transparent px-3 py-3 text-sm font-normal normal-case tracking-normal text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
             />
           </label>
 
@@ -322,7 +322,7 @@ export function LoginView() {
                 value={phone}
                 onChange={(event) => setPhone(formatPhone(event.target.value))}
                 placeholder="(11) 91234-5678"
-                className="w-full border border-neutral-300 bg-transparent px-3 py-3 text-sm font-normal normal-case tracking-normal text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
+                className="w-full rounded-app border border-neutral-300 bg-transparent px-3 py-3 text-sm font-normal normal-case tracking-normal text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
               />
             </label>
           )}
@@ -335,7 +335,7 @@ export function LoginView() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               placeholder="••••••••"
-              className="w-full border border-neutral-300 bg-transparent px-3 py-3 text-sm font-normal normal-case tracking-normal text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
+              className="w-full rounded-app border border-neutral-300 bg-transparent px-3 py-3 text-sm font-normal normal-case tracking-normal text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
             />
           </label>
 
@@ -353,13 +353,13 @@ export function LoginView() {
                   onChange={(event) => handleCepChange(event.target.value)}
                   placeholder="CEP"
                   maxLength={9}
-                  className="w-32 border border-neutral-300 bg-transparent px-3 py-3 text-sm font-normal normal-case tracking-normal text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
+                  className="w-32 rounded-app border border-neutral-300 bg-transparent px-3 py-3 text-sm font-normal normal-case tracking-normal text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
                 />
                 <button
                   type="button"
                   onClick={() => runAddressLookup(addressCep)}
                   disabled={cepStatus === 'loading'}
-                  className="flex-1 border border-neutral-300 px-3 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-800 transition-colors hover:border-neutral-500 disabled:opacity-50 dark:border-neutral-700 dark:text-neutral-100">
+                  className="flex-1 rounded-app border border-neutral-300 px-3 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-800 transition-colors hover:border-neutral-500 disabled:opacity-50 dark:border-neutral-700 dark:text-neutral-100">
                   {cepStatus === 'loading' ? 'Buscando...' : 'Buscar CEP'}
                 </button>
               </div>
@@ -382,14 +382,14 @@ export function LoginView() {
                       value={addressNumber}
                       onChange={(event) => setAddressNumber(event.target.value)}
                       placeholder="Número"
-                      className="w-24 border border-neutral-300 bg-transparent px-3 py-3 text-sm font-normal normal-case tracking-normal text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
+                      className="w-24 rounded-app border border-neutral-300 bg-transparent px-3 py-3 text-sm font-normal normal-case tracking-normal text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
                     />
                     <input
                       type="text"
                       value={addressComplement}
                       onChange={(event) => setAddressComplement(event.target.value)}
                       placeholder="Complemento (opcional)"
-                      className="flex-1 border border-neutral-300 bg-transparent px-3 py-3 text-sm font-normal normal-case tracking-normal text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
+                      className="flex-1 rounded-app border border-neutral-300 bg-transparent px-3 py-3 text-sm font-normal normal-case tracking-normal text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
                     />
                   </div>
                 </>
@@ -402,7 +402,7 @@ export function LoginView() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="mt-2 w-full bg-neutral-950 py-3.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-950">
+            className="mt-2 w-full rounded-app bg-neutral-950 py-3.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-950">
             {isSubmitting ? 'Entrando…' : mode === 'entrar' ? 'Entrar' : 'Criar conta'}
           </button>
         </form>

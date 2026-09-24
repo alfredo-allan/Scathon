@@ -95,7 +95,7 @@ export function AdminOverviewTab() {
         <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">
           Últimos comprovantes
         </h2>
-        <div className="mt-3 flex flex-col divide-y divide-neutral-100 border border-neutral-200 dark:divide-neutral-900 dark:border-neutral-800">
+        <div className="mt-3 flex flex-col divide-y divide-neutral-100 rounded-app border border-neutral-200 dark:divide-neutral-900 dark:border-neutral-800">
           {recentReceipts.map((order) => (
             <div key={order.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
               <div className="min-w-0">
@@ -120,7 +120,7 @@ export function AdminOverviewTab() {
 
 function StatTile({ label, value, hint, warn }: { label: string; value: string; hint?: string; warn?: boolean }) {
   return (
-    <div className="border border-neutral-200 p-4 dark:border-neutral-800">
+    <div className="rounded-app border border-neutral-200 p-4 dark:border-neutral-800">
       <p className="text-[11px] uppercase tracking-widest text-neutral-500 dark:text-neutral-400">{label}</p>
       <p className={`mt-1.5 text-xl font-semibold tracking-tight ${warn ? "text-amber-600 dark:text-amber-400" : "text-neutral-950 dark:text-neutral-50"}`}>
         {value}

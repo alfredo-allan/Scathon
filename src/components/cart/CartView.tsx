@@ -136,7 +136,7 @@ export function CartView() {
           <p className="text-sm text-neutral-600 dark:text-neutral-400">Seu carrinho está vazio.</p>
           <Link
             href="/"
-            className="bg-neutral-950 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
+            className="rounded-app bg-neutral-950 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
           >
             Ver produtos
           </Link>
@@ -179,7 +179,7 @@ export function CartView() {
 
         {/* Summary + shipping */}
         <div className="flex flex-col gap-6 lg:sticky lg:top-6 lg:self-start">
-          <div className="border border-neutral-200 p-4 dark:border-neutral-800">
+          <div className="rounded-app border border-neutral-200 p-4 dark:border-neutral-800">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">
               Resumo
             </h2>
@@ -205,7 +205,7 @@ export function CartView() {
             </dl>
           </div>
 
-          <div className="border border-neutral-200 p-4 dark:border-neutral-800">
+          <div className="rounded-app border border-neutral-200 p-4 dark:border-neutral-800">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">
               Confirmar envio
             </h2>
@@ -215,7 +215,7 @@ export function CartView() {
                 type="button"
                 onClick={() => handleSelectMethod("melhor_envio")}
                 aria-pressed={method === "melhor_envio"}
-                className={`flex-1 border px-3 py-2 text-[11px] font-semibold uppercase tracking-widest transition-colors ${
+                className={`flex-1 rounded-app border px-3 py-2 text-[11px] font-semibold uppercase tracking-widest transition-colors ${
                   method === "melhor_envio"
                     ? "border-neutral-950 bg-neutral-950 text-neutral-50 dark:border-neutral-100 dark:bg-neutral-100 dark:text-neutral-950"
                     : "border-neutral-300 text-neutral-800 hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-100"
@@ -227,7 +227,7 @@ export function CartView() {
                 type="button"
                 onClick={() => handleSelectMethod("combinar_com_vendedor")}
                 aria-pressed={method === "combinar_com_vendedor"}
-                className={`flex-1 border px-3 py-2 text-[11px] font-semibold uppercase tracking-widest transition-colors ${
+                className={`flex-1 rounded-app border px-3 py-2 text-[11px] font-semibold uppercase tracking-widest transition-colors ${
                   method === "combinar_com_vendedor"
                     ? "border-neutral-950 bg-neutral-950 text-neutral-50 dark:border-neutral-100 dark:bg-neutral-100 dark:text-neutral-950"
                     : "border-neutral-300 text-neutral-800 hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-100"
@@ -247,7 +247,7 @@ export function CartView() {
                         key={saved.id}
                         type="button"
                         onClick={() => handleUseSavedAddress(saved.cep)}
-                        className="border border-neutral-300 px-2 py-1 text-[11px] font-medium text-neutral-800 transition-colors hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-500"
+                        className="rounded-app border border-neutral-300 px-2 py-1 text-[11px] font-medium text-neutral-800 transition-colors hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-500"
                       >
                         {saved.label}
                       </button>
@@ -274,13 +274,13 @@ export function CartView() {
                     }}
                     placeholder="00000-000"
                     maxLength={9}
-                    className="w-full max-w-[160px] border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-neutral-400 focus:border-neutral-500"
+                    className="w-full max-w-[160px] rounded-app border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-neutral-400 focus:border-neutral-500"
                   />
                   <button
                     type="button"
                     onClick={() => runLookup(cepInput)}
                     disabled={lookupStatus === "loading"}
-                    className="border border-neutral-950 dark:border-neutral-100 bg-neutral-950 dark:bg-neutral-100 px-4 py-2.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 dark:text-neutral-950 transition-opacity hover:opacity-80 disabled:opacity-50"
+                    className="rounded-app border border-neutral-950 dark:border-neutral-100 bg-neutral-950 dark:bg-neutral-100 px-4 py-2.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 dark:text-neutral-950 transition-opacity hover:opacity-80 disabled:opacity-50"
                   >
                     {lookupStatus === "loading" ? "..." : "Calcular"}
                   </button>
@@ -307,7 +307,7 @@ export function CartView() {
                           type="button"
                           aria-pressed={isActive}
                           onClick={() => handleSelectQuote(quote)}
-                          className={`flex items-center justify-between border px-3 py-2 text-left text-xs transition-colors ${
+                          className={`flex items-center justify-between rounded-app border px-3 py-2 text-left text-xs transition-colors ${
                             isActive
                               ? "border-neutral-950 dark:border-neutral-100"
                               : "border-neutral-300 hover:border-neutral-500 dark:border-neutral-700 dark:hover:border-neutral-500"
@@ -334,21 +334,21 @@ export function CartView() {
                         value={addressLabel}
                         onChange={(event) => setAddressLabel(event.target.value)}
                         placeholder="Nome (ex: Casa)"
-                        className="min-w-0 flex-1 border border-neutral-300 dark:border-neutral-700 bg-transparent px-2.5 py-2 text-xs outline-none placeholder:text-neutral-400 focus:border-neutral-500"
+                        className="min-w-0 flex-1 rounded-app border border-neutral-300 dark:border-neutral-700 bg-transparent px-2.5 py-2 text-xs outline-none placeholder:text-neutral-400 focus:border-neutral-500"
                       />
                       <input
                         type="text"
                         value={addressNumber}
                         onChange={(event) => setAddressNumber(event.target.value)}
                         placeholder="Número"
-                        className="w-20 border border-neutral-300 dark:border-neutral-700 bg-transparent px-2.5 py-2 text-xs outline-none placeholder:text-neutral-400 focus:border-neutral-500"
+                        className="w-20 rounded-app border border-neutral-300 dark:border-neutral-700 bg-transparent px-2.5 py-2 text-xs outline-none placeholder:text-neutral-400 focus:border-neutral-500"
                       />
                       <input
                         type="text"
                         value={addressComplement}
                         onChange={(event) => setAddressComplement(event.target.value)}
                         placeholder="Complemento"
-                        className="min-w-0 flex-1 border border-neutral-300 dark:border-neutral-700 bg-transparent px-2.5 py-2 text-xs outline-none placeholder:text-neutral-400 focus:border-neutral-500"
+                        className="min-w-0 flex-1 rounded-app border border-neutral-300 dark:border-neutral-700 bg-transparent px-2.5 py-2 text-xs outline-none placeholder:text-neutral-400 focus:border-neutral-500"
                       />
                     </div>
                     <button
@@ -372,7 +372,7 @@ export function CartView() {
                   onChange={(event) => update({ customNote: event.target.value, method: "combinar_com_vendedor" })}
                   placeholder="Ex: prefiro retirar na loja no sábado à tarde"
                   rows={3}
-                  className="mt-2 w-full resize-none border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-neutral-400 focus:border-neutral-500"
+                  className="mt-2 w-full resize-none rounded-app border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-neutral-400 focus:border-neutral-500"
                 />
                 <a
                   href={whatsappHref}
@@ -403,7 +403,7 @@ export function CartView() {
               <button
                 type="button"
                 onClick={handleConfirmShipping}
-                className="mt-4 w-full bg-neutral-950 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 disabled:opacity-40 dark:bg-neutral-100 dark:text-neutral-950"
+                className="mt-4 w-full rounded-app bg-neutral-950 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 disabled:opacity-40 dark:bg-neutral-100 dark:text-neutral-950"
                 disabled={method === "melhor_envio" ? !selection.quote : selection.customNote.trim().length === 0}
               >
                 Confirmar envio
@@ -414,7 +414,7 @@ export function CartView() {
           {isConfirmed ? (
             <Link
               href="/checkout"
-              className="w-full bg-neutral-950 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
+              className="w-full rounded-app bg-neutral-950 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
             >
               Ir para o checkout
             </Link>

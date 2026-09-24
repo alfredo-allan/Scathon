@@ -148,7 +148,9 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
 
   return (
     <div className="px-4 md:px-8 py-6">
-      <nav aria-label="Breadcrumb" className="mb-3 text-xs text-neutral-500 dark:text-neutral-400">
+      {/* Escondido a pedido do Alfredo - deixado no código (não removido)
+          caso o breadcrumb volte a ser exibido no futuro. */}
+      <nav aria-label="Breadcrumb" className="hidden mb-3 text-xs text-neutral-500 dark:text-neutral-400">
         <ol className="flex flex-wrap items-center gap-1.5">
           <li>
             <Link href="/" className="hover:text-neutral-900 dark:hover:text-neutral-100">
@@ -175,7 +177,7 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
           </h1>
 
           {isComingSoon ? (
-            <span className="mt-1.5 inline-block border border-neutral-300 px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-neutral-600 dark:border-neutral-700 dark:text-neutral-400">
+            <span className="mt-1.5 inline-block rounded-app border border-neutral-300 px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-neutral-600 dark:border-neutral-700 dark:text-neutral-400">
               Em breve
             </span>
           ) : (
@@ -204,7 +206,7 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
                   {currencyFormatter.format(product.compareAtPrice)}
                 </span>
                 {discountPercent !== null && discountPercent > 0 && (
-                  <span className="bg-neutral-900 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-50 dark:bg-neutral-100 dark:text-neutral-950">
+                  <span className="rounded-app bg-neutral-900 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-50 dark:bg-neutral-100 dark:text-neutral-950">
                     -{discountPercent}%
                   </span>
                 )}
@@ -275,7 +277,7 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
                         setActiveSize(size);
                         setSizeError(false);
                       }}
-                      className={`h-11 min-w-11 border px-3 text-sm transition-colors ${
+                      className={`h-11 min-w-11 rounded-app border px-3 text-sm transition-colors ${
                         isActive
                           ? "border-neutral-950 bg-neutral-950 text-neutral-50 dark:border-neutral-100 dark:bg-neutral-100 dark:text-neutral-950"
                           : "border-neutral-300 text-neutral-800 hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-500"
@@ -307,7 +309,7 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
                     title={related.title}
                     className="group w-16 shrink-0 lg:w-20"
                   >
-                    <div className="relative aspect-[3/4] overflow-hidden bg-neutral-300 dark:bg-neutral-700">
+                    <div className="relative aspect-[3/4] overflow-hidden rounded-app bg-neutral-300 dark:bg-neutral-700">
                       <Image
                         src={related.coverImage ?? related.imageUrl}
                         alt={related.title}
@@ -339,7 +341,7 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
               <button
                 type="button"
                 onClick={handleAddToCart}
-                className="w-full bg-neutral-950 py-3.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
+                className="w-full rounded-app bg-neutral-950 py-3.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
               >
                 {addedFeedback ? "Adicionado ao carrinho ✓" : "Adicionar ao carrinho"}
               </button>
@@ -349,7 +351,7 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
               type="button"
               onClick={() => toggleSaved(product.id)}
               aria-pressed={saved}
-              className="flex w-full items-center justify-center gap-2 border border-neutral-300 py-3.5 text-xs font-semibold uppercase tracking-widest text-neutral-900 transition-colors hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-500"
+              className="flex w-full items-center justify-center gap-2 rounded-app border border-neutral-300 py-3.5 text-xs font-semibold uppercase tracking-widest text-neutral-900 transition-colors hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-500"
             >
               {saved ? "Salvo nos favoritos" : "Salvar como favoritos"}
               {saved ? (

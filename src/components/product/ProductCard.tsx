@@ -21,6 +21,14 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
 export function ProductCard({ product }: ProductCardProps) {
   const [activeColor, setActiveColor] = useState(product.colors[0]?.name ?? "");
   const [isHovered, setIsHovered] = useState(false);
+  // Tracks a deliberate swatch click, as opposed to `activeColor`'s
+  // default-on-mount value (`colors[0]`) - kept separate so the hover-swap
+  // below (`showSwap`) only backs off once the shopper has actually picked
+  // a color to look at, not just because a color happens to be resolved by
+  // default. Every product has a "resolved" `activeVariant` from the moment
+  // it mounts (see `activeVariant` below), so gating on that instead would
+  // permanently disable the swap for the whole catalog.
+  const [hasManualColorSelection, setHasManualColorSelection] = useState(false);
   const { isSaved, toggleSaved } = useWishlist();
 
   const activeVariant = useMemo(
@@ -35,7 +43,14 @@ export function ProductCard({ product }: ProductCardProps) {
   // unaffected.
   const baseImage = activeVariant?.imageUrl ?? product.coverImage ?? product.imageUrl;
   const swapImage = product.hoverImageUrl ?? baseImage;
-  const showSwap = isHovered && !activeVariant;
+  // Desktop-only "on-model" preview: hovering the card (a no-op on touch,
+  // since touch devices don't fire `mouseenter`/`mouseleave`) swaps the flat
+  // product photo for `product.hoverImageUrl` when one is set. Setting this
+  // one field on a product in `src/data/products.ts` is the entire "setup" -
+  // no other code changes needed to add the effect to another product.
+  // Backs off once the shopper has manually chosen a color, so the hover
+  // preview never fights an intentional swatch pick.
+  const showSwap = isHovered && !hasManualColorSelection && Boolean(product.hoverImageUrl);
   const productHref = `/shop/${product.category}/${product.slug}`;
   const isComingSoon = product.availability === "coming_soon";
   const isLiked = isSaved(product.id);
@@ -50,20 +65,20 @@ export function ProductCard({ product }: ProductCardProps) {
     // Moletom Cinza" vs "Camiseta Cathedral Preta"), and without this the
     // CTA/rating row shifted up or down card by card, so buttons in the
     // same grid row visibly didn't line up.
-    <div className="group relative flex h-full flex-col bg-neutral-100/50 dark:bg-neutral-900/50 p-4 rounded-none transition-colors">
+    <div className="group relative flex h-full flex-col bg-neutral-100/50 dark:bg-neutral-900/50 p-4 rounded-app transition-colors">
       <Link
         href={productHref}
-        className="relative block aspect-[3/4] overflow-hidden bg-neutral-300 dark:bg-neutral-700"
+        className="relative block aspect-[3/4] overflow-hidden rounded-app bg-neutral-300 dark:bg-neutral-700"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
         {isComingSoon ? (
-          <span className="absolute left-2 top-2 z-10 border border-neutral-900 bg-white/90 px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-neutral-900 dark:border-neutral-100 dark:bg-neutral-950/90 dark:text-neutral-100">
+          <span className="absolute left-2 top-2 z-10 rounded-app border border-neutral-900 bg-white/90 px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-neutral-900 dark:border-neutral-100 dark:bg-neutral-950/90 dark:text-neutral-100">
             Em breve
           </span>
         ) : (
           product.isNew && (
-            <span className="absolute left-2 top-2 z-10 bg-neutral-900 dark:bg-neutral-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-neutral-100 dark:text-neutral-900">
+            <span className="absolute left-2 top-2 z-10 rounded-app bg-neutral-900 dark:bg-neutral-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-neutral-100 dark:text-neutral-900">
               Novo
             </span>
           )
@@ -149,7 +164,10 @@ export function ProductCard({ product }: ProductCardProps) {
               <ColorSwatches
                 colors={product.colors}
                 activeColor={activeColor}
-                onSelect={(color) => setActiveColor(color.name)}
+                onSelect={(color) => {
+                  setActiveColor(color.name);
+                  setHasManualColorSelection(true);
+                }}
               />
 
               <StarRating rating={product.rating} reviewCount={product.reviewCount} />

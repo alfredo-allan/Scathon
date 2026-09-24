@@ -136,7 +136,7 @@ export function Header() {
               width={500}
               height={211}
               priority
-              className="hidden h-14 w-auto object-contain dark:block sm:h-16"
+              className="hidden h-12 w-auto object-contain dark:block sm:h-14"
             />
           </Link>
 

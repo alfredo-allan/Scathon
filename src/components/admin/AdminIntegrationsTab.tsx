@@ -21,7 +21,7 @@ export function AdminIntegrationsTab() {
 
       <div className="grid gap-4 md:grid-cols-2">
         {INTEGRATIONS.map((integration) => (
-          <div key={integration.id} className="border border-neutral-200 p-4 dark:border-neutral-800">
+          <div key={integration.id} className="rounded-app border border-neutral-200 p-4 dark:border-neutral-800">
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">{integration.name}</p>
               <span className="flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-400">

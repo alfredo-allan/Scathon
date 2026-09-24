@@ -25,7 +25,7 @@ export function AccountView() {
         </p>
         <Link
           href="/login"
-          className="bg-neutral-950 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
+          className="rounded-app bg-neutral-950 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
         >
           Entrar
         </Link>
@@ -79,7 +79,7 @@ export function AccountView() {
           </p>
           <p className="truncate text-sm text-neutral-500 dark:text-neutral-400">{user.email}</p>
           {isAdmin && (
-            <span className="mt-1 inline-block bg-neutral-900 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-neutral-50 dark:bg-neutral-100 dark:text-neutral-950">
+            <span className="mt-1 inline-block rounded-app bg-neutral-900 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-neutral-50 dark:bg-neutral-100 dark:text-neutral-950">
               Admin
             </span>
           )}
@@ -89,7 +89,7 @@ export function AccountView() {
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
         <Link
           href="/account/orders"
-          className="group flex items-center justify-between border border-neutral-200 p-4 transition-colors hover:border-neutral-400 dark:border-neutral-800 dark:hover:border-neutral-600"
+          className="group flex items-center justify-between rounded-app border border-neutral-200 p-4 transition-colors hover:border-neutral-400 dark:border-neutral-800 dark:hover:border-neutral-600"
         >
           <div>
             <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Meus Pedidos</p>
@@ -104,7 +104,7 @@ export function AccountView() {
 
         <Link
           href="/wishlist"
-          className="group flex items-center justify-between border border-neutral-200 p-4 transition-colors hover:border-neutral-400 dark:border-neutral-800 dark:hover:border-neutral-600"
+          className="group flex items-center justify-between rounded-app border border-neutral-200 p-4 transition-colors hover:border-neutral-400 dark:border-neutral-800 dark:hover:border-neutral-600"
         >
           <div>
             <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Curtidos</p>
@@ -119,7 +119,7 @@ export function AccountView() {
 
         <Link
           href="/account/addresses"
-          className={`group flex items-center justify-between border border-neutral-200 p-4 transition-colors hover:border-neutral-400 dark:border-neutral-800 dark:hover:border-neutral-600 ${isAdmin ? "" : "sm:col-span-2"}`}
+          className={`group flex items-center justify-between rounded-app border border-neutral-200 p-4 transition-colors hover:border-neutral-400 dark:border-neutral-800 dark:hover:border-neutral-600 ${isAdmin ? "" : "sm:col-span-2"}`}
         >
           <div>
             <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Meus Endereços</p>
@@ -135,7 +135,7 @@ export function AccountView() {
         {isAdmin && (
           <Link
             href="/admin"
-            className="group flex items-center justify-between border border-neutral-200 p-4 transition-colors hover:border-neutral-400 dark:border-neutral-800 dark:hover:border-neutral-600"
+            className="group flex items-center justify-between rounded-app border border-neutral-200 p-4 transition-colors hover:border-neutral-400 dark:border-neutral-800 dark:hover:border-neutral-600"
           >
             <div>
               <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Painel Admin</p>
@@ -175,7 +175,7 @@ export function AccountView() {
       <button
         type="button"
         onClick={handleLogout}
-        className="mt-8 border border-neutral-300 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-900 transition-colors hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-500"
+        className="mt-8 rounded-app border border-neutral-300 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-900 transition-colors hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-500"
       >
         Sair
       </button>

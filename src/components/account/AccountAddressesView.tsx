@@ -35,7 +35,7 @@ export function AccountAddressesView() {
         <p className="text-sm text-neutral-600 dark:text-neutral-400">Você precisa entrar pra ver seus endereços.</p>
         <Link
           href="/login"
-          className="bg-neutral-950 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
+          className="rounded-app bg-neutral-950 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
         >
           Entrar
         </Link>
@@ -126,7 +126,7 @@ export function AccountAddressesView() {
             <p className="text-sm text-neutral-600 dark:text-neutral-400">Nenhum endereço salvo ainda.</p>
           ) : (
             addresses.map((address) => (
-              <div key={address.id} className="border border-neutral-200 p-4 dark:border-neutral-800">
+              <div key={address.id} className="rounded-app border border-neutral-200 p-4 dark:border-neutral-800">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">{address.label}</p>
@@ -152,7 +152,7 @@ export function AccountAddressesView() {
           )}
         </div>
 
-        <div className="border border-neutral-200 p-4 dark:border-neutral-800">
+        <div className="rounded-app border border-neutral-200 p-4 dark:border-neutral-800">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">
             Adicionar novo endereço
           </h2>
@@ -163,7 +163,7 @@ export function AccountAddressesView() {
               value={label}
               onChange={(event) => setLabel(event.target.value)}
               placeholder="Nome (ex: Casa, Trabalho)"
-              className="w-full border border-neutral-300 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-neutral-400 focus:border-neutral-500 dark:border-neutral-700"
+              className="w-full rounded-app border border-neutral-300 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-neutral-400 focus:border-neutral-500 dark:border-neutral-700"
             />
 
             <div className="flex gap-2">
@@ -174,13 +174,13 @@ export function AccountAddressesView() {
                 onChange={(event) => handleCepChange(event.target.value)}
                 placeholder="00000-000"
                 maxLength={9}
-                className="w-32 border border-neutral-300 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-neutral-400 focus:border-neutral-500 dark:border-neutral-700"
+                className="w-32 rounded-app border border-neutral-300 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-neutral-400 focus:border-neutral-500 dark:border-neutral-700"
               />
               <button
                 type="button"
                 onClick={() => runLookup(cep)}
                 disabled={cepStatus === "loading"}
-                className="flex-1 border border-neutral-950 dark:border-neutral-100 bg-neutral-950 dark:bg-neutral-100 px-3 py-2.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 dark:text-neutral-950 transition-opacity hover:opacity-80 disabled:opacity-50"
+                className="flex-1 rounded-app border border-neutral-950 dark:border-neutral-100 bg-neutral-950 dark:bg-neutral-100 px-3 py-2.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 dark:text-neutral-950 transition-opacity hover:opacity-80 disabled:opacity-50"
               >
                 {cepStatus === "loading" ? "Buscando..." : "Buscar CEP"}
               </button>
@@ -202,14 +202,14 @@ export function AccountAddressesView() {
                     value={number}
                     onChange={(event) => setNumber(event.target.value)}
                     placeholder="Número"
-                    className="w-24 border border-neutral-300 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-neutral-400 focus:border-neutral-500 dark:border-neutral-700"
+                    className="w-24 rounded-app border border-neutral-300 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-neutral-400 focus:border-neutral-500 dark:border-neutral-700"
                   />
                   <input
                     type="text"
                     value={complement}
                     onChange={(event) => setComplement(event.target.value)}
                     placeholder="Complemento (opcional)"
-                    className="flex-1 border border-neutral-300 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-neutral-400 focus:border-neutral-500 dark:border-neutral-700"
+                    className="flex-1 rounded-app border border-neutral-300 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-neutral-400 focus:border-neutral-500 dark:border-neutral-700"
                   />
                 </div>
               </>
@@ -219,7 +219,7 @@ export function AccountAddressesView() {
               type="button"
               onClick={handleAddAddress}
               disabled={!canSave || isSaving}
-              className="border border-neutral-300 px-3 py-2.5 text-xs font-semibold uppercase tracking-widest text-neutral-900 transition-colors hover:border-neutral-500 disabled:opacity-40 dark:border-neutral-700 dark:text-neutral-100"
+              className="rounded-app border border-neutral-300 px-3 py-2.5 text-xs font-semibold uppercase tracking-widest text-neutral-900 transition-colors hover:border-neutral-500 disabled:opacity-40 dark:border-neutral-700 dark:text-neutral-100"
             >
               {isSaving ? "Salvando..." : "Salvar endereço"}
             </button>

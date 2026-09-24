@@ -19,7 +19,7 @@ export function AdminCustomersTab() {
   );
 
   return (
-    <div className="overflow-x-auto border border-neutral-200 dark:border-neutral-800">
+    <div className="overflow-x-auto rounded-app border border-neutral-200 dark:border-neutral-800">
       <table className="w-full min-w-[720px] text-left text-sm">
         <thead>
           <tr className="border-b border-neutral-200 text-[10px] font-semibold uppercase tracking-widest text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">

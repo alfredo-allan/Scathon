@@ -65,7 +65,7 @@ export function CheckoutView() {
           </p>
           <Link
             href="/"
-            className="mt-2 bg-neutral-950 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
+            className="mt-2 rounded-app bg-neutral-950 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
           >
             Voltar para a loja
           </Link>
@@ -81,7 +81,7 @@ export function CheckoutView() {
           <p className="text-sm text-neutral-600 dark:text-neutral-400">Seu carrinho está vazio.</p>
           <Link
             href="/"
-            className="bg-neutral-950 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
+            className="rounded-app bg-neutral-950 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
           >
             Ver produtos
           </Link>
@@ -99,7 +99,7 @@ export function CheckoutView() {
           </p>
           <Link
             href="/cart"
-            className="bg-neutral-950 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
+            className="rounded-app bg-neutral-950 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
           >
             Voltar ao carrinho
           </Link>
@@ -134,7 +134,7 @@ export function CheckoutView() {
 
       <div className="mt-6 grid gap-8 lg:grid-cols-[1.4fr_1fr] lg:gap-12">
         <div className="flex flex-col gap-6">
-          <div className="border border-neutral-200 p-4 dark:border-neutral-800">
+          <div className="rounded-app border border-neutral-200 p-4 dark:border-neutral-800">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">
               Entrega
             </h2>
@@ -169,14 +169,14 @@ export function CheckoutView() {
             )}
           </div>
 
-          <div className="border border-neutral-200 p-4 dark:border-neutral-800">
+          <div className="rounded-app border border-neutral-200 p-4 dark:border-neutral-800">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">
               Produtos
             </h2>
             <div className="mt-3 flex flex-col divide-y divide-neutral-100 dark:divide-neutral-900">
               {items.map((item) => (
                 <div key={`${item.productId}-${item.color}-${item.size}`} className="flex gap-3 py-3">
-                  <div className="relative h-16 w-[52px] shrink-0 overflow-hidden bg-neutral-200 dark:bg-neutral-800">
+                  <div className="relative h-16 w-[52px] shrink-0 overflow-hidden rounded-app bg-neutral-200 dark:bg-neutral-800">
                     <Image src={item.imageUrl} alt={item.title} fill unoptimized sizes="52px" className="object-cover" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -193,7 +193,7 @@ export function CheckoutView() {
             </div>
           </div>
 
-          <div className="border border-neutral-200 p-4 dark:border-neutral-800">
+          <div className="rounded-app border border-neutral-200 p-4 dark:border-neutral-800">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">
               Trocas e devoluções
             </h2>
@@ -207,7 +207,7 @@ export function CheckoutView() {
         </div>
 
         <div className="flex flex-col gap-4 lg:sticky lg:top-6 lg:self-start">
-          <div className="border border-neutral-200 p-4 dark:border-neutral-800">
+          <div className="rounded-app border border-neutral-200 p-4 dark:border-neutral-800">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">
               Total
             </h2>
@@ -233,7 +233,7 @@ export function CheckoutView() {
             type="button"
             onClick={handleFinalize}
             disabled={isSubmitting}
-            className="w-full bg-neutral-950 py-3.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-950"
+            className="w-full rounded-app bg-neutral-950 py-3.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-950"
           >
             {isSubmitting ? "Finalizando..." : "Finalizar compra"}
           </button>

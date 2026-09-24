@@ -98,7 +98,7 @@ export function CartDrawer() {
             <Link
               href="/"
               onClick={closeCartDrawer}
-              className="bg-neutral-950 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
+              className="rounded-app bg-neutral-950 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
             >
               Ver produtos
             </Link>
@@ -132,14 +132,14 @@ export function CartDrawer() {
               <Link
                 href="/cart"
                 onClick={closeCartDrawer}
-                className="mt-4 block w-full bg-neutral-950 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
+                className="mt-4 block w-full rounded-app bg-neutral-950 py-3.5 text-center text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
               >
                 Finalizar Compra
               </Link>
               <button
                 type="button"
                 onClick={closeCartDrawer}
-                className="mt-2 w-full border border-neutral-300 py-3.5 text-xs font-semibold uppercase tracking-widest text-neutral-900 transition-colors hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-500"
+                className="mt-2 w-full rounded-app border border-neutral-300 py-3.5 text-xs font-semibold uppercase tracking-widest text-neutral-900 transition-colors hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-500"
               >
                 Continuar Comprando
               </button>

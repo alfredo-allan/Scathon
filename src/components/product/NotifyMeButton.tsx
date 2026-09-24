@@ -84,8 +84,8 @@ export function NotifyMeButton({
       <div
         className={
           isCompact
-            ? "mt-2 flex items-center gap-1.5 border border-neutral-300 px-2 py-2 text-[10px] font-medium uppercase tracking-widest text-neutral-700 dark:border-neutral-700 dark:text-neutral-300"
-            : "flex w-full items-start gap-2.5 border border-neutral-300 px-4 py-3.5 text-sm text-neutral-800 dark:border-neutral-700 dark:text-neutral-200"
+            ? "mt-2 flex items-center gap-1.5 rounded-app border border-neutral-300 px-2 py-2 text-[10px] font-medium uppercase tracking-widest text-neutral-700 dark:border-neutral-700 dark:text-neutral-300"
+            : "flex w-full items-start gap-2.5 rounded-app border border-neutral-300 px-4 py-3.5 text-sm text-neutral-800 dark:border-neutral-700 dark:text-neutral-200"
         }
       >
         <svg
@@ -121,8 +121,8 @@ export function NotifyMeButton({
         onClick={() => setIsOpen(true)}
         className={
           isCompact
-            ? "mt-2 w-full border border-neutral-300 py-2 text-[10px] font-semibold uppercase tracking-widest text-neutral-700 transition-colors hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-300 dark:hover:border-neutral-500"
-            : "w-full border border-neutral-300 py-3.5 text-xs font-semibold uppercase tracking-widest text-neutral-900 transition-colors hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-500"
+            ? "mt-2 w-full rounded-app border border-neutral-300 py-2 text-[10px] font-semibold uppercase tracking-widest text-neutral-700 transition-colors hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-300 dark:hover:border-neutral-500"
+            : "w-full rounded-app border border-neutral-300 py-3.5 text-xs font-semibold uppercase tracking-widest text-neutral-900 transition-colors hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-500"
         }
       >
         Avise-me quando disponível
@@ -144,8 +144,8 @@ export function NotifyMeButton({
         placeholder="seu@email.com"
         className={
           isCompact
-            ? "min-w-0 flex-1 border border-neutral-300 bg-transparent px-2 py-2 text-xs outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:focus:border-neutral-100"
-            : "w-full flex-1 border border-neutral-300 bg-transparent px-3 py-3.5 text-sm outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:focus:border-neutral-100"
+            ? "min-w-0 flex-1 rounded-app border border-neutral-300 bg-transparent px-2 py-2 text-xs outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:focus:border-neutral-100"
+            : "w-full flex-1 rounded-app border border-neutral-300 bg-transparent px-3 py-3.5 text-sm outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:focus:border-neutral-100"
         }
       />
       <button
@@ -153,8 +153,8 @@ export function NotifyMeButton({
         disabled={status === "submitting"}
         className={
           isCompact
-            ? "shrink-0 bg-neutral-950 px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-950"
-            : "shrink-0 bg-neutral-950 px-6 py-3.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-950"
+            ? "shrink-0 rounded-app bg-neutral-950 px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-950"
+            : "shrink-0 rounded-app bg-neutral-950 px-6 py-3.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-950"
         }
       >
         {status === "submitting" ? (isCompact ? "..." : "Enviando…") : isCompact ? "OK" : "Avise-me"}

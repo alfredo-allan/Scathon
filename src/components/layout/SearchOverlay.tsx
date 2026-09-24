@@ -90,7 +90,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
                     key={category.id}
                     href={category.href}
                     onClick={handleClose}
-                    className="border border-neutral-200 dark:border-neutral-800 px-4 py-2 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                    className="rounded-app border border-neutral-200 dark:border-neutral-800 px-4 py-2 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                   >
                     {category.label}
                   </Link>
@@ -110,7 +110,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
                     onClick={handleClose}
                     className="group"
                   >
-                    <div className="relative aspect-[3/4] overflow-hidden bg-neutral-300 dark:bg-neutral-700">
+                    <div className="relative aspect-[3/4] overflow-hidden rounded-app bg-neutral-300 dark:bg-neutral-700">
                       <Image
                         src={product.coverImage ?? product.imageUrl}
                         alt={product.title}
@@ -141,7 +141,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
                     onClick={handleClose}
                     className="flex items-center gap-4 py-3"
                   >
-                    <div className="relative h-16 w-12 shrink-0 overflow-hidden bg-neutral-300 dark:bg-neutral-700">
+                    <div className="relative h-16 w-12 shrink-0 overflow-hidden rounded-app bg-neutral-300 dark:bg-neutral-700">
                       <Image
                         src={product.coverImage ?? product.imageUrl}
                         alt={product.title}

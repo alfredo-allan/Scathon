@@ -31,7 +31,7 @@ export function CartLineItem({ item, onIncrease, onDecrease, onRemove, compact =
   return (
     <div className={`flex gap-4 ${compact ? "py-4" : "py-5"}`}>
       <div
-        className={`relative shrink-0 overflow-hidden bg-neutral-200 dark:bg-neutral-800 ${
+        className={`relative shrink-0 overflow-hidden rounded-app bg-neutral-200 dark:bg-neutral-800 ${
           compact ? "h-24 w-[72px]" : "h-28 w-[88px]"
         }`}
       >
@@ -57,7 +57,7 @@ export function CartLineItem({ item, onIncrease, onDecrease, onRemove, compact =
         </div>
 
         <div className="mt-2 flex items-center justify-between">
-          <div className="flex items-center border border-neutral-300 dark:border-neutral-700">
+          <div className="flex items-center overflow-hidden rounded-app border border-neutral-300 dark:border-neutral-700">
             <button
               type="button"
               aria-label={`Diminuir quantidade de ${item.title}`}

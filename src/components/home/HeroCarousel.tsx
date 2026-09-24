@@ -155,7 +155,7 @@ export function HeroCarousel({ slides, autoPlayMs = 6000 }: HeroCarouselProps) {
               )}
               <Link
                 href={slide.ctaHref}
-                className={`mt-3 inline-block px-6 py-3 text-xs font-semibold uppercase tracking-widest transition-colors ${
+                className={`mt-3 inline-block rounded-app px-6 py-3 text-xs font-semibold uppercase tracking-widest transition-colors ${
                   slide.theme === "dark"
                     ? "bg-neutral-50 text-neutral-950 hover:bg-neutral-200"
                     : "bg-neutral-950 text-neutral-50 hover:bg-neutral-800"
@@ -168,7 +168,7 @@ export function HeroCarousel({ slides, autoPlayMs = 6000 }: HeroCarouselProps) {
         ))}
       </div>
 
-      {/* {slides.length > 1 && (
+      {slides.length > 1 && (
         <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
           {slides.map((slide, index) => (
             <button
@@ -185,7 +185,7 @@ export function HeroCarousel({ slides, autoPlayMs = 6000 }: HeroCarouselProps) {
             />
           ))}
         </div>
-      )} */}
+      )}
     </section>
   );
 }

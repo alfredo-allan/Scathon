@@ -20,6 +20,12 @@
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica,
     Arial, sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  /* Subtle, brand-wide corner treatment for buttons, cards, inputs and
+     other previously sharp-cornered UI (see `rounded-app` usage across
+     components) - one token here so the radius stays consistent and can
+     be tuned from a single place instead of a scattered `rounded-[15px]`
+     copied into every className. */
+  --radius-app: 15px;
 }
 
 html {

@@ -22,12 +22,12 @@ export function AdminInventoryTab() {
   return (
     <div className="flex flex-col gap-4">
       {lowStockCount > 0 && (
-        <p className="border border-amber-300 bg-amber-50 px-4 py-2.5 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300">
+        <p className="rounded-app border border-amber-300 bg-amber-50 px-4 py-2.5 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300">
           {lowStockCount} {lowStockCount === 1 ? "produto está" : "produtos estão"} com estoque em {LOW_STOCK_THRESHOLD} unidades ou menos.
         </p>
       )}
 
-      <div className="flex flex-col divide-y divide-neutral-100 border border-neutral-200 dark:divide-neutral-900 dark:border-neutral-800">
+      <div className="flex flex-col divide-y divide-neutral-100 rounded-app border border-neutral-200 dark:divide-neutral-900 dark:border-neutral-800">
         {products.map((product) => (
           <InventoryRow key={product.id} slug={product.slug} title={product.title} imageUrl={product.coverImage ?? product.imageUrl} price={product.price} quantity={stock[product.slug] ?? 0} />
         ))}
@@ -75,7 +75,7 @@ function InventoryRow({
 
   return (
     <div className="flex flex-wrap items-center gap-3 px-4 py-3">
-      <span className="relative block h-14 w-11 shrink-0 overflow-hidden bg-neutral-200 dark:bg-neutral-800">
+      <span className="relative block h-14 w-11 shrink-0 overflow-hidden rounded-app bg-neutral-200 dark:bg-neutral-800">
         <Image src={imageUrl} alt={title} fill unoptimized sizes="44px" className="object-cover" />
       </span>
       <div className="min-w-0 flex-1">
@@ -84,7 +84,7 @@ function InventoryRow({
       </div>
 
       {isLow && (
-        <span className="shrink-0 border border-amber-300 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-amber-700 dark:border-amber-900 dark:text-amber-400">
+        <span className="shrink-0 rounded-app border border-amber-300 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-amber-700 dark:border-amber-900 dark:text-amber-400">
           {quantity === 0 ? "Esgotado" : "Estoque baixo"}
         </span>
       )}
@@ -95,7 +95,7 @@ function InventoryRow({
           onClick={() => adjustStockFor(slug, -1)}
           disabled={quantity === 0}
           aria-label="Remover uma unidade"
-          className="flex h-7 w-7 items-center justify-center border border-neutral-300 text-neutral-700 transition-colors hover:border-neutral-500 disabled:opacity-30 dark:border-neutral-700 dark:text-neutral-300"
+          className="flex h-7 w-7 items-center justify-center rounded-app border border-neutral-300 text-neutral-700 transition-colors hover:border-neutral-500 disabled:opacity-30 dark:border-neutral-700 dark:text-neutral-300"
         >
           −
         </button>
@@ -110,13 +110,13 @@ function InventoryRow({
               event.currentTarget.blur();
             }
           }}
-          className="w-14 border border-neutral-300 bg-transparent px-2 py-1 text-center text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:focus:border-neutral-100"
+          className="w-14 rounded-app border border-neutral-300 bg-transparent px-2 py-1 text-center text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:focus:border-neutral-100"
         />
         <button
           type="button"
           onClick={() => adjustStockFor(slug, 1)}
           aria-label="Adicionar uma unidade"
-          className="flex h-7 w-7 items-center justify-center border border-neutral-300 text-neutral-700 transition-colors hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-300"
+          className="flex h-7 w-7 items-center justify-center rounded-app border border-neutral-300 text-neutral-700 transition-colors hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-300"
         >
           +
         </button>

@@ -88,7 +88,7 @@ export function ShippingEstimator() {
               key={saved.id}
               type="button"
               onClick={() => handleUseSavedAddress(saved.cep)}
-              className="border border-neutral-300 px-2 py-1 text-[11px] font-medium text-neutral-800 transition-colors hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-500"
+              className="rounded-app border border-neutral-300 px-2 py-1 text-[11px] font-medium text-neutral-800 transition-colors hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-500"
             >
               {saved.label}
             </button>
@@ -107,13 +107,13 @@ export function ShippingEstimator() {
           }}
           placeholder="00000-000"
           maxLength={9}
-          className="w-full max-w-[160px] border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-neutral-400 focus:border-neutral-500"
+          className="w-full max-w-[160px] rounded-app border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-neutral-400 focus:border-neutral-500"
         />
         <button
           type="button"
           onClick={() => runLookup(cep)}
           disabled={status === "loading"}
-          className="border border-neutral-950 dark:border-neutral-100 bg-neutral-950 dark:bg-neutral-100 px-5 py-2.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 dark:text-neutral-950 transition-opacity hover:opacity-80 disabled:opacity-50"
+          className="rounded-app border border-neutral-950 dark:border-neutral-100 bg-neutral-950 dark:bg-neutral-100 px-5 py-2.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 dark:text-neutral-950 transition-opacity hover:opacity-80 disabled:opacity-50"
         >
           {status === "loading" ? "Calculando..." : "Calcular"}
         </button>

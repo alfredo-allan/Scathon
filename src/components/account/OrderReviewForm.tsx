@@ -65,7 +65,7 @@ export function OrderReviewForm({ slug, title }: OrderReviewFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="mt-3 flex flex-col gap-2.5 border border-neutral-200 p-3 dark:border-neutral-800"
+      className="mt-3 flex flex-col gap-2.5 rounded-app border border-neutral-200 p-3 dark:border-neutral-800"
     >
       <p className="text-xs font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">
         Avaliar {title}
@@ -95,14 +95,14 @@ export function OrderReviewForm({ slug, title }: OrderReviewFormProps) {
         onChange={(event) => setComment(event.target.value)}
         placeholder="Conte como foi usar o produto (opcional)"
         rows={2}
-        className="w-full resize-none border border-neutral-300 bg-transparent px-2.5 py-2 text-xs outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:focus:border-neutral-100"
+        className="w-full resize-none rounded-app border border-neutral-300 bg-transparent px-2.5 py-2 text-xs outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:focus:border-neutral-100"
       />
 
       <div className="flex items-center gap-3">
         <button
           type="submit"
           disabled={rating === 0 || isSubmitting}
-          className="bg-neutral-950 px-4 py-2 text-[10px] font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 disabled:opacity-40 dark:bg-neutral-100 dark:text-neutral-950"
+          className="rounded-app bg-neutral-950 px-4 py-2 text-[10px] font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 disabled:opacity-40 dark:bg-neutral-100 dark:text-neutral-950"
         >
           {isSubmitting ? "Enviando…" : "Enviar avaliação"}
         </button>

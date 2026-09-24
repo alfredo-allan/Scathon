@@ -39,7 +39,7 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
         {images.map((src, index) => (
           <div
             key={`${src}-${index}`}
-            className="relative aspect-[3/4] w-full overflow-hidden bg-neutral-300 dark:bg-neutral-700"
+            className="relative aspect-[3/4] w-full overflow-hidden rounded-app bg-neutral-300 dark:bg-neutral-700"
           >
             <Image
               src={src}

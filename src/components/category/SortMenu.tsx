@@ -52,7 +52,7 @@ export function SortMenu({ options, value, onChange }: SortMenuProps) {
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
         aria-haspopup="listbox"
-        className="flex items-center gap-2 border border-neutral-300 dark:border-neutral-700 px-4 py-2 text-xs font-medium uppercase tracking-widest text-neutral-800 dark:text-neutral-100 transition-colors hover:border-neutral-500 dark:hover:border-neutral-500"
+        className="flex items-center gap-2 rounded-app border border-neutral-300 dark:border-neutral-700 px-4 py-2 text-xs font-medium uppercase tracking-widest text-neutral-800 dark:text-neutral-100 transition-colors hover:border-neutral-500 dark:hover:border-neutral-500"
       >
         {activeLabel}
         <svg
@@ -68,7 +68,7 @@ export function SortMenu({ options, value, onChange }: SortMenuProps) {
       {open && (
         <div
           role="listbox"
-          className="absolute right-0 z-20 mt-2 w-56 border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-lg"
+          className="absolute right-0 z-20 mt-2 w-56 overflow-hidden rounded-app border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-lg"
         >
           <ul className="py-1">
             {options.map((option) => (
