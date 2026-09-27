@@ -80,10 +80,10 @@ export function DrawerMenu({ open, onClose }: DrawerMenuProps) {
 
           {/*
             "Minha Conta", "Entrar / Criar Conta" and "Painel Admin" all
-            point at real pages now (`/account`, `/login`, `/admin`) -
-            `<AdminView/>` guards that last one against non-admin accounts
-            on its own, so this link only needs to stay hidden from signed-
-            out/non-admin visitors as a matter of UX, not security.
+            point at real pages now (`/account`, `/login`, `/admin`) - the
+            real gate on that last one is `src/proxy.ts` (a signed, server-
+            checked cookie), so hiding this link from non-admin visitors
+            here is only ever a UX nicety, not the actual security boundary.
           */}
           <div className="mt-8 border-t border-neutral-200 dark:border-neutral-800 pt-4 flex flex-col gap-3 text-sm">
             {isAuthenticated ? (

@@ -86,53 +86,15 @@ export function AccountView() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-2">
-        <Link
-          href="/account/orders"
-          className="group flex items-center justify-between rounded-app border border-neutral-200 p-4 transition-colors hover:border-neutral-400 dark:border-neutral-800 dark:hover:border-neutral-600"
-        >
-          <div>
-            <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Meus Pedidos</p>
-            <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
-              Acompanhe suas compras e avalie produtos
-            </p>
-          </div>
-          <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5" fill="none" aria-hidden>
-            <path d="m9 6 6 6-6 6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </Link>
-
-        <Link
-          href="/wishlist"
-          className="group flex items-center justify-between rounded-app border border-neutral-200 p-4 transition-colors hover:border-neutral-400 dark:border-neutral-800 dark:hover:border-neutral-600"
-        >
-          <div>
-            <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Curtidos</p>
-            <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
-              Os produtos que você salvou como favoritos
-            </p>
-          </div>
-          <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5" fill="none" aria-hidden>
-            <path d="m9 6 6 6-6 6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </Link>
-
-        <Link
-          href="/account/addresses"
-          className={`group flex items-center justify-between rounded-app border border-neutral-200 p-4 transition-colors hover:border-neutral-400 dark:border-neutral-800 dark:hover:border-neutral-600 ${isAdmin ? "" : "sm:col-span-2"}`}
-        >
-          <div>
-            <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Meus Endereços</p>
-            <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
-              Salve mais de um endereço para sua preferência de entrega
-            </p>
-          </div>
-          <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5" fill="none" aria-hidden>
-            <path d="m9 6 6 6-6 6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </Link>
-
-        {isAdmin && (
+      {isAdmin ? (
+        // Uma conta admin não é uma cliente com um card extra - ela não
+        // deve ver "Meus Pedidos"/"Curtidos"/"Meus Endereços" (conceitos de
+        // quem compra na loja, não de quem administra) pendurados na
+        // própria "Minha Conta". Essa tela vira só um resumo objetivo da
+        // conta + o caminho de volta pro painel; toda a navegação
+        // administrativa de verdade já vive em `<AdminHeader/>` (ver
+        // `<SiteChrome/>`) enquanto a rota é `/admin`.
+        <div className="mt-6">
           <Link
             href="/admin"
             className="group flex items-center justify-between rounded-app border border-neutral-200 p-4 transition-colors hover:border-neutral-400 dark:border-neutral-800 dark:hover:border-neutral-600"
@@ -147,8 +109,55 @@ export function AccountView() {
               <path d="m9 6 6 6-6 6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </Link>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <Link
+            href="/account/orders"
+            className="group flex items-center justify-between rounded-app border border-neutral-200 p-4 transition-colors hover:border-neutral-400 dark:border-neutral-800 dark:hover:border-neutral-600"
+          >
+            <div>
+              <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Meus Pedidos</p>
+              <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+                Acompanhe suas compras e avalie produtos
+              </p>
+            </div>
+            <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5" fill="none" aria-hidden>
+              <path d="m9 6 6 6-6 6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Link>
+
+          <Link
+            href="/wishlist"
+            className="group flex items-center justify-between rounded-app border border-neutral-200 p-4 transition-colors hover:border-neutral-400 dark:border-neutral-800 dark:hover:border-neutral-600"
+          >
+            <div>
+              <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Curtidos</p>
+              <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+                Os produtos que você salvou como favoritos
+              </p>
+            </div>
+            <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5" fill="none" aria-hidden>
+              <path d="m9 6 6 6-6 6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Link>
+
+          <Link
+            href="/account/addresses"
+            className="group flex items-center justify-between rounded-app border border-neutral-200 p-4 transition-colors hover:border-neutral-400 dark:border-neutral-800 dark:hover:border-neutral-600 sm:col-span-2"
+          >
+            <div>
+              <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Meus Endereços</p>
+              <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+                Salve mais de um endereço para sua preferência de entrega
+              </p>
+            </div>
+            <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5" fill="none" aria-hidden>
+              <path d="m9 6 6 6-6 6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Link>
+        </div>
+      )}
 
       <div className="mt-8 border-t border-neutral-200 pt-6 dark:border-neutral-800">
         <h2 className="text-sm font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">

@@ -2,10 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
 import { Providers } from "@/components/providers/Providers";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
-import { FloatingDock } from "@/components/layout/FloatingDock";
-import { CartDrawer } from "@/components/cart/CartDrawer";
+import { SiteChrome } from "@/components/layout/SiteChrome";
 import { MetaPixelRouteTracker } from "@/components/analytics/MetaPixelRouteTracker";
 
 // Meta (Facebook/Instagram) Pixel ID - used to load the tracking script below
@@ -97,23 +94,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <MetaPixelRouteTracker />
 
         <Providers>
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
           {/*
-            Fixed-position, so it doesn't matter that it lives outside the
-            document's normal header/main/footer flow - see FloatingDock's
-            own doc comment for how it hands off with <Header/> on scroll.
+            Which header/footer/dock/cart render depends on the route -
+            `/admin` gets its own minimal chrome instead of the storefront's.
+            See <SiteChrome/>'s own doc comment.
           */}
-          <FloatingDock />
-          {/*
-            Lives at the root, alongside <Header/>'s own <DrawerMenu/> and
-            <SearchOverlay/>, since it needs to open from any page the
-            moment `addItem` runs (see <CartContext/> and <CartDrawer/>'s
-            own doc comments) - not just from wherever the "add to cart"
-            button happens to be.
-          */}
-          <CartDrawer />
+          <SiteChrome>{children}</SiteChrome>
         </Providers>
       </body>
     </html>

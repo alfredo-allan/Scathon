@@ -35,20 +35,30 @@ const TABS: Array<{ id: TabId; label: string }> = [
  * panel's shape and potential are real to look at today, even with zero
  * backend behind it.
  *
- * Security note (the "proteção total" part of the brief): this gate is a
- * `role === "admin"` check against client-side session state, which is
- * fine for *hiding* the panel from the wrong audience during development
- * but is not real protection - anyone can read/modify client JS or
- * localStorage. `registerAccount` (the public signup path) already refuses
- * to ever create an `"admin"` account, which closes the obvious self-
- * escalation hole, but the durable fix is server-side: once there's a real
- * backend, every `/api/admin/*` route needs its own role check against a
- * verified session (a signed httpOnly cookie/JWT), and this page should
- * become a Server Component that redirects before rendering anything
- * (Next's `middleware.ts` guarding the `/admin` path is the other common
- * place to enforce this) rather than trusting the client-side `isAdmin`
- * flag alone. Nothing below should ever assume this gate is sufficient by
- * itself.
+ * Security note: the real gate now lives in `src/proxy.ts` - it checks a
+ * signed, httpOnly cookie (issued by `POST /api/auth/login`, see
+ * `@/lib/session`) on the server, before this component (or any `/admin`
+ * route) is even allowed to render, for both hard loads and client-side
+ * navigations. `registerAccount` (the public signup path) also still
+ * refuses to ever create an `"admin"` account, closing the obvious self-
+ * escalation hole.
+ *
+ * The two checks below (`!isAuthenticated`/`!isAdmin`) are what's left
+ * *after* that: friendly fallback screens for the narrow window where the
+ * client's own `scathon:session` (localStorage, see `<AuthContext/>`) is
+ * out of sync with the real cookie - e.g. it expired mid-visit, or
+ * `logout()` cleared it - never the actual security boundary. Nothing below
+ * should assume otherwise.
+ *
+ * One honest limitation this doesn't fix: the tabs below still read plain
+ * mock arrays (`@/lib/adminOrders`, `@/lib/adminCustomers`, ...) as client
+ * components, so that data still ships inside this route's JS bundle like
+ * every other client component here - proxy.ts stops an unauthorized
+ * visitor from *navigating* to `/admin` and getting that bundle in the
+ * first place, but doesn't turn the mock data itself into a server-only
+ * secret. That needs a real backend (data fetched from a protected
+ * API/DB instead of imported as a static module) - the same "mock now,
+ * swap later" gap the rest of this project's data layer already has.
  */
 export function AdminView() {
   const { user, isAuthenticated, isAdmin } = useAuth();

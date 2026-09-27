@@ -23,10 +23,17 @@ interface ProductGalleryProps {
  * through *them* first; once the gallery's own scroll bottoms out, the
  * browser's native scroll-chaining hands the rest of the gesture to the
  * page itself - that handoff needs no JS, it's just what a bounded
- * `overflow: auto` box inside a `position: sticky` parent already does.
- * `no-scrollbar` (the same utility `<Header/>`'s category nav and
- * `<CategoryBar/>` already rely on) hides the scrollbar chrome without
- * disabling the scroll it drives.
+ * `overflow: auto` box inside a `position: sticky` parent already does, AS
+ * LONG AS `overscroll-behavior` is left at its default `auto` on this box.
+ * `overscroll-contain` (tried at first) looks like the tidy/safe choice,
+ * but does the opposite of what's wanted: per spec, `contain` still lets
+ * the box itself scroll, but explicitly stops the leftover gesture from
+ * chaining out to the page once it bottoms out - confirmed with a headless
+ * scroll test (scrolling well past the gallery's own max left
+ * `window.scrollY` stuck at 0 with `contain`; `auto` is what makes the
+ * handoff actually happen). `no-scrollbar` (the same utility `<Header/>`'s
+ * category nav and `<CategoryBar/>` already rely on) hides the scrollbar
+ * chrome without disabling the scroll it drives.
  *
  * Mobile/`md`-down: none of the above applies - no sticky, no bounded
  * height, no internal scroll. Photos are just stacked in normal page
@@ -34,7 +41,7 @@ interface ProductGalleryProps {
  */
 export function ProductGallery({ images, title }: ProductGalleryProps) {
   return (
-    <div className="no-scrollbar lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
+    <div className="no-scrollbar lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:self-start lg:overflow-y-auto lg:overscroll-y-auto lg:pr-1">
       <div className="mx-auto flex max-w-xl flex-col gap-3 md:max-w-2xl">
         {images.map((src, index) => (
           <div

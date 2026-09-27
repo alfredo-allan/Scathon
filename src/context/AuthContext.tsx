@@ -83,6 +83,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     authStore.setValue(EMPTY_SESSION);
+    // Also clears the real, signed `/admin` session cookie (see
+    // `POST /api/auth/logout`, `@/lib/session`, `src/proxy.ts`) - fired and
+    // forgotten rather than awaited, since `logout()` is called from plain
+    // click handlers all over the app (`<DrawerMenu/>`, `<AccountView/>`,
+    // `<AdminHeader/>`...) that don't expect a promise back, and the local
+    // session above is what those screens actually react to right away.
+    if (typeof window !== "undefined") {
+      fetch("/api/auth/logout", { method: "POST" }).catch(() => {
+        // Offline/network hiccup: worst case the cookie outlives this
+        // logout until it naturally expires (12h, see `SESSION_TTL_SECONDS`)
+        // - it still never grants anything beyond what a fresh login to the
+        // same account would.
+      });
+    }
   }, []);
 
   const value = useMemo<AuthContextValue>(

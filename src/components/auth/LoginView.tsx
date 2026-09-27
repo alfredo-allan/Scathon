@@ -117,6 +117,25 @@ export function LoginView() {
       }
       setError(null)
       setIsSubmitting(true)
+      // Also asks the server for a real, signed session (see
+      // `POST /api/auth/login`) - this is what `src/proxy.ts` actually
+      // checks before letting anyone into `/admin`, independent of the
+      // client-side `login(...)` below. Awaited before navigating so the
+      // cookie is already set by the time an admin account is routed
+      // straight to `/admin`. A self-registered account the server doesn't
+      // recognize (see that route's doc comment) just gets `ok: false` here
+      // - harmless, since it can only ever be `role: "customer"` anyway.
+      try {
+        await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: trimmedEmail, password })
+        })
+      } catch {
+        // Offline/network hiccup: the client-side session below still lets
+        // the visitor use the rest of the app - they just won't pass the
+        // real `/admin` gate until a login attempt reaches the server.
+      }
       login(`mock-token-${Date.now()}`, {
         id: `user-${account.email}`,
         displayName: account.displayName,
