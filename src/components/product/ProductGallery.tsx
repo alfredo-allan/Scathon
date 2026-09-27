@@ -71,8 +71,19 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
 
   return (
     <>
-      {/* Mobile/tablet - foto em destaque + miniaturas. */}
-      <div className="lg:hidden">
+      {/* Mobile/tablet - foto em destaque + miniaturas.
+          `min-w-0` aqui não é decoração: este <div> é item direto do grid de
+          duas colunas da página (`ProductDetail.tsx`), e por padrão um item
+          de grid/flex tem `min-width: auto` - ou seja, o navegador nunca o
+          encolhe abaixo da largura "natural" do próprio conteúdo. Sem isso,
+          um produto com bastante fotos faria a fileira de miniaturas (que
+          quer rolar por conta própria, ver `overflow-x-auto` abaixo) esticar
+          esta div - e com ela a coluna inteira do grid e a página junto -
+          em vez de simplesmente ganhar sua própria barra de rolagem
+          horizontal. `min-w-0` devolve pra esta div a permissão de ficar
+          mais estreita que seu conteúdo, que é exatamente o que a rolagem
+          interna da fileira precisa pra funcionar de verdade. */}
+      <div className="min-w-0 lg:hidden">
         <div
           className="relative aspect-[3/4] w-full overflow-hidden rounded-app bg-neutral-300 dark:bg-neutral-700"
           onTouchStart={handleTouchStart}
@@ -90,7 +101,22 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
         </div>
 
         {hasMultiplePhotos && (
-          <div className="no-scrollbar mt-3 flex gap-2 overflow-x-auto">
+          // `justify-between` é o "cálculo" pedido, só que feito pelo próprio
+          // motor de layout do navegador em vez de JS/`ResizeObserver` nosso:
+          // como não há uma quantidade fixa de fotos por produto, a largura
+          // de cada miniatura é fixa (`w-14`) e o espaço que sobra entre elas
+          // é sempre recalculado pra preencher a largura inteira do card,
+          // qualquer que seja o número de fotos (2, 3, 4...). `gap-2` some
+          // como piso mínimo entre elas nesse cálculo - nunca ficam mais
+          // próximas que isso, só mais distantes quando sobra espaço.
+          // Quando as miniaturas já não cabem (produto com bem mais fotos),
+          // não sobra espaço livre pra distribuir - o próprio flexbox então
+          // empilha do início pra fora sem inventar espaço extra, e
+          // `overflow-x-auto` assume a rolagem horizontal a partir daí. Ou
+          // seja, os dois comportamentos pedidos (preencher quando cabe,
+          // rolar quando não cabe) saem do mesmo `justify-between`, sem
+          // precisar de duas classes/condicionais diferentes.
+          <div className="no-scrollbar mt-3 flex justify-between gap-2 overflow-x-auto">
             {images.map((src, index) => (
               <button
                 key={`${src}-${index}`}

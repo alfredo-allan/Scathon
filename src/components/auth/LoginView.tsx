@@ -124,18 +124,48 @@ export function LoginView() {
       // cookie is already set by the time an admin account is routed
       // straight to `/admin`. A self-registered account the server doesn't
       // recognize (see that route's doc comment) just gets `ok: false` here
-      // - harmless, since it can only ever be `role: "customer"` anyway.
+      // - harmless, since it can only ever be `role: "customer"` anyway, and
+      // never needed the cookie to begin with.
+      //
+      // For the seeded admin account, though, `ok: true` here is not
+      // optional: it's the only thing that actually gets the visitor past
+      // `src/proxy.ts`'s server-side gate. Silently swallowing a failed or
+      // non-ok response here (as an earlier version of this function did)
+      // meant an admin login could look 100% successful client-side -
+      // `login(...)` still ran, `/account` still showed "Admin Scathon" -
+      // while `/admin` bounced back to `/login` every single time, because
+      // no real cookie was ever issued. That exact symptom (SESSION_SECRET
+      // missing in the Vercel production env, see `.env.example` and
+      // `@/lib/session`'s `getSecretKey`) is what this check now surfaces
+      // as a real error instead of a silent, confusing loop.
+      let serverSessionConfirmed = false
       try {
-        await fetch('/api/auth/login', {
+        const response = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: trimmedEmail, password })
         })
+        const data: unknown = await response.json().catch(() => null)
+        serverSessionConfirmed =
+          response.ok &&
+          typeof data === 'object' &&
+          data !== null &&
+          (data as { ok?: unknown }).ok === true
       } catch {
-        // Offline/network hiccup: the client-side session below still lets
-        // the visitor use the rest of the app - they just won't pass the
-        // real `/admin` gate until a login attempt reaches the server.
+        // Offline/network hiccup - treated the same as any other non-ok
+        // response below (blocking only for the admin account).
       }
+
+      if (account.role === 'admin' && !serverSessionConfirmed) {
+        setIsSubmitting(false)
+        setError(
+          'Não foi possível abrir sua sessão de administrador no servidor (é isso que protege /admin - ver src/proxy.ts). ' +
+            'Tente novamente em instantes; se persistir, confirme se a variável de ambiente SESSION_SECRET está configurada ' +
+            'em produção (Vercel: Project Settings -> Environment Variables - ver .env.example).'
+        )
+        return
+      }
+
       login(`mock-token-${Date.now()}`, {
         id: `user-${account.email}`,
         displayName: account.displayName,
