@@ -171,6 +171,16 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
       <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr] lg:gap-12">
         <ProductGallery images={galleryImages} title={product.title} />
 
+        {/* Painel de compra: em telas lg+ ele fica `sticky` junto com a
+            galeria (ver `<ProductGallery/>`) - pro congelamento visual bater
+            com a expectativa (só a galeria parece rolar, o painel fica
+            "parado" na tela), ele precisa caber inteiro numa tela comum sem
+            precisar do próprio scroll; senão a "sticky" libera no meio do
+            conteúdo e corta pedaço dele. Por isso os espaçamentos abaixo têm
+            uma versão `lg:` mais compacta que a versão mobile (que continua
+            com o respiro normal, já que lá não existe esse painel fixo nem
+            essa restrição de altura) - mesmo conteúdo dos dois lados, só a
+            densidade muda. */}
         <div className="lg:sticky lg:top-6 lg:self-start">
           <h1 className="text-xl font-semibold tracking-tight text-neutral-950 dark:text-neutral-50 md:text-2xl">
             {product.title}
@@ -184,7 +194,7 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
             <button
               type="button"
               onClick={() => setReviewsOpen(true)}
-              className="mt-1.5 flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-400"
+              className="mt-1.5 flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-400 lg:mt-1"
             >
               <span aria-hidden className="flex text-neutral-900 dark:text-neutral-100">
                 {Array.from({ length: 5 }, (_, index) => (
@@ -195,8 +205,8 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
             </button>
           )}
 
-          <div className="mt-4 flex flex-wrap items-baseline gap-2">
-            <span className="text-2xl font-semibold text-neutral-950 dark:text-neutral-50">
+          <div className="mt-4 flex flex-wrap items-baseline gap-2 lg:mt-2">
+            <span className="text-2xl font-semibold text-neutral-950 dark:text-neutral-50 lg:text-xl">
               {currencyFormatter.format(product.price)}
             </span>
             <span className="text-sm text-neutral-500 dark:text-neutral-400">no Pix</span>
@@ -218,7 +228,7 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
           </p>
 
           {hasSizes && (
-            <div className="mt-6">
+            <div className="mt-6 lg:mt-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">
                   Tamanho e numeração
@@ -265,7 +275,7 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
                 </table>
               )}
 
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-2 lg:mt-2">
                 {product.sizes!.map((size) => {
                   const isActive = size === activeSize;
                   return (
@@ -277,7 +287,7 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
                         setActiveSize(size);
                         setSizeError(false);
                       }}
-                      className={`h-11 min-w-11 rounded-app border px-3 text-sm transition-colors ${
+                      className={`h-11 min-w-11 rounded-app border px-3 text-sm transition-colors lg:h-9 lg:min-w-9 lg:text-xs ${
                         isActive
                           ? "border-neutral-950 bg-neutral-950 text-neutral-50 dark:border-neutral-100 dark:bg-neutral-100 dark:text-neutral-950"
                           : "border-neutral-300 text-neutral-800 hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-500"
@@ -297,17 +307,17 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
           )}
 
           {relatedProducts.length > 0 && (
-            <div className="mt-6">
+            <div className="mt-6 lg:mt-3">
               <span className="text-xs font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">
                 Você também pode gostar
               </span>
-              <div className="mt-3 flex gap-3 overflow-x-auto pb-1">
+              <div className="mt-3 flex gap-3 overflow-x-auto pb-1 lg:mt-2 lg:gap-2">
                 {relatedProducts.map((related) => (
                   <Link
                     key={related.id}
                     href={`/shop/${related.category}/${related.slug}`}
                     title={related.title}
-                    className="group w-16 shrink-0 lg:w-20"
+                    className="group w-16 shrink-0 lg:w-10"
                   >
                     <div className="relative aspect-[3/4] overflow-hidden rounded-app bg-neutral-300 dark:bg-neutral-700">
                       <Image
@@ -319,7 +329,11 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
                         className="object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                     </div>
-                    <p className="mt-1.5 line-clamp-2 text-[11px] leading-tight text-neutral-600 dark:text-neutral-400">
+                    {/* Legenda só no mobile - no painel compacto do desktop
+                        a miniatura sozinha (+ `title` como tooltip nativo do
+                        link) já basta, e cortar essa linha de texto é o que
+                        mais economiza altura aqui. */}
+                    <p className="mt-1.5 line-clamp-2 text-[11px] leading-tight text-neutral-600 dark:text-neutral-400 lg:hidden">
                       {related.title}
                     </p>
                   </Link>
@@ -328,7 +342,7 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
             </div>
           )}
 
-          <div className="mt-6 flex flex-col gap-3">
+          <div className="mt-6 flex flex-col gap-3 lg:mt-3 lg:gap-2">
             {isComingSoon ? (
               <NotifyMeButton
                 productId={product.id}
@@ -341,7 +355,7 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
               <button
                 type="button"
                 onClick={handleAddToCart}
-                className="w-full rounded-app bg-neutral-950 py-3.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
+                className="w-full rounded-app bg-neutral-950 py-3.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950 lg:py-2.5"
               >
                 {addedFeedback ? "Adicionado ao carrinho ✓" : "Adicionar ao carrinho"}
               </button>
@@ -351,7 +365,7 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
               type="button"
               onClick={() => toggleSaved(product.id)}
               aria-pressed={saved}
-              className="flex w-full items-center justify-center gap-2 rounded-app border border-neutral-300 py-3.5 text-xs font-semibold uppercase tracking-widest text-neutral-900 transition-colors hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-500"
+              className="flex w-full items-center justify-center gap-2 rounded-app border border-neutral-300 py-3.5 text-xs font-semibold uppercase tracking-widest text-neutral-900 transition-colors hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-500 lg:py-2.5"
             >
               {saved ? "Salvo nos favoritos" : "Salvar como favoritos"}
               {saved ? (
@@ -374,7 +388,7 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
             </button>
           </div>
 
-          <div className="mt-4 flex items-center gap-4 text-xs text-neutral-600 dark:text-neutral-400">
+          <div className="mt-4 flex items-center gap-4 text-xs text-neutral-600 dark:text-neutral-400 lg:mt-3 lg:gap-3">
             <span>Compartilhar:</span>
             <button
               type="button"
@@ -401,12 +415,21 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
 
           {!isComingSoon && <ShippingEstimator />}
 
-          <div className="border-t border-neutral-200 dark:border-neutral-800 py-6">
+          <div className="border-t border-neutral-200 dark:border-neutral-800 py-6 lg:py-3">
             <h2 className="text-sm font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">
               Descrição
             </h2>
-            <div className="mt-3 flex flex-col gap-3 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
-              <p className="whitespace-pre-line">{descriptionParagraphs[0]}</p>
+            <div className="mt-3 flex flex-col gap-3 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300 lg:mt-2 lg:gap-2 lg:text-xs">
+              {/* No painel compacto do desktop o primeiro parágrafo trunca em
+                  2 linhas por padrão (`lg:line-clamp-2`, só enquanto
+                  `!descriptionExpanded`) - é o maior item de conteúdo
+                  variável do painel, e sem isso uma descrição longa sozinha
+                  já estoura a altura da tela. O botão "Ver mais" (abaixo)
+                  cobre esse corte mesmo quando só existe um parágrafo (nesse
+                  caso ele não aparece no mobile, onde não há clamp nenhum). */}
+              <p className={`whitespace-pre-line ${!descriptionExpanded ? "lg:line-clamp-2" : ""}`}>
+                {descriptionParagraphs[0]}
+              </p>
               {descriptionExpanded &&
                 descriptionParagraphs.slice(1).map((paragraph, index) => (
                   <p key={index} className="whitespace-pre-line">
@@ -415,24 +438,26 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
                 ))}
             </div>
 
-            {descriptionParagraphs.length > 1 && !descriptionExpanded && (
+            {!descriptionExpanded && (
               <button
                 type="button"
                 onClick={() => setDescriptionExpanded(true)}
-                className="mt-3 text-xs font-semibold uppercase tracking-widest text-neutral-900 underline underline-offset-4 dark:text-neutral-100"
+                className={`mt-3 text-xs font-semibold uppercase tracking-widest text-neutral-900 underline underline-offset-4 dark:text-neutral-100 lg:mt-2 ${
+                  descriptionParagraphs.length > 1 ? "" : "hidden lg:inline-block"
+                }`}
               >
                 Ver mais detalhes do produto
               </button>
             )}
 
-            <ul className="mt-4 flex flex-col gap-1 text-sm text-neutral-600 dark:text-neutral-400">
+            <ul className="mt-4 flex flex-col gap-1 text-sm text-neutral-600 dark:text-neutral-400 lg:mt-2 lg:flex-row lg:gap-3 lg:text-xs">
               {defaultColor && <li>Cor: {defaultColor.name}</li>}
               {product.styleCode && <li>Estilo: {product.styleCode}</li>}
             </ul>
           </div>
 
           {!isComingSoon && (
-          <div className="border-t border-neutral-200 dark:border-neutral-800 py-6">
+          <div className="border-t border-neutral-200 dark:border-neutral-800 py-6 lg:py-3">
             <button
               type="button"
               onClick={() => setReviewsOpen((current) => !current)}

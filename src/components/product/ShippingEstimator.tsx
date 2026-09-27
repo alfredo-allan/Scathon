@@ -65,7 +65,7 @@ export function ShippingEstimator() {
   const cheapestQuote = quotes.length > 0 ? [...quotes].sort((a, b) => a.price - b.price)[0] : null;
 
   return (
-    <div className="border-t border-neutral-200 dark:border-neutral-800 py-6">
+    <div className="border-t border-neutral-200 dark:border-neutral-800 py-6 lg:py-3">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">
           Calcular frete
@@ -81,7 +81,7 @@ export function ShippingEstimator() {
       </div>
 
       {savedAddresses.length > 0 && cep.length === 0 && (
-        <div className="mt-3 flex flex-wrap items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+        <div className="mt-3 flex flex-wrap items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400 lg:mt-2 lg:text-[11px]">
           <span>Deseja entregar em algum dos seus endereços salvos?</span>
           {savedAddresses.map((saved) => (
             <button
@@ -96,7 +96,7 @@ export function ShippingEstimator() {
         </div>
       )}
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-4 flex gap-2 lg:mt-2">
         <input
           type="text"
           inputMode="numeric"
@@ -107,24 +107,24 @@ export function ShippingEstimator() {
           }}
           placeholder="00000-000"
           maxLength={9}
-          className="w-full max-w-[160px] rounded-app border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-neutral-400 focus:border-neutral-500"
+          className="w-full max-w-[160px] rounded-app border border-neutral-300 dark:border-neutral-700 bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-neutral-400 focus:border-neutral-500 lg:py-2 lg:text-xs"
         />
         <button
           type="button"
           onClick={() => runLookup(cep)}
           disabled={status === "loading"}
-          className="rounded-app border border-neutral-950 dark:border-neutral-100 bg-neutral-950 dark:bg-neutral-100 px-5 py-2.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 dark:text-neutral-950 transition-opacity hover:opacity-80 disabled:opacity-50"
+          className="rounded-app border border-neutral-950 dark:border-neutral-100 bg-neutral-950 dark:bg-neutral-100 px-5 py-2.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 dark:text-neutral-950 transition-opacity hover:opacity-80 disabled:opacity-50 lg:py-2 lg:px-4"
         >
           {status === "loading" ? "Calculando..." : "Calcular"}
         </button>
       </div>
 
       {status === "invalid" && (
-        <p className="mt-3 text-xs text-red-600 dark:text-red-400">Digite um CEP válido com 8 dígitos.</p>
+        <p className="mt-3 text-xs text-red-600 dark:text-red-400 lg:mt-2">Digite um CEP válido com 8 dígitos.</p>
       )}
 
       {status === "done" && (
-        <div className="mt-3 flex flex-col gap-1">
+        <div className="mt-3 flex flex-col gap-1 lg:mt-2">
           {address && (address.street || address.city) && (
             <p className="text-xs text-neutral-500 dark:text-neutral-400">
               {[address.street, address.neighborhood].filter(Boolean).join(", ")}
@@ -151,7 +151,12 @@ export function ShippingEstimator() {
         </div>
       )}
 
-      <p className="mt-3 text-xs text-neutral-500 dark:text-neutral-400">
+      {/* Escondido no painel compacto do desktop de propósito - é um link
+          legal secundário (deve existir em algum lugar do rodapé também),
+          não algo que precise estar "acima da dobra" junto com o essencial
+          de decidir a compra. Continua visível no mobile, onde a página
+          rola normalmente e não tem essa restrição de altura. */}
+      <p className="mt-3 text-xs text-neutral-500 dark:text-neutral-400 lg:hidden">
         Confira a nossa{" "}
         {/* No dedicated policy page yet - points home rather than 404ing
             (same fix as the rest of the site's still-missing pages; see
