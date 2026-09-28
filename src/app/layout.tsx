@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/components/providers/Providers";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import { MetaPixelRouteTracker } from "@/components/analytics/MetaPixelRouteTracker";
+import { EntryGate } from "@/components/entry/EntryGate";
 
 // Meta (Facebook/Instagram) Pixel ID - used to load the tracking script below
 // and in its <noscript> fallback. Kept as one constant so there is a single
@@ -95,11 +96,22 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
 
         <Providers>
           {/*
-            Which header/footer/dock/cart render depends on the route -
-            `/admin` gets its own minimal chrome instead of the storefront's.
-            See <SiteChrome/>'s own doc comment.
+            Portal de entrada cinematográfico (emblema 3D + fundo plasma +
+            GSAP) por cima de tudo - fica no root layout de propósito, não
+            dentro de <SiteChrome/> nem só na home: assim ele cobre o
+            <Header/>/<FloatingDock/> também (igual à referência, onde nada
+            do site aparece antes do clique em ENTRAR) e só é desmontado
+            quando o documento inteiro recarrega - navegação via <Link>
+            nunca o remonta. Ver o doc comment de `EntryGate.tsx`.
           */}
-          <SiteChrome>{children}</SiteChrome>
+          <EntryGate>
+            {/*
+              Which header/footer/dock/cart render depends on the route -
+              `/admin` gets its own minimal chrome instead of the storefront's.
+              See <SiteChrome/>'s own doc comment.
+            */}
+            <SiteChrome>{children}</SiteChrome>
+          </EntryGate>
         </Providers>
       </body>
     </html>

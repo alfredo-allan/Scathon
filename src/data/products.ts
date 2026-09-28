@@ -77,6 +77,7 @@ export const products: Product[] = [
       "/category/shirt/WhiteCathedral-T-shirt.jpeg",
       "/category/shirt/WhiteCathedral-T-shirt_1.jpeg",
       "/specimen/WhiteModelCathedral-T-shirt.jpeg",
+      "/specimen/WhiteModelCathedral-T-shirt_1.jpeg",
     ],
     colors: [
       {
