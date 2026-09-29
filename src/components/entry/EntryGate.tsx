@@ -318,7 +318,7 @@ export function EntryGate({ children }: { children: ReactNode }) {
             ENTRAR
           </button>
 
-          <p className="entry__subtitle">OUTRA REALIDADE TE ESPERA</p>
+          <p className="entry__subtitle">ALGUNS COPIAM, OUTROS VESTEM SCATHON</p>
         </section>
 
         {/* RODAPÉ */}
