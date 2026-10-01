@@ -10,16 +10,20 @@
 // pelo Alfredo - ver o doc comment de `EntryLogo3D.tsx`) e o texto pela voz
 // da marca.
 //
-// Quando aparece: uma vez por carregamento "de verdade" da aplicação (uma
-// aba nova ou um F5) - não a cada navegação entre páginas. Isso sai de graça
-// da própria arquitetura do Next: este componente vive no ROOT layout
-// (`src/app/layout.tsx`), então ele só é desmontado/remontado quando o
-// documento inteiro recarrega; navegações via <Link> dentro do site (que não
-// recarregam o documento) mantêm o `phase` já em "done" e nunca mostram o
-// portal de novo. Não precisa de sessionStorage nem de nenhum outro estado
-// persistido pra isso - é exatamente o comportamento que a referência tem
-// (ela também não usa storage nenhum: sendo uma SPA, cada F5 é um mount novo
-// do zero).
+// Quando aparece: uma vez por ABA/SESSÃO DO NAVEGADOR - no primeiro acesso
+// real ao site, nunca de novo depois disso (nem ao navegar pra um produto,
+// nem num F5, nem em qualquer outra remontagem deste componente) até a aba
+// ser fechada. Controlado por `sessionStorage` via `useHasSeenEntry` abaixo,
+// não só pelo `phase` em memória: depender só do React state parte do
+// pressuposto de que este componente, vivendo no ROOT layout (`src/app/
+// layout.tsx`), nunca desmonta numa navegação via <Link> (que é verdade em
+// teoria - o Next preserva o layout raiz entre páginas) - mas na prática o
+// portal estava reaparecendo ao clicar num produto mesmo assim (reportado
+// pelo Alfredo), então a garantia real passou a ser essa flag persistida:
+// não importa POR QUE este componente remontou, se a aba já viu o portal uma
+// vez, ele nunca anima de novo nela. `sessionStorage` (não `localStorage`) de
+// propósito: zera ao fechar a aba, então uma visita nova mais tarde ainda
+// conta como "primeiro acesso".
 //
 // O conteúdo real do site (`children`, já com <SiteChrome/> por dentro) fica
 // SEMPRE montado no DOM, por baixo do portal (que é `position: fixed`,
@@ -29,7 +33,7 @@
 // adiamento: a home da Scathon já é leve o bastante pra ficar pronta por
 // baixo enquanto o portal anima por cima, e a revelação final é só o véu
 // preto (`.entry__transition-cover`) desaparecendo.
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
 import gsap from "gsap";
 
@@ -44,17 +48,76 @@ import Plasma from "./Plasma";
 
 type Phase = "intro" | "exiting" | "done";
 
+// ---------------------------------------------------------------------------
+// "Esta aba já viu o portal?" - sessionStorage lido via `useSyncExternalStore`
+// ---------------------------------------------------------------------------
+//
+// Mesmo padrão de `createPersistedStore`/`useHydrated` (ver `src/lib/
+// waitlist.ts` e `src/hooks/useHydrated.ts`) usado no resto do projeto pra
+// ler algo do navegador sem cair no `react-hooks/set-state-in-effect`: nada
+// de "useEffect que chama setState" - o valor vem direto de
+// `useSyncExternalStore`, com `getServerSnapshot` sempre `false` (o servidor
+// nunca sabe se a aba já viu o portal, então o HTML sempre assume que não) e
+// o valor real do navegador chegando assim que o React reconcilia a
+// hidratação.
+const ENTRY_SESSION_KEY = "scathon:entry-seen";
+const entrySeenListeners = new Set<() => void>();
+
+function readHasSeenEntry(): boolean {
+  try {
+    return window.sessionStorage.getItem(ENTRY_SESSION_KEY) === "1";
+  } catch {
+    // Aba anônima/navegação privada com storage bloqueado, ou qualquer outro
+    // motivo do navegador recusar - trata como "nunca visto". Pior caso
+    // possível: o portal reaparece; nunca quebra a navegação em troca.
+    return false;
+  }
+}
+
+function getServerSnapshot(): boolean {
+  return false;
+}
+
+function subscribeToEntrySeen(listener: () => void): () => void {
+  entrySeenListeners.add(listener);
+  return () => entrySeenListeners.delete(listener);
+}
+
+function markEntrySeen(): void {
+  try {
+    window.sessionStorage.setItem(ENTRY_SESSION_KEY, "1");
+  } catch {
+    // Mesma tolerância do `readHasSeenEntry` - falha silenciosa.
+  }
+  entrySeenListeners.forEach((listener) => listener());
+}
+
+function useHasSeenEntry(): boolean {
+  return useSyncExternalStore(subscribeToEntrySeen, readHasSeenEntry, getServerSnapshot);
+}
+
 export function EntryGate({ children }: { children: ReactNode }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const enteringRef = useRef(false);
+  const hasSeenEntry = useHasSeenEntry();
 
   const [phase, setPhase] = useState<Phase>("intro");
+
+  // Só mostra o overlay quando a fase de saída ainda não terminou E esta aba
+  // ainda não viu o portal - essa segunda condição é o que garante que uma
+  // remontagem deste componente (navegar pra um produto, F5, ou qualquer
+  // outro motivo) nunca reabre o portal depois da primeira vez na sessão.
+  const showEntry = !hasSeenEntry && phase !== "done";
 
   /* =========================================
      CINEMÁTICA DE ENTRADA
   ========================================= */
 
   useLayoutEffect(() => {
+    // Esta aba já viu o portal (seja porque já passou pelo clique em
+    // ENTRAR, seja porque isto é uma remontagem no meio da mesma sessão) -
+    // nada a animar.
+    if (hasSeenEntry) return;
     if (phase !== "intro") return;
 
     const root = rootRef.current;
@@ -150,7 +213,7 @@ export function EntryGate({ children }: { children: ReactNode }) {
     return () => {
       context.revert();
     };
-  }, [phase]);
+  }, [phase, hasSeenEntry]);
 
   /* =========================================
      ENTRAR -> BLACKOUT -> REVELA O SITE
@@ -167,6 +230,7 @@ export function EntryGate({ children }: { children: ReactNode }) {
     ).matches;
 
     if (reducedMotion || !root) {
+      markEntrySeen();
       setPhase("done");
       return;
     }
@@ -228,8 +292,12 @@ export function EntryGate({ children }: { children: ReactNode }) {
 
       // Cover 100% preto encobrindo tudo - o site real por baixo já está
       // pronto, então não precisa esperar nada pra revelar (diferente da
-      // referência, que só neste ponto começa a carregar a Hero).
-      timeline.call(() => setPhase("done"), [], 1.05);
+      // referência, que só neste ponto começa a carregar a Hero). Marca a
+      // sessão como "já viu o portal" só agora, no fim de verdade.
+      timeline.call(() => {
+        markEntrySeen();
+        setPhase("done");
+      }, [], 1.05);
 
       // Meio segundo depois do corte, o véu preto se dissolve revelando o
       // site já montado - o mesmo "crossfade a partir do preto" da
@@ -254,11 +322,11 @@ export function EntryGate({ children }: { children: ReactNode }) {
   // termina; só o overlay do portal é que entra/sai da árvore.
   return (
     <>
-      <div style={phase === "done" ? undefined : { visibility: "hidden" }}>
+      <div style={showEntry ? { visibility: "hidden" } : undefined}>
         {children}
       </div>
 
-      {phase !== "done" && (
+      {showEntry && (
         <div ref={rootRef} className="entry" role="dialog" aria-modal="true" aria-label="Entrada Scathon">
         {/* GRÃO */}
         <div className="entry__grain" aria-hidden="true" />
