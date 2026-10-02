@@ -7,10 +7,10 @@
  * gasto total per customer) - this file has no dependency on either, so
  * both can import it safely.
  *
- * These are independent from `@/lib/accounts`'s `accountsStore` on purpose:
- * that table is only the tiny set of logins actually testable against
- * `/login` (seeded customer + admin, plus whatever a real signup adds in
- * this browser). This is a fuller mock customer base so the admin panel's
+ * These are independent from the real `User` rows in the backend on
+ * purpose: those are only the actual logins testable against `/login`
+ * (seeded customer + admin, plus whatever a real signup adds via
+ * `@/lib/auth`). This is a fuller mock customer base so the admin panel's
  * "Clientes"/"Pedidos" tabs have enough data to show what a real, busier
  * store would look like - swap for a real `GET /api/admin/customers` later
  * and `@/lib/adminCustomers`'s `getAdminCustomers()` is the only thing that

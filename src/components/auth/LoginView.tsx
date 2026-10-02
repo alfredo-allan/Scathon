@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import { findAccount, registerAccount } from '@/lib/accounts'
+import { ApiError, loginRequest, registerRequest, updatePhone } from '@/lib/auth'
 import { saveAddress } from '@/lib/addresses'
 import { formatCep, isCompleteCep, lookupAddressByCep, type ViaCepAddress } from '@/lib/viaCep'
 import { formatPhone, isCompletePhone } from '@/lib/phone'
@@ -20,19 +20,28 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
  * `/login` page body: a real, responsive sign-in/sign-up screen - a single
  * centered column at every breakpoint (no photo panel; that split-screen
  * treatment didn't earn its keep on desktop, so the form is just centered
- * there too, same as mobile). There's still no real backend, but this is no
- * longer a rubber-stamp form either -
- * "Entrar" checks the typed e-mail/senha against `@/lib/accounts`'s mock
- * accounts table (seeded with cliente@scathon.com / senha123 for a customer,
- * and admin@scathon.com / senha123 for `/admin` - a matching admin login
- * routes straight there instead of home), and "Criar Conta" collects the
- * account's actual base data - nome
- * completo, e-mail, telefone, foto, senha and an endereço de entrega
- * (CEP-assisted, same ViaCEP lookup `<ShippingEstimator/>`/`<CartView/>`
- * already use) - and adds a real entry to that same table plus a saved
- * address, then signs the new account straight in. Swap `registerAccount`/
- * `findAccount`'s bodies for real requests once there's an endpoint; this
- * form doesn't need to change either way.
+ * there too, same as mobile).
+ *
+ * "Entrar" and "Criar Conta" both talk to the real Flask backend now (see
+ * `@/lib/auth`'s `loginRequest`/`registerRequest` -
+ * `POST /api/v1/auth/login` / `POST /api/v1/auth/register`), not a mock
+ * table in `localStorage` anymore (`@/lib/accounts`, deleted). The two test
+ * logins printed below the form still work with the same credentials as
+ * before (cliente@scathon.com / senha123 for a customer, admin@scathon.com
+ * / senha123 for `/admin`) because they're now real seeded rows in the
+ * backend's database instead of a hardcoded object - an admin login still
+ * routes straight to `/admin` instead of home.
+ *
+ * "Criar Conta" still collects nome completo, e-mail, telefone, foto, senha
+ * and an endereço de entrega (CEP-assisted, same ViaCEP lookup
+ * `<ShippingEstimator/>`/`<CartView/>` already use); the account itself,
+ * its password (hashed with bcrypt - never stored as typed) and its avatar
+ * are created for real in the backend in one request, the telefone is
+ * persisted right after with a `PATCH /api/v1/me` (the register endpoint
+ * itself doesn't take one), and the endereço keeps going to `saveAddress`
+ * (still the local mock store - the backend's own `/api/v1/me/addresses`
+ * exists already but wiring every address-reading screen to it is a
+ * separate pass, not part of connecting login).
  */
 export function LoginView() {
   const router = useRouter()
@@ -104,77 +113,78 @@ export function LoginView() {
       setError('Digite um e-mail válido.')
       return
     }
-    if (password.length < 6) {
-      setError('A senha precisa ter pelo menos 6 caracteres.')
-      return
-    }
 
     if (mode === 'entrar') {
-      const account = findAccount(trimmedEmail)
-      if (!account || account.password !== password) {
-        setError('E-mail ou senha inválidos.')
+      if (password.length === 0) {
+        setError('Digite sua senha.')
         return
       }
+
       setError(null)
       setIsSubmitting(true)
-      // Also asks the server for a real, signed session (see
-      // `POST /api/auth/login`) - this is what `src/proxy.ts` actually
-      // checks before letting anyone into `/admin`, independent of the
-      // client-side `login(...)` below. Awaited before navigating so the
-      // cookie is already set by the time an admin account is routed
-      // straight to `/admin`. A self-registered account the server doesn't
-      // recognize (see that route's doc comment) just gets `ok: false` here
-      // - harmless, since it can only ever be `role: "customer"` anyway, and
-      // never needed the cookie to begin with.
-      //
-      // For the seeded admin account, though, `ok: true` here is not
-      // optional: it's the only thing that actually gets the visitor past
-      // `src/proxy.ts`'s server-side gate. Silently swallowing a failed or
-      // non-ok response here (as an earlier version of this function did)
-      // meant an admin login could look 100% successful client-side -
-      // `login(...)` still ran, `/account` still showed "Admin Scathon" -
-      // while `/admin` bounced back to `/login` every single time, because
-      // no real cookie was ever issued. That exact symptom (SESSION_SECRET
-      // missing in the Vercel production env, see `.env.example` and
-      // `@/lib/session`'s `getSecretKey`) is what this check now surfaces
-      // as a real error instead of a silent, confusing loop.
-      let serverSessionConfirmed = false
       try {
-        const response = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: trimmedEmail, password })
-        })
-        const data: unknown = await response.json().catch(() => null)
-        serverSessionConfirmed =
-          response.ok &&
-          typeof data === 'object' &&
-          data !== null &&
-          (data as { ok?: unknown }).ok === true
-      } catch {
-        // Offline/network hiccup - treated the same as any other non-ok
-        // response below (blocking only for the admin account).
-      }
+        const { token, user } = await loginRequest(trimmedEmail, password)
 
-      if (account.role === 'admin' && !serverSessionConfirmed) {
+        // Also asks the Next.js server to open a real, signed session (see
+        // `POST /api/auth/login`) - this is what `src/proxy.ts` actually
+        // checks before letting anyone into `/admin`, independent of the
+        // client-side `login(...)` below. It re-verifies the JWT we just
+        // got from the backend (server-to-server, via `GET /api/v1/auth/me`)
+        // rather than trusting anything from this response directly -
+        // awaited before navigating so the cookie is already set by the
+        // time an admin account is routed straight to `/admin`. A customer
+        // account just gets `ok: false` here - harmless, since it never
+        // needed the cookie to begin with.
+        //
+        // For the seeded admin account, though, `ok: true` here is not
+        // optional: it's the only thing that actually gets the visitor past
+        // `src/proxy.ts`'s server-side gate. Silently swallowing a failed or
+        // non-ok response here (as an earlier version of this function did)
+        // meant an admin login could look 100% successful client-side -
+        // `login(...)` still ran, `/account` still showed "Admin Scathon" -
+        // while `/admin` bounced back to `/login` every single time, because
+        // no real cookie was ever issued. That exact symptom (SESSION_SECRET
+        // missing in the Vercel production env, see `.env.example` and
+        // `@/lib/session`'s `getSecretKey`) is what this check now surfaces
+        // as a real error instead of a silent, confusing loop.
+        let serverSessionConfirmed = false
+        try {
+          const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token })
+          })
+          const data: unknown = await response.json().catch(() => null)
+          serverSessionConfirmed =
+            response.ok &&
+            typeof data === 'object' &&
+            data !== null &&
+            (data as { ok?: unknown }).ok === true
+        } catch {
+          // Offline/network hiccup - treated the same as any other non-ok
+          // response below (blocking only for the admin account).
+        }
+
+        if (user.role === 'admin' && !serverSessionConfirmed) {
+          setIsSubmitting(false)
+          setError(
+            'Não foi possível abrir sua sessão de administrador no servidor (é isso que protege /admin - ver src/proxy.ts). ' +
+              'Tente novamente em instantes; se persistir, confirme se a variável de ambiente SESSION_SECRET está configurada ' +
+              'em produção (Vercel: Project Settings -> Environment Variables - ver .env.example).'
+          )
+          return
+        }
+
+        login(token, user)
+        router.push(user.role === 'admin' ? '/admin' : '/')
+      } catch (err) {
         setIsSubmitting(false)
         setError(
-          'Não foi possível abrir sua sessão de administrador no servidor (é isso que protege /admin - ver src/proxy.ts). ' +
-            'Tente novamente em instantes; se persistir, confirme se a variável de ambiente SESSION_SECRET está configurada ' +
-            'em produção (Vercel: Project Settings -> Environment Variables - ver .env.example).'
+          err instanceof ApiError
+            ? err.message
+            : 'Não foi possível entrar agora. Tente de novo em instantes.'
         )
-        return
       }
-
-      login(`mock-token-${Date.now()}`, {
-        id: `user-${account.email}`,
-        displayName: account.displayName,
-        email: account.email,
-        avatarUrl: account.avatarUrl,
-        phone: account.phone,
-        role: account.role
-      })
-      router.push(account.role === 'admin' ? '/admin' : '/')
       return
     }
 
@@ -182,6 +192,10 @@ export function LoginView() {
     const trimmedName = name.trim()
     if (trimmedName.length < 2) {
       setError('Digite seu nome completo.')
+      return
+    }
+    if (password.length < 8) {
+      setError('A senha precisa ter pelo menos 8 caracteres.')
       return
     }
     if (!isCompletePhone(phone)) {
@@ -196,17 +210,26 @@ export function LoginView() {
     setError(null)
     setIsSubmitting(true)
     try {
-      const account = await registerAccount({
+      const registered = await registerRequest({
         email: trimmedEmail,
         password,
         displayName: trimmedName,
-        phone,
-        avatarUrl: avatarPreview,
-        // `registerAccount` always forces this back to "customer" itself
-        // (see its doc comment) - passed here only to satisfy `MockAccount`'s
-        // required field, never trusted as the actual source of truth.
-        role: 'customer'
+        avatarDataUrl: avatarPreview
       })
+      const token = registered.token
+      let user = registered.user
+
+      // O cadastro em si não tem campo de telefone (ver `registerRequest`'s
+      // doc comment) - persiste o que foi digitado logo em seguida, pra não
+      // simplesmente descartar um dado que o visitante já preencheu.
+      try {
+        user = await updatePhone(token, phone)
+      } catch {
+        // Conta e login já são reais nesse ponto - um telefone que não
+        // salvou não deveria travar o cadastro inteiro; só fica sem
+        // telefone até a próxima edição de perfil.
+      }
+
       await saveAddress({
         label: 'Principal',
         cep: addressCep,
@@ -217,15 +240,15 @@ export function LoginView() {
         city: resolvedAddress.city,
         state: resolvedAddress.state
       })
-      login(`mock-token-${Date.now()}`, {
-        id: `user-${account.email}`,
-        displayName: account.displayName,
-        email: account.email,
-        avatarUrl: account.avatarUrl,
-        phone: account.phone,
-        role: account.role
-      })
+
+      login(token, user)
       router.push('/')
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : 'Não foi possível criar sua conta agora. Tente de novo em instantes.'
+      )
     } finally {
       setIsSubmitting(false)
     }

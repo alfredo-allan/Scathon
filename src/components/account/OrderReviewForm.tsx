@@ -1,40 +1,50 @@
 "use client";
 
-import { useState, useSyncExternalStore, type FormEvent } from "react";
-import { orderReviewsStore, submitOrderReview } from "@/lib/orderReviews";
+import { useState, type FormEvent } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { ApiError, submitReview, type OwnReview } from "@/lib/reviews";
 
 interface OrderReviewFormProps {
   slug: string;
   title: string;
+  /** A avaliação que o cliente já escreveu pra este produto, se houver -
+   * vem de `GET /me/reviews` buscado uma vez em `<AccountOrdersView/>` (não
+   * mais de um cache próprio em `localStorage`), repassado pra cá pra que o
+   * "você já avaliou" sobreviva a um reload sem precisar embutir essa
+   * lógica de novo em cada item de pedido. */
+  existingReview: OwnReview | null;
+  /** Avisa o pai assim que o backend confirma a avaliação, pra ele atualizar
+   * seu próprio mapa de "já avaliados" sem precisar refazer o fetch inteiro
+   * de `GET /me/reviews`. */
+  onSubmitted: (review: OwnReview) => void;
 }
 
 /**
  * Inline "avalie este produto" control for a line item on `/account/orders`
- * - the "espaço para avaliar um produto" the account panel needs. Same
- * three-state shape as `<NotifyMeButton/>` (collapsed prompt → open form →
- * done confirmation), reading `orderReviewsStore` via `useSyncExternalStore`
- * so "already reviewed" survives a reload without an effect.
+ * - the "espaço para avaliar um produto" the account panel needs. Fala de
+ * verdade com o backend (`POST /api/v1/products/{slug}/reviews`, ver
+ * `@/lib/reviews`) - que só aceita a avaliação se o cliente REALMENTE tiver
+ * um pedido `entregue` com este produto; como este formulário só é
+ * renderizado a partir de um item de pedido já `entregue` (ver
+ * `<AccountOrdersView/>`), isso deveria sempre passar no uso normal, mas um
+ * erro do backend ainda aparece na tela em vez de falhar silenciosamente.
  */
-export function OrderReviewForm({ slug, title }: OrderReviewFormProps) {
-  const reviews = useSyncExternalStore(
-    orderReviewsStore.subscribe,
-    orderReviewsStore.getSnapshot,
-    orderReviewsStore.getServerSnapshot,
-  );
-  const existing = reviews[slug];
+export function OrderReviewForm({ slug, title, existingReview, onSubmitted }: OrderReviewFormProps) {
+  const { token } = useAuth();
 
   const [isOpen, setIsOpen] = useState(false);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  if (existing) {
+  if (existingReview) {
     return (
       <div className="mt-2 flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-400">
         <span aria-hidden className="flex text-neutral-900 dark:text-neutral-100">
           {Array.from({ length: 5 }, (_, index) => (
-            <span key={index}>{index < existing.rating ? "★" : "☆"}</span>
+            <span key={index}>{index < existingReview.rating ? "★" : "☆"}</span>
           ))}
         </span>
         <span>Você avaliou este produto</span>
@@ -56,10 +66,21 @@ export function OrderReviewForm({ slug, title }: OrderReviewFormProps) {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (rating === 0) return;
+    if (rating === 0 || !token) return;
+    setErrorMessage(null);
     setIsSubmitting(true);
-    await submitOrderReview(slug, rating, comment.trim());
-    setIsSubmitting(false);
+    try {
+      const { review } = await submitReview(slug, rating, comment, token);
+      onSubmitted(review);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof ApiError
+          ? error.message
+          : "Não foi possível enviar agora - tenta de novo em instantes.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -95,8 +116,11 @@ export function OrderReviewForm({ slug, title }: OrderReviewFormProps) {
         onChange={(event) => setComment(event.target.value)}
         placeholder="Conte como foi usar o produto (opcional)"
         rows={2}
+        maxLength={1000}
         className="w-full resize-none rounded-app border border-neutral-300 bg-transparent px-2.5 py-2 text-xs outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:focus:border-neutral-100"
       />
+
+      {errorMessage && <p className="text-[11px] text-red-600 dark:text-red-400">{errorMessage}</p>}
 
       <div className="flex items-center gap-3">
         <button

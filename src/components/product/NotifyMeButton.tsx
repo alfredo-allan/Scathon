@@ -43,8 +43,9 @@ interface NotifyMeButtonProps {
  * - Anonymous visitor: the original e-mail form below, so joining a waitlist
  *   never forces a detour through account creation.
  *
- * Talks to `@/lib/waitlist` for the actual persistence (backend-first now,
- * see its own doc comment for the current mock-auth caveat).
+ * Talks to `@/lib/waitlist` for the actual persistence (backend-first,
+ * real JWT identity now that `/login` talks to the real backend too - see
+ * that file's own doc comment).
  */
 export function NotifyMeButton({
   productId,

@@ -28,20 +28,21 @@ const TABS: Array<{ id: TabId; label: string }> = [
 
 /**
  * `/admin` page body - the internal dashboard for `role: "admin"` accounts
- * only (test login: admin@scathon.com / senha123, seeded in
- * `@/lib/accounts`). One page, tabbed, backed entirely by mock data
- * (`@/lib/adminOrders`, `@/lib/inventory`, `@/lib/adminCustomers`,
- * `@/lib/melhorEnvio`'s `calculateDispatch`, `@/lib/integrations`) so the
- * panel's shape and potential are real to look at today, even with zero
- * backend behind it.
+ * only (test login: admin@scathon.com / senha123, a real row seeded by the
+ * backend's `seed.py` - ver `@/lib/auth`). One page, tabbed, still backed by
+ * mock data for its own tabs (`@/lib/adminOrders`, `@/lib/inventory`,
+ * `@/lib/adminCustomers`, `@/lib/melhorEnvio`'s `calculateDispatch`,
+ * `@/lib/integrations`) so the panel's shape and potential are real to look
+ * at today, even with zero backend behind those tabs specifically.
  *
- * Security note: the real gate now lives in `src/proxy.ts` - it checks a
+ * Security note: the real gate lives in `src/proxy.ts` - it checks a
  * signed, httpOnly cookie (issued by `POST /api/auth/login`, see
  * `@/lib/session`) on the server, before this component (or any `/admin`
  * route) is even allowed to render, for both hard loads and client-side
- * navigations. `registerAccount` (the public signup path) also still
- * refuses to ever create an `"admin"` account, closing the obvious self-
- * escalation hole.
+ * navigations. The backend's public `POST /api/v1/auth/register` also still
+ * refuses to ever create an `"admin"` account (always forces
+ * `role: "customer"` server-side - ver `app/auth/__init__.py`), closing the
+ * obvious self-escalation hole.
  *
  * The two checks below (`!isAuthenticated`/`!isAdmin`) are what's left
  * *after* that: friendly fallback screens for the narrow window where the

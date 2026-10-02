@@ -9,7 +9,6 @@ import {
 } from "react";
 import type { User } from "@/types";
 import { createPersistedStore } from "@/lib/createPersistedStore";
-import { SEED_ACCOUNT } from "@/lib/accounts";
 
 interface AuthSession {
   token: string | null;
@@ -27,44 +26,22 @@ interface AuthContextValue {
 
 const EMPTY_SESSION: AuthSession = { token: null, user: null };
 
-// Mock customer identity - the *default* (pre-login) session below uses it
-// so <UserAvatar/> - in the header and in <FloatingDock/> - previews its
-// real end state (an actual photo) instead of the generic sign-in glyph,
-// before real accounts/auth exist. Exported (not just used inline) so
-// `/login`'s real sign-in/sign-up form (`<LoginView/>`) can build on the
-// same identity instead of inventing a second one - the avatar photo in
-// particular stays consistent with what the rest of the app already shows.
+// Real session now (ver `@/lib/auth`'s `loginRequest`/`registerRequest`):
+// `token` é o JWT de verdade emitido por `POST /api/v1/auth/login` no
+// backend Flask (`scathon-api`), válido por 12h (mesma janela do cookie de
+// `/admin` - ver `JWT_TTL_HOURS` em `app/auth/jwt_utils.py`), e `user` vem
+// de `User.to_public_dict()` - nenhum dos dois é mais inventado aqui.
 //
-// Built from `@/lib/accounts`'s `SEED_ACCOUNT` (not the other way around)
-// so there's exactly one place that defines "cliente@scathon.com" - the
-// identity previewed everywhere before login and the one `/login` actually
-// authenticates against (cliente@scathon.com / senha123) can't drift apart.
-export const MOCK_CUSTOMER: User = {
-  id: "mock-user",
-  displayName: SEED_ACCOUNT.displayName,
-  email: SEED_ACCOUNT.email,
-  // Real avatar asset (`public/avatar.jpg`) rather than the generated
-  // initials-circle placeholder - wherever this mock identity's photo
-  // shows up (header, floating dock, /login's "already signed in" state,
-  // /account), it's now the actual brand avatar instead of a stand-in.
-  avatarUrl: SEED_ACCOUNT.avatarUrl,
-  phone: SEED_ACCOUNT.phone,
-  role: SEED_ACCOUNT.role,
-};
-
-// This is only the fallback: it's what a fresh browser sees before any
-// explicit login/logout persists a real value to localStorage. Calling
-// `logout()` still writes a real `EMPTY_SESSION` (token: null, user: null)
-// so the signed-out state - and `/login`'s actual sign-in form - can still
-// be reached and tested on demand. Delete this mock and go back to
-// `EMPTY_SESSION` as the default once there's a real backend session to
-// check on load instead.
-const MOCK_SESSION: AuthSession = {
-  token: "mock-token",
-  user: MOCK_CUSTOMER,
-};
-
-const authStore = createPersistedStore<AuthSession>("scathon:session", MOCK_SESSION);
+// `EMPTY_SESSION` é o default de propósito: um visitante novo chega
+// DESLOGADO, como em qualquer app de verdade. Antes disso existir, essa
+// store começava com uma sessão mockada (`MOCK_SESSION`/`MOCK_CUSTOMER`,
+// construída a partir de `@/lib/accounts`) só pra UI ter uma foto/avatar
+// bonita pra mostrar antes do backend existir - isso foi removido junto com
+// aquele arquivo. Todo componente que lê `useAuth()` já trata `user: null`/
+// `isAuthenticated: false` corretamente (`<UserAvatar/>`, `<DrawerMenu/>`,
+// `<AccountView/>`, `<NotifyMeButton/>`...), então não sobrou nenhum lugar
+// assumindo "sempre tem alguém logado".
+const authStore = createPersistedStore<AuthSession>("scathon:session", EMPTY_SESSION);
 
 export const AuthContext = createContext<AuthContextValue | undefined>(
   undefined,

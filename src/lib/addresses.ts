@@ -14,11 +14,13 @@ export interface SavedAddress {
   state: string;
 }
 
-// One seeded address for the mock customer (see `@/lib/accounts`'s
-// `SEED_ACCOUNT`) so `/account/addresses` and the cart's "entregar em um
+// One seeded address for the seeded customer login (cliente@scathon.com -
+// see `@/lib/auth`) so `/account/addresses` and the cart's "entregar em um
 // endereço salvo?" prompt have something real to show right away instead
 // of an empty state on a fresh browser - same idea as `@/lib/orders`'
-// mock order history. Fictional address, not tied to any real person.
+// mock order history. Fictional address, not tied to any real person. Still
+// a local-only mock store (not the backend's own `/api/v1/me/addresses`,
+// which already exists) - see `<LoginView/>`'s doc comment.
 const SEED_ADDRESS: SavedAddress = {
   id: "addr-seed-casa",
   label: "Casa",

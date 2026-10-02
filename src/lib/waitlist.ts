@@ -40,16 +40,10 @@ interface JoinWaitlistResponse {
  * `token`/`accountEmail` come from `<AuthContext/>`: when there's a session,
  * `<NotifyMeButton/>` passes the account's own e-mail instead of asking the
  * visitor to type one again. The backend is what actually enforces this
- * (it always uses the *authenticated* account's e-mail and ignores whatever
- * the request body says) - `accountEmail` here just saves the round trip of
- * asking the visitor to type it themselves when we already know it. **This
- * only works end-to-end once real login is wired to this backend**: today
- * `<AuthContext/>`'s session token is still a mock (see its own doc
- * comment), so the backend never recognizes it and treats the request as
- * anonymous - which is why `accountEmail` is still sent as a normal body
- * field, not only relied upon via the token. Nothing here needs to change
- * when real auth lands; it'll just start being verified server-side instead
- * of trusted client-side.
+ * (it always uses the *authenticated* account's e-mail, verified from the
+ * real JWT in `token`, and ignores whatever the request body says) -
+ * `email` here just saves the backend a lookup and keeps this call working
+ * the same way whether or not a session happens to be present.
  *
  * Errors (invalid e-mail, rate-limited, product no longer `coming_soon`,
  * etc.) are re-thrown as `ApiError` for the caller to show a real message

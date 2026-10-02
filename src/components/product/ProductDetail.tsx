@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Category, Product } from "@/types";
 import { useCart } from "@/hooks/useCart";
 import { useWishlist } from "@/hooks/useWishlist";
+import { getProductReviews, type ProductReviewsPage } from "@/lib/reviews";
 import { ProductGallery } from "./ProductGallery";
 import { ShippingEstimator } from "./ShippingEstimator";
 import { NotifyMeButton } from "./NotifyMeButton";
@@ -68,6 +69,35 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const [reviewsOpen, setReviewsOpen] = useState(false);
+
+  // Avaliações reais (`GET /api/v1/products/{slug}/reviews`, seção 2 do
+  // briefing) - buscadas uma vez ao abrir a página, não só quando a seção
+  // expande, porque o badge de estrelas logo acima do preço TAMBÉM precisa
+  // do agregado atual (não faria sentido mostrar um cliente a própria
+  // avaliação recém-enviada em `/account/orders` e continuar vendo aqui a
+  // nota antiga). Em caso de falha de rede, cai de volta pros valores
+  // estáticos de `src/data/products.ts` (`product.rating`/`reviewCount`/
+  // `reviews`) em vez de quebrar a página - isso aqui é melhoria
+  // progressiva, não a ação principal da PDP.
+  const [liveReviews, setLiveReviews] = useState<ProductReviewsPage | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getProductReviews(product.slug)
+      .then((page) => {
+        if (!cancelled) setLiveReviews(page);
+      })
+      .catch(() => {
+        // Mantém os valores estáticos do mock - ver comentário acima.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [product.slug]);
+
+  const displayRating = liveReviews?.rating ?? product.rating;
+  const displayReviewCount = liveReviews?.reviewCount ?? product.reviewCount;
+  const displayReviews = liveReviews?.items ?? product.reviews ?? [];
 
   const galleryImages = useMemo(() => {
     // Real photography wins: `specimenImages` (model photos) first, then
@@ -198,10 +228,10 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
             >
               <span aria-hidden className="flex text-neutral-900 dark:text-neutral-100">
                 {Array.from({ length: 5 }, (_, index) => (
-                  <span key={index}>{index < Math.round(product.rating) ? "★" : "☆"}</span>
+                  <span key={index}>{index < Math.round(displayRating) ? "★" : "☆"}</span>
                 ))}
               </span>
-              {product.rating.toFixed(1)} · {product.reviewCount} avaliações
+              {displayRating.toFixed(1)} · {displayReviewCount} avaliações
             </button>
           )}
 
@@ -465,12 +495,12 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
               className="flex w-full items-center justify-between text-left"
             >
               <span className="text-sm font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">
-                Avaliações ({product.reviewCount})
+                Avaliações ({displayReviewCount})
               </span>
               <span className="flex items-center gap-2">
                 <span aria-hidden className="flex text-neutral-900 dark:text-neutral-100">
                   {Array.from({ length: 5 }, (_, index) => (
-                    <span key={index}>{index < Math.round(product.rating) ? "★" : "☆"}</span>
+                    <span key={index}>{index < Math.round(displayRating) ? "★" : "☆"}</span>
                   ))}
                 </span>
                 <svg
@@ -486,8 +516,8 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
 
             {reviewsOpen && (
               <div className="mt-4 flex flex-col gap-4">
-                {product.reviews && product.reviews.length > 0 ? (
-                  product.reviews.map((review, index) => (
+                {displayReviews.length > 0 ? (
+                  displayReviews.map((review, index) => (
                     <div key={index} className="border-b border-neutral-100 pb-4 last:border-none dark:border-neutral-900">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
@@ -505,7 +535,7 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
                 ) : (
                   <p className="text-sm text-neutral-600 dark:text-neutral-400">
                     Ainda não há avaliações detalhadas por escrito para este produto - a nota acima é a
-                    média agregada de {product.reviewCount} compras.
+                    média agregada de {displayReviewCount} compras.
                   </p>
                 )}
               </div>

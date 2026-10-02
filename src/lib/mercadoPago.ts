@@ -16,8 +16,9 @@ export interface PlacedOrder {
 /**
  * No Mercado Pago credentials (access token + public key) exist for this
  * project yet, so there's nothing real to call - this only generates a
- * mock order id/timestamp, same seam style as `@/lib/orderReviews` and
- * `@/lib/waitlist` (already `async`/`Promise`-returning so the swap later
+ * mock order id/timestamp, same seam style already used elsewhere in this
+ * file's siblings before they got a real backend (`@/lib/waitlist`,
+ * `@/lib/reviews`) - already `async`/`Promise`-returning so the swap later
  * is a one-function change, no caller update needed).
  *
  * The real version becomes a call to create a Mercado Pago Checkout Pro
