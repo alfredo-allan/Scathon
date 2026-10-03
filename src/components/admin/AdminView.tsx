@@ -29,11 +29,12 @@ const TABS: Array<{ id: TabId; label: string }> = [
 /**
  * `/admin` page body - the internal dashboard for `role: "admin"` accounts
  * only (test login: admin@scathon.com / senha123, a real row seeded by the
- * backend's `seed.py` - ver `@/lib/auth`). One page, tabbed, still backed by
- * mock data for its own tabs (`@/lib/adminOrders`, `@/lib/inventory`,
- * `@/lib/adminCustomers`, `@/lib/melhorEnvio`'s `calculateDispatch`,
- * `@/lib/integrations`) so the panel's shape and potential are real to look
- * at today, even with zero backend behind those tabs specifically.
+ * backend's `seed.py` - ver `@/lib/auth`). One page, tabbed; every tab now
+ * reads real data from the Flask backend (`@/lib/adminOrders`,
+ * `@/lib/inventory`, `@/lib/adminCustomers`, `@/lib/melhorEnvio`'s
+ * `calculateDispatch`, `@/lib/integrations`) - fase 4 do roadmap já
+ * concluída. (`@/lib/adminCustomerProfiles` é código morto da fase 1-3,
+ * mantido só como registro histórico - nada mais importa dele.)
  *
  * Security note: the real gate lives in `src/proxy.ts` - it checks a
  * signed, httpOnly cookie (issued by `POST /api/auth/login`, see
@@ -51,15 +52,10 @@ const TABS: Array<{ id: TabId; label: string }> = [
  * `logout()` cleared it - never the actual security boundary. Nothing below
  * should assume otherwise.
  *
- * One honest limitation this doesn't fix: the tabs below still read plain
- * mock arrays (`@/lib/adminOrders`, `@/lib/adminCustomers`, ...) as client
- * components, so that data still ships inside this route's JS bundle like
- * every other client component here - proxy.ts stops an unauthorized
- * visitor from *navigating* to `/admin` and getting that bundle in the
- * first place, but doesn't turn the mock data itself into a server-only
- * secret. That needs a real backend (data fetched from a protected
- * API/DB instead of imported as a static module) - the same "mock now,
- * swap later" gap the rest of this project's data layer already has.
+ * Cada chamada aos endpoints `/admin/*` exige o token de admin (ver
+ * `apiFetch`'s `token` option) - o backend confere o `role` do usuário no
+ * JWT antes de devolver qualquer dado, então os dados aqui nunca vazam pra
+ * uma aba client-side sem autorização de verdade por trás.
  */
 export function AdminView() {
   const { user, isAuthenticated, isAdmin } = useAuth();
