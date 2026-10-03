@@ -1,5 +1,15 @@
 import type { Product } from "@/types";
 
+// SUPERSEDED (fase 4 do roadmap): o catálogo real agora mora no backend
+// (`scathon-api`, tabela `products`, seedada a partir destes mesmos dados -
+// ver `seed.py`) e é lido via `@/lib/products` (`listProducts`,
+// `getProductBySlug`, `getBestSellers`, ...), não mais daqui. Nada no app
+// importa mais este arquivo - ele fica só como registro histórico de como o
+// catálogo começou (mock em memória, fases 1-3) e como referência de quais
+// imagens/textos cada produto tem, caso precise recriar um seed. Editar um
+// produto aqui NÃO muda o que o site mostra; isso agora é feito pelo painel
+// admin (`PATCH /api/v1/admin/products/{id}`) ou direto no banco.
+//
 // The placeholder-generator helper that used to live here (`productImages`,
 // built on `@/lib/placeholder`) went unused once the last placeholder-only
 // products were replaced by real photography below - every product in the

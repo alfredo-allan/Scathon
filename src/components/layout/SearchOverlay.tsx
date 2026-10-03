@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { popularCategories } from "@/data/categories";
-import { products } from "@/data/products";
+import { searchableCatalog } from "@/lib/products";
+import type { Product } from "@/types";
 
 interface SearchOverlayProps {
   open: boolean;
@@ -13,13 +14,26 @@ interface SearchOverlayProps {
 }
 
 /**
- * Full-viewport search modal. Input is debounced before "querying"
- * (client-side filtering here; swap for a backend API call) to avoid
- * spamming the network on every keystroke.
+ * Full-viewport search modal. Input is debounced before "querying" para
+ * evitar sobrecarregar a rede a cada tecla digitada.
+ *
+ * O catálogo filtrado continua sendo client-side (não há endpoint de busca
+ * textual no backend - `GET /products` não tem um parâmetro de texto livre),
+ * mas agora busca o catálogo real (`searchableCatalog()` - ver
+ * `@/lib/products`, que já cacheia por 60s do lado do cliente) em vez do
+ * array estático em `@/data/products`. Só busca quando o modal é aberto pela
+ * primeira vez - não há por quê buscar o catálogo inteiro antes disso.
  */
 export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebounce(query, 300);
+  const [catalog, setCatalog] = useState<Product[]>([]);
+  const [hasLoadedCatalog, setHasLoadedCatalog] = useState(false);
+
+  const loadCatalog = useCallback(async () => {
+    setCatalog(await searchableCatalog());
+    setHasLoadedCatalog(true);
+  }, []);
 
   const handleClose = () => {
     setQuery("");
@@ -30,18 +44,24 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
     if (!open) return;
     const original = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    if (!hasLoadedCatalog) {
+      // Adia a primeira chamada pra fora da passada síncrona do efeito,
+      // mesmo idioma usado em `<AccountOrdersView/>`/`useSavedAddresses`
+      // (`react-hooks/set-state-in-effect`).
+      Promise.resolve().then(() => loadCatalog());
+    }
     return () => {
       document.body.style.overflow = original;
     };
-  }, [open]);
+  }, [open, hasLoadedCatalog, loadCatalog]);
 
   const results = useMemo(() => {
     const term = debouncedQuery.trim().toLowerCase();
     if (!term) return [];
-    return products
+    return catalog
       .filter((product) => product.title.toLowerCase().includes(term))
       .slice(0, 6);
-  }, [debouncedQuery]);
+  }, [debouncedQuery, catalog]);
 
   if (!open) return null;
 
@@ -103,7 +123,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
                 Recomendados
               </h3>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                {products.slice(0, 3).map((product) => (
+                {catalog.slice(0, 3).map((product) => (
                   <Link
                     key={product.id}
                     href={`/shop/${product.category}/${product.slug}`}

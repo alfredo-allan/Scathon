@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { createSessionToken, SESSION_COOKIE } from "@/lib/session";
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:5000/api/v1";
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://srv2027628.hstgr.cloud/api/v1";
 
 interface BackendMeResponse {
   user?: {

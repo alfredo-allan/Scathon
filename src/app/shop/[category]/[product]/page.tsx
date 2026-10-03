@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCategoryBySlug } from "@/data/categories";
-import { getProductBySlug, products } from "@/data/products";
+import { getProductBySlug, listProducts } from "@/lib/products";
 import { ProductDetail } from "@/components/product/ProductDetail";
 
 interface ProductPageParams {
@@ -9,25 +9,17 @@ interface ProductPageParams {
   product: string;
 }
 
-// "Generate params from the bottom up" (per Next's own docs for routes with
-// multiple dynamic segments): each product already knows its own category,
-// so one pass over the catalog produces every valid {category, product}
-// pair - there's no need for this segment to depend on the parent
-// `/shop/[category]` page's own generateStaticParams.
-export function generateStaticParams(): ProductPageParams[] {
-  return products.map((product) => ({
-    category: product.category,
-    product: product.slug,
-  }));
-}
-
+// Sem `generateStaticParams()` - mesma razão de `/shop/[category]`: o
+// catálogo agora vem do backend real (`@/lib/products`), então uma lista de
+// slugs fixa no build ficaria desatualizada assim que um produto novo fosse
+// cadastrado no painel admin. Cada produto é buscado sob demanda abaixo.
 export async function generateMetadata({
   params,
 }: {
   params: Promise<ProductPageParams>;
 }): Promise<Metadata> {
   const { product: slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
 
   if (!product) {
     return { title: "Produto não encontrado — Scathon" };
@@ -47,7 +39,7 @@ export default async function ProductPage({
   const { category: categorySlug, product: productSlug } = await params;
 
   const category = getCategoryBySlug(categorySlug);
-  const product = getProductBySlug(productSlug);
+  const product = await getProductBySlug(productSlug);
 
   // A valid product under the wrong category slug (typo'd or stale link)
   // 404s too, same as a completely unknown slug - the URL's category
@@ -59,9 +51,12 @@ export default async function ProductPage({
 
   // "Você também pode gostar" rail: same-category products first (most
   // relevant), padded out with anything else if the category is thin - caps
-  // at 4 so it stays a quick horizontal glance, not another grid.
-  const sameCategory = products.filter((p) => p.id !== product.id && p.category === product.category);
-  const otherCategories = products.filter((p) => p.id !== product.id && p.category !== product.category);
+  // at 4 so it stays a quick horizontal glance, not another grid. Busca o
+  // catálogo completo (revalidado a cada 60s) em vez de um array estático em
+  // memória - mesma fonte de dados que todo o resto do catálogo agora usa.
+  const allProducts = await listProducts({ revalidate: 60 });
+  const sameCategory = allProducts.filter((p) => p.id !== product.id && p.category === product.category);
+  const otherCategories = allProducts.filter((p) => p.id !== product.id && p.category !== product.category);
   const relatedProducts = [...sameCategory, ...otherCategories].slice(0, 4);
 
   return <ProductDetail product={product} category={category} relatedProducts={relatedProducts} />;

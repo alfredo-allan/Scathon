@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
-import { getAdminOrders, getAdminOverviewStats, type OrderStatus } from "@/lib/adminOrders";
-import { getAdminCustomers } from "@/lib/adminCustomers";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { useInventory } from "@/hooks/useInventory";
-import { products } from "@/data/products";
+import { computeOverviewStats, getAdminOrders, type AdminOrder, type OrderStatus } from "@/lib/adminOrders";
+import { getAdminCustomers, type AdminCustomer } from "@/lib/adminCustomers";
 import { LOW_STOCK_THRESHOLD, ORDER_STATUS_LABEL, PaymentStatusBadge } from "./adminShared";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -22,31 +22,74 @@ const STATUS_BAR_COLOR: Record<OrderStatus, string> = {
 };
 
 /**
- * "Visão Geral" tab: the numbers a store owner checks first - receita
- * aprovada (bruta/líquida, líquida já descontando a taxa do Mercado Pago,
- * ver `@/lib/adminOrders`'s doc comment on por que esses números devem
- * bater com o próprio painel do Mercado Pago), pedidos por status, e alertas
- * rápidos de estoque baixo/clientes cadastrados - tudo derivado das mesmas
- * fontes que as outras abas (`getAdminOrders`, `getAdminCustomers`,
- * `useInventory`) então nunca diverge do que elas mostram em detalhe.
+ * "Visão Geral" tab: os números reais da loja agora - pedidos e pagamentos
+ * vêm de `GET /api/v1/admin/orders`, clientes de `GET /api/v1/admin/
+ * customers`, estoque baixo de `GET /api/v1/admin/inventory` (via
+ * `useInventory`). Os agregados (receita aprovada bruta/líquida, ticket
+ * médio, ...) continuam calculados no cliente por `computeOverviewStats`,
+ * em cima da mesma lista de pedidos que `<AdminOrdersTab/>` busca - nunca
+ * diverge do que aquela aba mostra em detalhe.
  */
 export function AdminOverviewTab() {
-  const stats = useMemo(() => getAdminOverviewStats(), []);
-  const orders = useMemo(() => getAdminOrders(), []);
-  const customers = useMemo(() => getAdminCustomers(), []);
-  const stock = useInventory();
+  const { token } = useAuth();
+  const [orders, setOrders] = useState<AdminOrder[]>([]);
+  const [customers, setCustomers] = useState<AdminCustomer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { items: inventoryItems } = useInventory();
 
-  const lowStockCount = useMemo(
-    () => products.filter((product) => (stock[product.slug] ?? 0) <= LOW_STOCK_THRESHOLD).length,
-    [stock],
-  );
+  const load = useCallback(async () => {
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+    setErrorMessage(null);
+    try {
+      const [fetchedOrders, fetchedCustomers] = await Promise.all([
+        getAdminOrders(token),
+        getAdminCustomers(token),
+      ]);
+      setOrders(fetchedOrders);
+      setCustomers(fetchedCustomers);
+    } catch {
+      setErrorMessage("Não foi possível carregar o resumo agora.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [token]);
 
+  useEffect(() => {
+    Promise.resolve().then(() => load());
+  }, [load]);
+
+  const stats = useMemo(() => computeOverviewStats(orders), [orders]);
+  const lowStockCount = useMemo(() => inventoryItems.filter((item) => item.lowStock).length, [inventoryItems]);
   const recentReceipts = useMemo(
     () => [...orders].sort((a, b) => (a.placedAt < b.placedAt ? 1 : -1)).slice(0, 5),
     [orders],
   );
 
   const maxStatusCount = Math.max(1, ...STATUS_ORDER.map((status) => stats.ordersByStatus[status]));
+
+  if (isLoading) {
+    return <p className="text-sm text-neutral-500 dark:text-neutral-400">Carregando resumo…</p>;
+  }
+
+  if (errorMessage) {
+    return (
+      <div className="flex flex-col items-start gap-3">
+        <p className="text-sm text-red-600 dark:text-red-400">{errorMessage}</p>
+        <button
+          type="button"
+          onClick={load}
+          className="text-xs font-semibold uppercase tracking-widest text-neutral-900 underline underline-offset-4 dark:text-neutral-100"
+        >
+          Tentar de novo
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -96,22 +139,29 @@ export function AdminOverviewTab() {
           Últimos comprovantes
         </h2>
         <div className="mt-3 flex flex-col divide-y divide-neutral-100 rounded-app border border-neutral-200 dark:divide-neutral-900 dark:border-neutral-800">
-          {recentReceipts.map((order) => (
-            <div key={order.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
-              <div className="min-w-0">
-                <p className="font-medium text-neutral-900 dark:text-neutral-100">{order.payment.paymentId}</p>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                  {order.customerName} · Pedido {order.id} · {dateFormatter.format(new Date(order.placedAt))}
-                </p>
+          {recentReceipts.map((order) =>
+            order.payment ? (
+              <div key={order.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
+                <div className="min-w-0">
+                  <p className="font-medium text-neutral-900 dark:text-neutral-100">{order.payment.paymentId ?? order.id}</p>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                    {order.customerName} · Pedido {order.id} · {dateFormatter.format(new Date(order.placedAt))}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <PaymentStatusBadge status={order.payment.status} />
+                  <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                    {currencyFormatter.format(order.payment.grossAmount)}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <PaymentStatusBadge status={order.payment.status} />
-                <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                  {currencyFormatter.format(order.payment.grossAmount)}
-                </span>
-              </div>
-            </div>
-          ))}
+            ) : null,
+          )}
+          {recentReceipts.length === 0 && (
+            <p className="px-4 py-6 text-center text-sm text-neutral-500 dark:text-neutral-400">
+              Nenhum pedido ainda.
+            </p>
+          )}
         </div>
       </div>
     </div>

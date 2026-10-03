@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
-import { getAdminOrders, type OrderStatus } from "@/lib/adminOrders";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { getAdminOrders, updateOrderStatus, type AdminOrder, type OrderStatus } from "@/lib/adminOrders";
 import { ORDER_STATUS_LABEL, ORDER_STATUS_STYLE, PaymentStatusBadge } from "./adminShared";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -22,21 +23,79 @@ const FILTERS: Array<{ id: OrderStatus | "todos"; label: string }> = [
   { id: "cancelado", label: "Cancelado" },
 ];
 
+const STATUS_OPTIONS: OrderStatus[] = ["processando", "a caminho", "entregue", "cancelado"];
+
 /**
- * "Pedidos" tab: every order across every customer (`getAdminOrders`,
- * unlike `@/lib/orders`'s customer-scoped list), with its shipping method
- * and payment receipt inline - "listagem de compras" and "lista de pedidos
- * realizados" from the brief are the same table here, since a completed
- * purchase *is* an order in this mock data model.
+ * "Pedidos" tab: todo pedido de toda a loja (`GET /api/v1/admin/orders` -
+ * ver `@/lib/adminOrders`), com o status editável inline
+ * (`PATCH /admin/orders/{id}/status`) - o painel mockado original só exibia
+ * o status, nunca deixava mudar; como o backend já suporta isso desde a
+ * fase 6, faz sentido o painel usar de verdade.
  */
 export function AdminOrdersTab() {
-  const orders = useMemo(() => [...getAdminOrders()].sort((a, b) => (a.placedAt < b.placedAt ? 1 : -1)), []);
+  const { token } = useAuth();
+  const [orders, setOrders] = useState<AdminOrder[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [filter, setFilter] = useState<OrderStatus | "todos">("todos");
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  const filteredOrders = useMemo(
-    () => (filter === "todos" ? orders : orders.filter((order) => order.status === filter)),
-    [orders, filter],
-  );
+  const load = useCallback(async () => {
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+    setErrorMessage(null);
+    try {
+      setOrders(await getAdminOrders(token));
+    } catch {
+      setErrorMessage("Não foi possível carregar os pedidos agora.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    Promise.resolve().then(() => load());
+  }, [load]);
+
+  const filteredOrders = useMemo(() => {
+    const sorted = [...orders].sort((a, b) => (a.placedAt < b.placedAt ? 1 : -1));
+    return filter === "todos" ? sorted : sorted.filter((order) => order.status === filter);
+  }, [orders, filter]);
+
+  async function handleStatusChange(orderId: string, status: OrderStatus) {
+    if (!token) return;
+    setUpdatingId(orderId);
+    try {
+      await updateOrderStatus(token, orderId, status);
+      setOrders((current) => current.map((order) => (order.id === orderId ? { ...order, status } : order)));
+    } catch {
+      setErrorMessage("Não foi possível atualizar o status desse pedido agora.");
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  if (isLoading) {
+    return <p className="text-sm text-neutral-500 dark:text-neutral-400">Carregando pedidos…</p>;
+  }
+
+  if (errorMessage && orders.length === 0) {
+    return (
+      <div className="flex flex-col items-start gap-3">
+        <p className="text-sm text-red-600 dark:text-red-400">{errorMessage}</p>
+        <button
+          type="button"
+          onClick={load}
+          className="text-xs font-semibold uppercase tracking-widest text-neutral-900 underline underline-offset-4 dark:text-neutral-100"
+        >
+          Tentar de novo
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -69,11 +128,18 @@ export function AdminOrdersTab() {
                   {order.customerName} · {order.customerEmail} · {dateFormatter.format(new Date(order.placedAt))}
                 </p>
               </div>
-              <span
-                className={`rounded-app border px-2 py-1 text-[10px] font-semibold uppercase tracking-widest ${ORDER_STATUS_STYLE[order.status]}`}
+              <select
+                value={order.status}
+                disabled={updatingId === order.id}
+                onChange={(event) => handleStatusChange(order.id, event.target.value as OrderStatus)}
+                className={`rounded-app border bg-transparent px-2 py-1 text-[10px] font-semibold uppercase tracking-widest outline-none disabled:opacity-50 ${ORDER_STATUS_STYLE[order.status]}`}
               >
-                {ORDER_STATUS_LABEL[order.status]}
-              </span>
+                {STATUS_OPTIONS.map((status) => (
+                  <option key={status} value={status} className="bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100">
+                    {ORDER_STATUS_LABEL[status]}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="flex flex-col divide-y divide-neutral-100 dark:divide-neutral-900">
@@ -99,13 +165,15 @@ export function AdminOrdersTab() {
                   Envio: {order.shippingMethod === "melhor_envio" ? order.shippingCarrier ?? "Melhor Envio" : "Combinado com o vendedor"}
                   {order.shippingCost > 0 ? ` · ${currencyFormatter.format(order.shippingCost)}` : ""}
                 </span>
-                <span className="flex items-center gap-1.5">
-                  {order.payment.paymentId} · {METHOD_LABEL[order.payment.method]} ·{" "}
-                  <PaymentStatusBadge status={order.payment.status} />
-                </span>
+                {order.payment && (
+                  <span className="flex items-center gap-1.5">
+                    {order.payment.paymentId ?? "—"} · {METHOD_LABEL[order.payment.method]} ·{" "}
+                    <PaymentStatusBadge status={order.payment.status} />
+                  </span>
+                )}
               </div>
               <p className="font-semibold text-neutral-900 dark:text-neutral-100">
-                Total: {currencyFormatter.format(order.payment.grossAmount + order.shippingCost)}
+                Total: {currencyFormatter.format((order.payment?.grossAmount ?? 0) + order.shippingCost)}
               </p>
             </div>
           </div>

@@ -1,4 +1,9 @@
 /**
+ * SUPERSEDED (fase 4 do roadmap): `@/lib/adminCustomers`'s `getAdminCustomers()`
+ * agora lê direto de `GET /api/v1/admin/customers` (clientes reais, tabela
+ * `users`) - nada importa mais este arquivo. Mantido só como registro
+ * histórico da base mock usada nas fases 1-3.
+ *
  * Shared cadastro-style fields for the admin panel's mock customer base -
  * split into its own file (rather than living inside `@/lib/adminOrders` or
  * `@/lib/adminCustomers`) purely to avoid a circular import: `adminOrders`

@@ -1,20 +1,19 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getCategoryBySlug, popularCategories } from "@/data/categories";
-import { getProductsByCategory } from "@/data/products";
+import { getCategoryBySlug } from "@/data/categories";
+import { getProductsByCategory } from "@/lib/products";
 import { CategoryListing } from "@/components/category/CategoryListing";
 
 interface CategoryPageParams {
   category: string;
 }
 
-// Pre-render all five known category slugs at build time (Moletons,
-// Camisetas, Casacos, Calças, Acessórios) - see `popularCategories` in
-// @/data/categories, whose `id` doubles as this URL segment.
-export function generateStaticParams(): CategoryPageParams[] {
-  return popularCategories.map((category) => ({ category: category.id }));
-}
-
+// Sem `generateStaticParams()` - o catálogo real (`@/lib/products`) muda
+// conforme o painel admin cadastra/edita produtos, então cada categoria é
+// renderizada sob demanda (Server Component assíncrono abaixo) em vez de
+// pré-gerada no build com uma lista de slugs fixa. `getProductsByCategory`
+// revalida a cada 60s, então um ajuste no admin ainda aparece rápido sem
+// precisar de um novo deploy.
 export async function generateMetadata({
   params,
 }: {
@@ -45,7 +44,7 @@ export default async function CategoryPage({
     notFound();
   }
 
-  const products = getProductsByCategory(category.id);
+  const products = await getProductsByCategory(category.id, 60);
 
   return <CategoryListing category={category} products={products} />;
 }

@@ -1,26 +1,73 @@
-import { INTEGRATIONS } from "@/lib/integrations";
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { getIntegrations, type IntegrationStatus } from "@/lib/integrations";
 
 /**
- * "Integrações" tab: estado do Mercado Pago e do Melhor Envio - ambos já
- * têm código real pronto pra usar (`@/lib/mercadoPago`, `@/lib/melhorEnvio`)
- * mas nenhum credencial ainda, então aparecem como "não conectado" de
- * propósito. Isso é uma checklist do que falta pra ligar de verdade, não um
- * formulário que salva nada - o "seguro" aqui é justamente nunca aceitar um
- * token pela UI: essas variáveis vivem no servidor (env vars), nunca no
- * bundle do cliente.
+ * "Integrações" tab: estado real do Mercado Pago e da Melhor Envio
+ * (`GET /api/v1/admin/integrations` - ver `@/lib/integrations`) - `connected`
+ * agora reflete de verdade se o servidor tem as credenciais configuradas,
+ * nunca um `false` fixo. Continua sem formulário nenhum que salve algo -
+ * essas variáveis só existem no `.env` do servidor, nunca no bundle do
+ * cliente.
  */
 export function AdminIntegrationsTab() {
+  const { token } = useAuth();
+  const [integrations, setIntegrations] = useState<IntegrationStatus[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+    setErrorMessage(null);
+    try {
+      setIntegrations(await getIntegrations(token));
+    } catch {
+      setErrorMessage("Não foi possível carregar o estado das integrações agora.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    Promise.resolve().then(() => load());
+  }, [load]);
+
+  if (isLoading) {
+    return <p className="text-sm text-neutral-500 dark:text-neutral-400">Carregando integrações…</p>;
+  }
+
+  if (errorMessage) {
+    return (
+      <div className="flex flex-col items-start gap-3">
+        <p className="text-sm text-red-600 dark:text-red-400">{errorMessage}</p>
+        <button
+          type="button"
+          onClick={load}
+          className="text-xs font-semibold uppercase tracking-widest text-neutral-900 underline underline-offset-4 dark:text-neutral-100"
+        >
+          Tentar de novo
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <p className="max-w-2xl text-sm text-neutral-600 dark:text-neutral-400">
-        Nenhuma credencial real foi configurada ainda - o checkout e o cálculo de frete usam dados mock
-        (determinísticos, não aleatórios) pra já dar pra visualizar o fluxo completo. Ativar de verdade é
-        configurar as variáveis abaixo no servidor e trocar a função mock correspondente pela chamada real -
-        o restante do app não precisa mudar.
+        Enquanto as credenciais reais não estiverem configuradas no servidor, o checkout e o cálculo de frete usam
+        dados determinísticos (não aleatórios), pra já dar pra testar o fluxo completo. Ativar de verdade é
+        preencher as variáveis abaixo direto no <span className="font-mono">.env</span> da VPS (nunca aqui) e
+        reiniciar o serviço - o restante do app não precisa mudar.
       </p>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {INTEGRATIONS.map((integration) => (
+        {integrations.map((integration) => (
           <div key={integration.id} className="rounded-app border border-neutral-200 p-4 dark:border-neutral-800">
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">{integration.name}</p>

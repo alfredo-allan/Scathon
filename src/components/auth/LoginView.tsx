@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import { ApiError, loginRequest, registerRequest, updatePhone } from '@/lib/auth'
+import { ApiError, loginRequest, registerRequest, updateProfile } from '@/lib/auth'
+import { resolveMediaUrl } from '@/lib/apiClient'
 import { saveAddress } from '@/lib/addresses'
 import { formatCep, isCompleteCep, lookupAddressByCep, type ViaCepAddress } from '@/lib/viaCep'
 import { formatPhone, isCompletePhone } from '@/lib/phone'
@@ -56,6 +57,9 @@ export function LoginView() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  // Hook precisa vir antes de qualquer `return` condicional (regra dos
+  // hooks) - mesmo que só seja usado lá embaixo, no branch "já logado".
+  const [imageFailed, setImageFailed] = useState(false)
 
   // Signup's "endereço" step - same CEP-format-then-ViaCEP-lookup pattern
   // as `<ShippingEstimator/>`/`<CartView/>`, just feeding `saveAddress`
@@ -223,14 +227,14 @@ export function LoginView() {
       // doc comment) - persiste o que foi digitado logo em seguida, pra não
       // simplesmente descartar um dado que o visitante já preencheu.
       try {
-        user = await updatePhone(token, phone)
+        user = await updateProfile(token, { phone })
       } catch {
         // Conta e login já são reais nesse ponto - um telefone que não
         // salvou não deveria travar o cadastro inteiro; só fica sem
         // telefone até a próxima edição de perfil.
       }
 
-      await saveAddress({
+      await saveAddress(token, {
         label: 'Principal',
         cep: addressCep,
         street: resolvedAddress.street,
@@ -259,11 +263,22 @@ export function LoginView() {
   // re-logging the visitor in, this hands them straight to their account
   // or an easy way out, no form in sight.
   if (isAuthenticated && user) {
+    // Caminho relativo servido pelo backend - ver o doc comment de
+    // `resolveMediaUrl` em `@/lib/apiClient`.
+    const avatarSrc = resolveMediaUrl(user.avatarUrl)
     return (
       <div className="flex min-h-[70vh] flex-col items-center justify-center gap-5 px-4 text-center">
         <span className="w-16 h-16 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
-          {user.avatarUrl ? (
-            <Image src={user.avatarUrl} alt={user.displayName} width={64} height={64} unoptimized className="h-full w-full object-cover" />
+          {avatarSrc && !imageFailed ? (
+            <Image
+              src={avatarSrc}
+              alt={user.displayName}
+              width={64}
+              height={64}
+              unoptimized
+              onError={() => setImageFailed(true)}
+              className="h-full w-full object-cover"
+            />
           ) : (
             <span className="flex h-full w-full items-center justify-center text-lg font-semibold text-neutral-800 dark:text-neutral-100">
               {user.displayName.charAt(0).toUpperCase()}

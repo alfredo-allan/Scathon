@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { resolveMediaUrl } from "@/lib/apiClient";
 
 /**
  * `/account` page body - a modest "Minha Conta" profile screen: who's
@@ -16,6 +18,9 @@ import { useAuth } from "@/hooks/useAuth";
 export function AccountView() {
   const router = useRouter();
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  // Hook precisa vir antes de qualquer `return` condicional (regra dos
+  // hooks) - mesmo quando deslogado e o avatar nunca é exibido.
+  const [imageFailed, setImageFailed] = useState(false);
 
   if (!isAuthenticated || !user) {
     return (
@@ -38,6 +43,11 @@ export function AccountView() {
     router.push("/");
   }
 
+  // Caminho relativo servido pelo backend - ver o doc comment de
+  // `resolveMediaUrl` em `@/lib/apiClient` (sem isso, `<Image>` quebra e o
+  // `alt` com o nome completo estoura pra fora do círculo de 64px).
+  const avatarSrc = resolveMediaUrl(user.avatarUrl);
+
   return (
     <div className="px-4 md:px-8 py-6">
       <nav aria-label="Breadcrumb" className="mb-3 text-xs text-neutral-500 dark:text-neutral-400">
@@ -58,13 +68,14 @@ export function AccountView() {
 
       <div className="mt-6 flex items-center gap-4 border-b border-neutral-200 pb-6 dark:border-neutral-800">
         <span className="h-16 w-16 shrink-0 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
-          {user.avatarUrl ? (
+          {avatarSrc && !imageFailed ? (
             <Image
-              src={user.avatarUrl}
+              src={avatarSrc}
               alt={user.displayName}
               width={64}
               height={64}
               unoptimized
+              onError={() => setImageFailed(true)}
               className="h-full w-full object-cover"
             />
           ) : (
@@ -160,9 +171,17 @@ export function AccountView() {
       )}
 
       <div className="mt-8 border-t border-neutral-200 pt-6 dark:border-neutral-800">
-        <h2 className="text-sm font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">
-          Dados da conta
-        </h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">
+            Dados da conta
+          </h2>
+          <Link
+            href="/account/edit"
+            className="text-xs font-semibold text-neutral-900 underline underline-offset-4 dark:text-neutral-100"
+          >
+            Editar
+          </Link>
+        </div>
         <dl className="mt-3 flex flex-col gap-2 text-sm">
           <div className="flex justify-between gap-4 border-b border-neutral-100 pb-2 dark:border-neutral-900">
             <dt className="text-neutral-500 dark:text-neutral-400">Nome</dt>

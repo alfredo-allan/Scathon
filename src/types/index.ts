@@ -7,6 +7,9 @@ export interface User {
   avatarUrl: string | null;
   /** Optional - older/mock sessions created before this field existed simply omit it. */
   phone?: string | null;
+  /** Soltos no perfil (ver `User.city`/`.state` no backend) - nada a ver com os endereços de entrega completos de `@/lib/addresses`. */
+  city?: string | null;
+  state?: string | null;
   role: UserRole;
 }
 

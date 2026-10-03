@@ -30,6 +30,36 @@ interface OrdersResponse {
   total: number;
 }
 
+export interface OrderDetail extends Order {
+  userId: number;
+  subtotal: number;
+  shipping: {
+    method: "melhor_envio" | "combinar_com_vendedor";
+    carrier: string | null;
+    cost: number;
+    note: string | null;
+    trackingCode: string | null;
+    address: {
+      recipientName: string;
+      cep: string;
+      street: string;
+      number: string;
+      complement: string | null;
+      neighborhood: string;
+      city: string;
+      state: string;
+    };
+  };
+  payment: {
+    paymentId: string | null;
+    method: "pix" | "credito" | "boleto";
+    status: "pending" | "approved" | "rejected" | "refunded";
+    grossAmount: number;
+    feeAmount: number;
+    netAmount: number;
+  } | null;
+}
+
 /**
  * Histórico de pedidos do cliente logado - `GET /api/v1/me/orders` no
  * backend real (`scathon-api`), que já foi desenhado desde a Fase 5 pra ser
@@ -51,4 +81,17 @@ export async function getRecentOrders(token: string | null): Promise<Order[]> {
   if (!token) return [];
   const data = await apiFetch<OrdersResponse>("/me/orders", { token });
   return data.items;
+}
+
+/**
+ * Um pedido específico por completo (`GET /api/v1/orders/{id}` - ver
+ * `app/checkout/__init__.py`) - alimenta `/pedido/[id]`, a página pra onde
+ * `checkout.initPoint` redireciona depois de `POST /checkout` (ver
+ * `@/lib/mercadoPago`'s doc comment). O backend já garante que só o dono do
+ * pedido (ou um admin) consegue ver - um id alheio vira 404 genérico, nunca
+ * 403, pra não confirmar que aquele id existe.
+ */
+export async function getOrderById(token: string, orderId: string): Promise<OrderDetail> {
+  const data = await apiFetch<{ order: OrderDetail }>(`/orders/${encodeURIComponent(orderId)}`, { token });
+  return data.order;
 }

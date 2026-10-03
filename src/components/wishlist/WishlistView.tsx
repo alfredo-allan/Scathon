@@ -1,21 +1,49 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { useMemo } from 'react'
-import { getProductById } from '@/data/products'
-import { useWishlist } from '@/hooks/useWishlist'
-import { ProductCard } from '@/components/product/ProductCard'
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import { getProductsByIds } from "@/lib/products";
+import { useWishlist } from "@/hooks/useWishlist";
+import { ProductCard } from "@/components/product/ProductCard";
+import type { Product } from "@/types";
 
 /**
- * `/wishlist` page body - just the list of products the customer curtiu
- * (via the heart on `<ProductCard/>`'s photo or "Salvar como favoritos" on
- * the detail page; both write to the same `useWishlist()` store, so this
- * page is the single place either one leads back to).
+ * `/wishlist` page body - a lista de produtos que o cliente curtiu (via o
+ * coração na foto do `<ProductCard/>`, ou "Salvar como favoritos" na página
+ * de detalhe; ambos escrevem no mesmo `useWishlist()`, então esta página é o
+ * único lugar pra onde os dois levam de volta).
+ *
+ * `savedIds` continua vindo de `useWishlist()` (os ids em si ainda são só do
+ * navegador - não há endpoint de "favoritos" no backend), mas resolver
+ * esses ids em produtos de verdade agora é assíncrono (`getProductsByIds` -
+ * ver `@/lib/products`), já que o catálogo em si vem do backend real, não
+ * mais do array estático em `@/data/products`.
  */
 export function WishlistView() {
-  const { savedIds } = useWishlist()
+  const { savedIds } = useWishlist();
+  const [savedProducts, setSavedProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const savedProducts = useMemo(() => savedIds.map((id) => getProductById(id)).filter((product) => product !== undefined), [savedIds])
+  const load = useCallback(async () => {
+    if (savedIds.length === 0) {
+      setSavedProducts([]);
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+    try {
+      setSavedProducts(await getProductsByIds(savedIds));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [savedIds]);
+
+  useEffect(() => {
+    // Mesmo idioma de `<AccountOrdersView/>`'s `loadOrders` - adia a
+    // primeira chamada pra fora da passada síncrona do efeito
+    // (`react-hooks/set-state-in-effect`).
+    Promise.resolve().then(() => load());
+  }, [load]);
 
   return (
     <div className="px-4 md:px-8 py-6">
@@ -35,7 +63,9 @@ export function WishlistView() {
         Curtidos <span className="text-base font-normal text-neutral-500 dark:text-neutral-400">({savedProducts.length})</span>
       </h1>
 
-      {savedProducts.length === 0 ? (
+      {isLoading ? (
+        <p className="mt-8 text-sm text-neutral-500 dark:text-neutral-400">Carregando curtidos…</p>
+      ) : savedProducts.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-24 text-center">
           <p className="text-sm text-neutral-600 dark:text-neutral-400">
             Você ainda não curtiu nenhum produto. Toque no coração de uma foto pra guardar aqui.
@@ -57,5 +87,5 @@ export function WishlistView() {
         </div>
       )}
     </div>
-  )
+  );
 }

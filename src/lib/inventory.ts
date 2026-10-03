@@ -1,47 +1,48 @@
-import { products } from "@/data/products";
-import { createPersistedStore } from "./createPersistedStore";
+import { apiFetch } from "./apiClient";
+
+export interface InventoryItem {
+  productId: string;
+  slug: string;
+  title: string;
+  imageUrl: string | null;
+  quantity: number;
+  lowStock: boolean;
+  updatedAt: string | null;
+}
+
+interface InventoryListResponse {
+  items: InventoryItem[];
+  page: number;
+  perPage: number;
+  total: number;
+}
 
 /**
- * Mock estoque (stock). There's no warehouse/inventory backend yet, so this
- * is a small persisted client-side store keyed by product slug - same
- * pattern as `cartStore`/`wishlistStore` - seeded with a deterministic
- * (not random-on-every-load) quantity per product so `<AdminInventoryTab/>`
- * has real, stable numbers to show and edit instead of an empty state.
- * Swapping this for a real inventory API later means replacing this
- * store's read/write with `GET`/`PATCH /api/inventory`; the admin tab, the
- * only caller, wouldn't need to change.
+ * Estoque real do catálogo (`GET /api/v1/admin/inventory` - ver `app/admin/
+ * __init__.py`, fase 3 do roadmap, já concluída no backend), fase 4 do lado
+ * do frontend. Substitui `inventoryStore` (um objeto `{slug: quantidade}`
+ * persistido em `localStorage`, seedado com números pseudo-aleatórios) -
+ * agora é a tabela `inventory_levels` de verdade. Exige token de admin.
  */
-function seedQuantity(slug: string, index: number): number {
-  // Deterministic pseudo-variety spread across a believable small-batch
-  // streetwear range (0-42), derived from each slug's own characters so it
-  // stays stable across reloads/deploys - not `Math.random()`. The modulo
-  // naturally lands at least one product on 0 ("esgotado"), which matters
-  // for exercising that state in the UI instead of everything always
-  // having stock.
-  const hash = Array.from(slug).reduce((sum, char) => sum + char.charCodeAt(0), 0);
-  return (hash + index * 7) % 43;
+export async function getInventory(token: string): Promise<InventoryItem[]> {
+  const data = await apiFetch<InventoryListResponse>("/admin/inventory?perPage=100", { token });
+  return data.items;
 }
 
-const SEED_STOCK: Record<string, number> = Object.fromEntries(
-  products.map((product, index) => [product.slug, seedQuantity(product.slug, index)]),
-);
-
-export const inventoryStore = createPersistedStore<Record<string, number>>("scathon:inventory", SEED_STOCK);
-
-export function getStockFor(slug: string): number {
-  return inventoryStore.getSnapshot()[slug] ?? 0;
+/** Define um saldo exato (ex.: depois de uma recontagem manual). Clamp em >= 0 já é feito pelo backend. */
+export async function setStockFor(token: string, productId: string, quantity: number): Promise<void> {
+  await apiFetch(`/admin/products/${encodeURIComponent(productId)}/inventory`, {
+    method: "PATCH",
+    token,
+    body: { quantity: Math.max(0, Math.round(quantity)) },
+  });
 }
 
-/** Sets an exact stock count (e.g. after a manual recount). Clamped to >= 0. */
-export function setStockFor(slug: string, quantity: number): void {
-  const safeQuantity = Math.max(0, Math.round(quantity));
-  inventoryStore.setValue((prev) => ({ ...prev, [slug]: safeQuantity }));
-}
-
-/** Adds (or, with a negative delta, removes) stock relative to the current count. Clamped to >= 0. */
-export function adjustStockFor(slug: string, delta: number): void {
-  inventoryStore.setValue((prev) => ({
-    ...prev,
-    [slug]: Math.max(0, (prev[slug] ?? 0) + delta),
-  }));
+/** Soma (ou, com um delta negativo, subtrai) do saldo atual. Clamp em >= 0 já é feito pelo backend. */
+export async function adjustStockFor(token: string, productId: string, delta: number): Promise<void> {
+  await apiFetch(`/admin/products/${encodeURIComponent(productId)}/inventory`, {
+    method: "PATCH",
+    token,
+    body: { delta: Math.round(delta) },
+  });
 }

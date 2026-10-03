@@ -2,15 +2,28 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { resolveMediaUrl } from '@/lib/apiClient'
 
 /**
  * Renders the signed-in user's avatar image, or a fallback circle with
  * their first initial when `avatarUrl` is null/undefined. Links to
  * `/account` when signed in, `/login` otherwise - both are real pages now.
+ *
+ * `avatarUrl` vem do backend como caminho relativo - sempre passa por
+ * `resolveMediaUrl` antes de virar `src` (ver o doc comment dela em
+ * `@/lib/apiClient`), senão a imagem quebra e o navegador mostra o `alt`
+ * (o nome completo) estourando pra fora do círculo. `onError` abaixo é uma
+ * segunda camada de proteção pro mesmo sintoma: se a imagem ainda assim
+ * falhar ao carregar por qualquer outro motivo (arquivo apagado no disco,
+ * backend fora do ar num momento ruim), cai pro círculo com a inicial em
+ * vez de deixar o `alt` quebrar o layout de novo.
  */
 export function UserAvatar() {
   const { user, isAuthenticated } = useAuth()
+  const avatarSrc = resolveMediaUrl(user?.avatarUrl)
+  const [imageFailed, setImageFailed] = useState(false)
 
   if (!isAuthenticated || !user) {
     return (
@@ -27,13 +40,14 @@ export function UserAvatar() {
 
   return (
     <Link href="/account" aria-label={`Conta de ${user.displayName}`}>
-      {user.avatarUrl ? (
+      {avatarSrc && !imageFailed ? (
         <Image
-          src={user.avatarUrl}
+          src={avatarSrc}
           alt={user.displayName}
           width={32}
           height={32}
           unoptimized
+          onError={() => setImageFailed(true)}
           className="w-8 h-8 rounded-full object-cover"
         />
       ) : (

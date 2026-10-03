@@ -6,6 +6,15 @@ export type DeliveryMethod = "melhor_envio" | "combinar_com_vendedor";
 
 export interface ShippingSelection {
   method: DeliveryMethod | null;
+  /**
+   * Id de um `SavedAddress` real do cliente (`@/lib/addresses`) - o backend
+   * exige um `addressId` concreto em `POST /checkout` pra todo pedido,
+   * mesmo "combinar com o vendedor" (precisa de um destinatário/endereço
+   * pra registrar no pedido, mesmo quando a entrega em si é combinada à
+   * parte). `<CartView/>` preenche isso ao escolher um endereço salvo, ou
+   * ao salvar um novo endereço digitado na hora.
+   */
+  addressId: string | null;
   cep: string;
   address: ViaCepAddress | null;
   quote: ShippingQuote | null;
@@ -17,6 +26,7 @@ export interface ShippingSelection {
 
 export const EMPTY_SHIPPING_SELECTION: ShippingSelection = {
   method: null,
+  addressId: null,
   cep: "",
   address: null,
   quote: null,

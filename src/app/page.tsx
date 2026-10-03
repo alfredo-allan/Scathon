@@ -6,7 +6,7 @@ import { ProductGrid } from "@/components/home/ProductGrid";
 import { TestimonialsCarousel } from "@/components/home/TestimonialsCarousel";
 import { heroSlides } from "@/data/hero-slides";
 import { dividerSlides } from "@/data/dividers";
-import { getBestSellers, products } from "@/data/products";
+import { getBestSellers, listProducts } from "@/lib/products";
 
 // One product grid per catalog "slice", no more. With only a dozen
 // products, an earlier version of this page also showed a "Novidades" grid
@@ -19,10 +19,30 @@ import { getBestSellers, products } from "@/data/products";
 // complete listing - right after the one divider banner, not buried at the
 // very bottom - covers the same ground without the repetition. Reintroduce
 // a dedicated "Novidades" grid (`getNewArrivals()` is still exported from
-// `@/data/products` for this) once the catalog is large enough that "new"
+// `@/lib/products` for this) once the catalog is large enough that "new"
 // and "everything" stop being almost the same list.
-export default function Home() {
-  const bestSellers = getBestSellers();
+//
+// Server Component buscando o catálogo real (`@/lib/products` - fase 4 do
+// roadmap), não mais o array estático em `@/data/products`.
+//
+// `dynamic = "force-dynamic"`: sem nenhum segmento dinâmico na URL, o Next
+// tentaria pré-renderizar esta página como estática já no `next build` - o
+// que exigiria o backend Flask acessível NA HORA DO BUILD (local ou na
+// Vercel), não só em produção depois. Um build falhando porque o backend
+// estava fora do ar naquele instante (ou ainda nem tinha sido implantado)
+// seria um jeito frágil demais de quebrar o deploy inteiro do site. Forçar
+// renderização dinâmica faz essa busca acontecer a cada requisição real, no
+// servidor - o `revalidate: 60` abaixo continua valendo (é o cache de dados
+// do `fetch` do Next, independente da estratégia de renderização da
+// página), então requisições dentro da mesma janela de 60s ainda reusam o
+// mesmo resultado em vez de bater no Flask toda vez.
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const [bestSellers, allProducts] = await Promise.all([
+    getBestSellers(60),
+    listProducts({ revalidate: 60 }),
+  ]);
 
   return (
     <>
@@ -41,7 +61,7 @@ export default function Home() {
 
       <CategoryDividerCarousel slides={dividerSlides} />
 
-      <ProductGrid title="Todos os Produtos" products={products} />
+      <ProductGrid title="Todos os Produtos" products={allProducts} />
 
       {/* Right above <Footer/>, which layout.tsx renders after {children}. */}
       <TestimonialsCarousel />

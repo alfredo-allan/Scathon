@@ -4,12 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { products } from "@/data/products";
+import { searchableCatalog } from "@/lib/products";
 import { getRecentOrders, type Order } from "@/lib/orders";
 import { getMyReviews, type OwnReview } from "@/lib/reviews";
 import { ApiError } from "@/lib/apiClient";
 import { ProductCard } from "@/components/product/ProductCard";
 import { OrderReviewForm } from "./OrderReviewForm";
+import type { Product } from "@/types";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   style: "currency",
@@ -52,6 +53,7 @@ export function AccountOrdersView() {
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [myReviews, setMyReviews] = useState<Record<string, OwnReview>>({});
+  const [catalog, setCatalog] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -65,12 +67,14 @@ export function AccountOrdersView() {
     setIsLoading(true);
     setErrorMessage(null);
     try {
-      const [fetchedOrders, fetchedReviews] = await Promise.all([
+      const [fetchedOrders, fetchedReviews, fetchedCatalog] = await Promise.all([
         getRecentOrders(token),
         getMyReviews(token),
+        searchableCatalog(),
       ]);
       setOrders(fetchedOrders);
       setMyReviews(Object.fromEntries(fetchedReviews.map((review) => [review.productId, review])));
+      setCatalog(fetchedCatalog);
     } catch (error) {
       setErrorMessage(
         error instanceof ApiError
@@ -98,11 +102,14 @@ export function AccountOrdersView() {
   }
 
   // "Novos produtos" here means "stuff this customer hasn't bought yet"
-  // rather than the catalog's `isNew` flag.
+  // rather than the catalog's `isNew` flag. `catalog` vem de
+  // `searchableCatalog()` (`@/lib/products`, o mesmo cache de 60s do
+  // cliente usado por `<SearchOverlay/>`) - busca junto com os pedidos em
+  // `loadOrders`, não mais o array estático em `@/data/products`.
   const suggestions = useMemo(() => {
     const orderedSlugs = new Set(orders.flatMap((order) => order.items.map((item) => item.slug)));
-    return products.filter((product) => !orderedSlugs.has(product.slug));
-  }, [orders]);
+    return catalog.filter((product) => !orderedSlugs.has(product.slug));
+  }, [orders, catalog]);
 
   if (!isAuthenticated) {
     return (

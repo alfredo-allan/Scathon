@@ -16,10 +16,16 @@ type CepStatus = "idle" | "loading" | "done" | "invalid";
  * lists every saved address (`useSavedAddresses`) with a way to remove one,
  * and a form to add another, using the same CEP-format-then-ViaCEP-lookup
  * pattern as `<ShippingEstimator/>`/`<CartView/>`/`<LoginView/>`.
+ *
+ * `useSavedAddresses()` now fetches for real (`@/lib/addresses`'s doc
+ * comment) and exposes `{addresses, isLoading, reload}` instead of a
+ * synchronous `localStorage`-backed array - every mutation here
+ * (`saveAddress`/`removeAddress`) takes the real `token` and is followed by
+ * `reload()`, same refetch-after-mutate pattern as the admin tabs.
  */
 export function AccountAddressesView() {
-  const { user, isAuthenticated } = useAuth();
-  const addresses = useSavedAddresses();
+  const { user, token, isAuthenticated } = useAuth();
+  const { addresses, isLoading, reload } = useSavedAddresses();
 
   const [label, setLabel] = useState("");
   const [cep, setCep] = useState("");
@@ -28,6 +34,8 @@ export function AccountAddressesView() {
   const [number, setNumber] = useState("");
   const [complement, setComplement] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   if (!isAuthenticated || !user) {
     return (
@@ -67,10 +75,11 @@ export function AccountAddressesView() {
   }
 
   async function handleAddAddress() {
-    if (!resolvedAddress || !label.trim() || !number.trim()) return;
+    if (!token || !resolvedAddress || !label.trim() || !number.trim()) return;
     setIsSaving(true);
+    setErrorMessage(null);
     try {
-      await saveAddress({
+      await saveAddress(token, {
         label: label.trim(),
         cep,
         street: resolvedAddress.street,
@@ -80,14 +89,31 @@ export function AccountAddressesView() {
         city: resolvedAddress.city,
         state: resolvedAddress.state,
       });
+      await reload();
       setLabel("");
       setCep("");
       setNumber("");
       setComplement("");
       setResolvedAddress(null);
       setCepStatus("idle");
+    } catch {
+      setErrorMessage("Não foi possível salvar esse endereço agora. Tente de novo.");
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function handleRemoveAddress(id: string) {
+    if (!token) return;
+    setRemovingId(id);
+    setErrorMessage(null);
+    try {
+      await removeAddress(token, id);
+      await reload();
+    } catch {
+      setErrorMessage("Não foi possível remover esse endereço agora. Tente de novo.");
+    } finally {
+      setRemovingId(null);
     }
   }
 
@@ -120,9 +146,13 @@ export function AccountAddressesView() {
         Salve mais de um endereço para escolher a preferência de entrega na hora de fechar o pedido.
       </p>
 
+      {errorMessage && <p className="mt-4 text-xs text-red-600 dark:text-red-400">{errorMessage}</p>}
+
       <div className="mt-6 grid gap-8 lg:grid-cols-2 lg:gap-12">
         <div className="flex flex-col gap-3">
-          {addresses.length === 0 ? (
+          {isLoading ? (
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">Carregando endereços…</p>
+          ) : addresses.length === 0 ? (
             <p className="text-sm text-neutral-600 dark:text-neutral-400">Nenhum endereço salvo ainda.</p>
           ) : (
             addresses.map((address) => (
@@ -141,10 +171,11 @@ export function AccountAddressesView() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => removeAddress(address.id)}
-                    className="shrink-0 text-xs text-neutral-500 underline underline-offset-2 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+                    onClick={() => handleRemoveAddress(address.id)}
+                    disabled={removingId === address.id}
+                    className="shrink-0 text-xs text-neutral-500 underline underline-offset-2 hover:text-neutral-900 disabled:opacity-40 dark:text-neutral-400 dark:hover:text-neutral-100"
                   >
-                    Remover
+                    {removingId === address.id ? "Removendo…" : "Remover"}
                   </button>
                 </div>
               </div>

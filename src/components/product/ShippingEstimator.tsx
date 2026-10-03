@@ -27,7 +27,7 @@ export function ShippingEstimator() {
   const [status, setStatus] = useState<LookupStatus>("idle");
   const [address, setAddress] = useState<ViaCepAddress | null>(null);
   const [quotes, setQuotes] = useState<ShippingQuote[]>([]);
-  const savedAddresses = useSavedAddresses();
+  const { addresses: savedAddresses } = useSavedAddresses();
 
   async function runLookup(rawCep: string) {
     if (!isCompleteCep(rawCep)) {

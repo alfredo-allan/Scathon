@@ -1,51 +1,86 @@
-import type { CartItem } from "@/types";
+import { apiFetch } from "./apiClient";
+import type { DeliveryMethod } from "./checkoutShipping";
 
-export interface CheckoutTotals {
-  subtotal: number;
-  shipping: number;
-  total: number;
+export type PaymentMethod = "pix" | "credito" | "boleto";
+
+export interface CheckoutItemInput {
+  productId: string;
+  color: string;
+  size: string;
+  quantity: number;
+}
+
+export interface SubmitCheckoutInput {
+  addressId: string;
+  items: CheckoutItemInput[];
+  deliveryMethod: DeliveryMethod;
+  /** Obrigatório quando `deliveryMethod` é "melhor_envio" - o `id` da opção escolhida em `getShippingQuotes`. */
+  shippingQuoteId?: string | null;
+  /** Só usado quando `deliveryMethod` é "combinar_com_vendedor". */
+  shippingNote?: string | null;
+  paymentMethod: PaymentMethod;
 }
 
 export interface PlacedOrder {
   id: string;
   placedAt: string;
-  itemCount: number;
-  amountCharged: number;
+  status: string;
+}
+
+export interface SubmitCheckoutResult {
+  order: PlacedOrder;
+  checkout: {
+    method: PaymentMethod;
+    /**
+     * Só presente quando `method` é "credito"/"boleto" - pra onde
+     * redirecionar o navegador pra concluir o pagamento (Checkout Pro). Em
+     * modo mock (sem `MERCADO_PAGO_ACCESS_TOKEN` no servidor - ver
+     * `app/integrations/mercado_pago.py`), já é a própria página de
+     * confirmação do pedido (`/pedido/{id}`) com `?mock=true` - o mesmo
+     * link que o Mercado Pago de verdade devolveria (`init_point`) quando
+     * as credenciais reais entrarem.
+     */
+    initPoint?: string;
+    preferenceId?: string;
+    /**
+     * Só presente quando `method` é "pix" - fluxo "inline" (decisão
+     * confirmada com o Alfredo): sem redirecionar, `<PixPaymentModal/>`
+     * mostra o QR Code/código copia-e-cola direto aqui e consulta
+     * `GET /orders/{id}` até o pagamento aprovar pelo webhook.
+     */
+    pix?: {
+      qrCode: string;
+      /** Em modo mock vem vazio - só a API real manda a imagem pronta. */
+      qrCodeBase64: string;
+      ticketUrl: string;
+    };
+  };
 }
 
 /**
- * No Mercado Pago credentials (access token + public key) exist for this
- * project yet, so there's nothing real to call - this only generates a
- * mock order id/timestamp, same seam style already used elsewhere in this
- * file's siblings before they got a real backend (`@/lib/waitlist`,
- * `@/lib/reviews`) - already `async`/`Promise`-returning so the swap later
- * is a one-function change, no caller update needed).
- *
- * The real version becomes a call to create a Mercado Pago Checkout Pro
- * preference and a redirect to its `init_point`:
- *
- *   const response = await fetch("/api/checkout/create-preference", {
- *     method: "POST",
- *     headers: { "Content-Type": "application/json" },
- *     body: JSON.stringify({ items, totals, shipping: shippingSelection }),
- *   });
- *   const { init_point } = await response.json();
- *   window.location.href = init_point;
- *
- * `<CheckoutView/>`, the only caller, would swap its "pedido confirmado"
- * success screen for that redirect and nothing else changes.
+ * Fecha o pedido de verdade contra o backend (`POST /api/v1/checkout` - ver
+ * `app/checkout/__init__.py`), fase 4 do roadmap. Substitui o antigo mock
+ * que só gerava um id/timestamp falso - agora cria um `Order`/`Payment`
+ * reais, valida estoque e re-cota o frete no servidor (nunca confia num
+ * preço que o cliente mande). A forma de concluir o pagamento depende do
+ * `method` da resposta (ver `SubmitCheckoutResult.checkout` acima) - Pix
+ * fica num modal inline, cartão/boleto redirecionam pro Checkout Pro.
+ * Exige sessão - `<CheckoutView/>` já garante isso antes de chamar.
  */
 export async function submitCheckout(
-  items: CartItem[],
-  totals: CheckoutTotals,
-): Promise<PlacedOrder> {
-  await new Promise((resolve) => setTimeout(resolve, 700));
-
-  const id = `SCT-${Math.floor(100000 + Math.random() * 900000)}`;
-  return {
-    id,
-    placedAt: new Date().toISOString(),
-    itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
-    amountCharged: totals.total,
-  };
+  token: string,
+  input: SubmitCheckoutInput,
+): Promise<SubmitCheckoutResult> {
+  return apiFetch<SubmitCheckoutResult>("/checkout", {
+    method: "POST",
+    token,
+    body: {
+      addressId: input.addressId,
+      items: input.items,
+      deliveryMethod: input.deliveryMethod,
+      shippingQuoteId: input.shippingQuoteId ?? undefined,
+      shippingNote: input.shippingNote ?? undefined,
+      paymentMethod: input.paymentMethod,
+    },
+  });
 }

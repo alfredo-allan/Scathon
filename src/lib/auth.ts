@@ -44,6 +44,8 @@ function mapUser(apiUser: ApiUser): User {
     email: apiUser.email,
     avatarUrl: apiUser.avatarUrl,
     phone: apiUser.phone ?? undefined,
+    city: apiUser.city ?? undefined,
+    state: apiUser.state ?? undefined,
     role: apiUser.role,
   };
 }
@@ -96,18 +98,54 @@ export async function registerRequest(input: RegisterInput): Promise<AuthResult>
   return { token: data.token, user: mapUser(data.user) };
 }
 
+export interface ProfileUpdateInput {
+  displayName?: string;
+  phone?: string | null;
+  city?: string | null;
+  state?: string | null;
+}
+
 /**
- * `PATCH /api/v1/me` - só pra persistir o telefone logo após um cadastro
- * (ver `registerRequest` acima); `<LoginView/>` não tem (ainda) uma tela de
- * edição de perfil separada que chame isso, essa é a única chamadora hoje.
+ * `PATCH /api/v1/me` - atualiza qualquer combinação dos campos "soltos" do
+ * perfil (nome, telefone, cidade, estado). `email`/senha/foto não passam por
+ * aqui de propósito: e-mail e senha são "alterações sensíveis" (ver
+ * `<AccountEditView/>`'s doc comment) que vão exigir confirmação por código
+ * quando o serviço de SMTP existir; a foto tem seu próprio endpoint
+ * multipart (`uploadAvatar`/`removeAvatar` abaixo), já que esse PATCH só
+ * aceita JSON.
+ *
+ * Usado tanto por `<LoginView/>` (persistir o telefone logo após o cadastro)
+ * quanto por `<AccountEditView/>` (edição completa de perfil).
  */
-export async function updatePhone(token: string, phone: string): Promise<User> {
+export async function updateProfile(token: string, input: ProfileUpdateInput): Promise<User> {
   const data = await apiFetch<{ user: ApiUser }>("/me", {
     method: "PATCH",
     token,
-    body: { phone },
+    body: input,
   });
   return mapUser(data.user);
+}
+
+/**
+ * `POST /api/v1/me/avatar` (multipart) - troca a foto de perfil de uma conta
+ * já existente. Mesmo contrato de tamanho/formato do avatar enviado junto do
+ * cadastro em `registerRequest` (até 5MB, JPEG/PNG/WEBP/GIF na entrada,
+ * sempre volta como JPEG 256px).
+ */
+export async function uploadAvatar(token: string, file: File): Promise<User> {
+  const form = new FormData();
+  form.set("avatar", file);
+  const data = await apiFetch<{ user: ApiUser }>("/me/avatar", {
+    method: "POST",
+    token,
+    body: form,
+  });
+  return mapUser(data.user);
+}
+
+/** `DELETE /api/v1/me/avatar` - volta pro círculo com a inicial (sem foto). */
+export async function removeAvatar(token: string): Promise<void> {
+  await apiFetch<void>("/me/avatar", { method: "DELETE", token });
 }
 
 function dataUrlToFile(dataUrl: string, filename: string): File {

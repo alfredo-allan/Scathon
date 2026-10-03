@@ -1,5 +1,4 @@
-import { createPersistedStore } from "./createPersistedStore";
-import { formatCep } from "./viaCep";
+import { apiFetch } from "./apiClient";
 
 export interface SavedAddress {
   id: string;
@@ -8,66 +7,63 @@ export interface SavedAddress {
   cep: string;
   street: string;
   number: string;
-  complement?: string;
+  complement?: string | null;
   neighborhood: string;
   city: string;
   state: string;
 }
 
-// One seeded address for the seeded customer login (cliente@scathon.com -
-// see `@/lib/auth`) so `/account/addresses` and the cart's "entregar em um
-// endereço salvo?" prompt have something real to show right away instead
-// of an empty state on a fresh browser - same idea as `@/lib/orders`'
-// mock order history. Fictional address, not tied to any real person. Still
-// a local-only mock store (not the backend's own `/api/v1/me/addresses`,
-// which already exists) - see `<LoginView/>`'s doc comment.
-const SEED_ADDRESS: SavedAddress = {
-  id: "addr-seed-casa",
-  label: "Casa",
-  cep: "01310-100",
-  street: "Avenida Paulista",
-  number: "1000",
-  complement: "Apto 42",
-  neighborhood: "Bela Vista",
-  city: "São Paulo",
-  state: "SP",
-};
-
 /**
- * Same persisted-external-store shape as `cartStore`/`wishlistStore` (see
- * `createPersistedStore`'s doc comment) - a customer's saved delivery
- * addresses, read via `useSyncExternalStore` in `useSavedAddresses` below
- * wherever "want to ship to one of your saved addresses?" needs to be
- * offered (the product page's `<ShippingEstimator/>`, `<CartView/>`,
- * `/account/addresses`).
+ * Endereços salvos do cliente logado, real contra o backend
+ * (`GET/POST/PATCH/DELETE /api/v1/me/addresses` - ver `app/account/
+ * __init__.py`), fase 4 do roadmap. Substitui o antigo `savedAddressesStore`
+ * (um array em `localStorage`, igual pra qualquer sessão) - cada campo aqui
+ * já bate 1:1 com `Address.to_dict()` do backend, sem remapeamento nenhum
+ * (ver `AddressSchema`).
  *
- * No account backend yet, so this only persists to `localStorage` for
- * now - the real version is a `GET /api/addresses` read (mirroring
- * `getRecentOrders()`'s own doc comment on why a pure read stays
- * synchronous while writes below stay `async`).
+ * Toda rota exige um `token` porque todo endereço salvo é por conta - sem
+ * sessão não tem o que listar/criar.
  */
-export const savedAddressesStore = createPersistedStore<SavedAddress[]>("scathon:addresses", [SEED_ADDRESS]);
 
-function makeAddressId() {
-  return `addr-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+interface AddressesResponse {
+  items: SavedAddress[];
 }
 
-/**
- * Saves a new delivery address. `async`/`Promise`-returning for the same
- * reason as `@/lib/waitlist`'s `notifyInterest` - the future call is:
- *
- *   await fetch("/api/addresses", {
- *     method: "POST",
- *     headers: { "Content-Type": "application/json" },
- *     body: JSON.stringify(address),
- *   });
- */
-export async function saveAddress(address: Omit<SavedAddress, "id" | "cep"> & { cep: string }): Promise<SavedAddress> {
-  const entry: SavedAddress = { ...address, id: makeAddressId(), cep: formatCep(address.cep) };
-  savedAddressesStore.setValue((prev) => [...prev, entry]);
-  return entry;
+interface AddressResponse {
+  address: SavedAddress;
 }
 
-export async function removeAddress(id: string): Promise<void> {
-  savedAddressesStore.setValue((prev) => prev.filter((address) => address.id !== id));
+export async function getSavedAddresses(token: string | null): Promise<SavedAddress[]> {
+  if (!token) return [];
+  const data = await apiFetch<AddressesResponse>("/me/addresses", { token });
+  return data.items;
+}
+
+export async function saveAddress(
+  token: string,
+  address: Omit<SavedAddress, "id">,
+): Promise<SavedAddress> {
+  const data = await apiFetch<AddressResponse>("/me/addresses", {
+    method: "POST",
+    token,
+    body: address,
+  });
+  return data.address;
+}
+
+export async function updateAddress(
+  token: string,
+  id: string,
+  patch: Partial<Omit<SavedAddress, "id">>,
+): Promise<SavedAddress> {
+  const data = await apiFetch<AddressResponse>(`/me/addresses/${id}`, {
+    method: "PATCH",
+    token,
+    body: patch,
+  });
+  return data.address;
+}
+
+export async function removeAddress(token: string, id: string): Promise<void> {
+  await apiFetch<void>(`/me/addresses/${id}`, { method: "DELETE", token });
 }

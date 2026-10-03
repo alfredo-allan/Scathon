@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { formatCep, isCompleteCep } from "@/lib/viaCep";
 import { calculateDispatch, type DispatchQuote } from "@/lib/melhorEnvio";
 
@@ -15,6 +16,7 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", cu
  * checking a quote before a customer even asks.
  */
 export function AdminShippingTab() {
+  const { token } = useAuth();
   const [originCep, setOriginCep] = useState("");
   const [destinationCep, setDestinationCep] = useState("");
   const [weight, setWeight] = useState("1");
@@ -27,9 +29,9 @@ export function AdminShippingTab() {
   const canCalculate = originValid && destinationValid && weightValid && status !== "loading";
 
   async function handleCalculate() {
-    if (!canCalculate) return;
+    if (!canCalculate || !token) return;
     setStatus("loading");
-    const results = await calculateDispatch(originCep, destinationCep, Number(weight));
+    const results = await calculateDispatch(token, originCep, destinationCep, Number(weight));
     if (results.length === 0) {
       setStatus("error");
       setQuotes([]);

@@ -3,12 +3,14 @@
 import {
   createContext,
   useCallback,
+  useEffect,
   useMemo,
   useSyncExternalStore,
   type ReactNode,
 } from "react";
 import type { User } from "@/types";
 import { createPersistedStore } from "@/lib/createPersistedStore";
+import { SESSION_EXPIRED_EVENT } from "@/lib/apiClient";
 
 interface AuthSession {
   token: string | null;
@@ -22,6 +24,12 @@ interface AuthContextValue {
   isAdmin: boolean;
   login: (token: string, user: User) => void;
   logout: () => void;
+  /**
+   * Atualiza só o `user` da sessão (mantém o mesmo `token`) - usado depois de
+   * um `PATCH /me`/upload de avatar bem-sucedido (ver `<AccountEditView/>`),
+   * pra refletir os novos dados na hora sem precisar logar de novo.
+   */
+  updateUser: (user: User) => void;
 }
 
 const EMPTY_SESSION: AuthSession = { token: null, user: null };
@@ -58,6 +66,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     authStore.setValue({ token, user });
   }, []);
 
+  const updateUser = useCallback((user: User) => {
+    authStore.setValue((current) =>
+      current.token ? { token: current.token, user } : current,
+    );
+  }, []);
+
   const logout = useCallback(() => {
     authStore.setValue(EMPTY_SESSION);
     // Also clears the real, signed `/admin` session cookie (see
@@ -76,6 +90,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Sessão local com token morto (expirado, ou de um segredo/DB que o
+  // backend não reconhece mais) - ver o doc comment de `SESSION_EXPIRED_EVENT`
+  // em `@/lib/apiClient`. Sem isso, um token inválido deixava o app
+  // "logado" na aparência (token/user ainda presentes aqui) enquanto toda
+  // chamada autenticada quebrava por baixo - cada hook descobrindo isso do
+  // seu próprio jeito, às vezes nem tratando o erro (foi o que aconteceu com
+  // `useSavedAddresses`/`useInventory`). Limpar a sessão aqui, central,
+  // garante que o app inteiro reage do mesmo jeito (volta a mostrar "entrar")
+  // não importa qual tela foi a primeira a bater no 401.
+  useEffect(() => {
+    function handleSessionExpired() {
+      authStore.setValue(EMPTY_SESSION);
+    }
+    window.addEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
+  }, []);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user: session.user,
@@ -84,8 +115,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAdmin: session.user?.role === "admin",
       login,
       logout,
+      updateUser,
     }),
-    [session, login, logout],
+    [session, login, logout, updateUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
