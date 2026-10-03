@@ -114,7 +114,17 @@ export function CheckoutView() {
     );
   }
 
-  if (items.length === 0) {
+  // `pixPayment` preenchido significa que o checkout já foi concluído com
+  // sucesso (ver `handleFinalize`) e o carrinho/seleção de frete já foram
+  // limpos de propósito - sem esse escape aqui, o React re-renderiza com
+  // `items.length === 0` e `pixPayment` setados NO MESMO ciclo (o
+  // `clearCart()`/`resetShippingSelection()` e o `setPixPayment(...)` saem
+  // do mesmo `handleFinalize`, então o React 18 agrupa as duas atualizações
+  // num único re-render), e esse `return` antecipado roda ANTES do bloco que
+  // mostra `<PixPaymentModal/>` lá embaixo - o modal nunca chega a aparecer,
+  // mesmo com o estado certo. Esse era o bug: o Pix era criado com sucesso
+  // no backend, mas a tela de "carrinho vazio" entrava na frente do modal.
+  if (items.length === 0 && !pixPayment) {
     return (
       <div className="px-4 md:px-8 py-6">
         <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 text-center">
@@ -130,7 +140,11 @@ export function CheckoutView() {
     );
   }
 
-  if (!selection.confirmedAt || !selection.addressId || !selection.method) {
+  // Mesmo raciocínio do guard de carrinho vazio acima: `resetShippingSelection()`
+  // roda junto com `setPixPayment(...)` no mesmo `handleFinalize`, então sem
+  // `&& !pixPayment` aqui esse `return` antecipado também bloquearia o modal
+  // do Pix depois de um checkout bem-sucedido.
+  if ((!selection.confirmedAt || !selection.addressId || !selection.method) && !pixPayment) {
     return (
       <div className="px-4 md:px-8 py-6">
         <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 text-center">
