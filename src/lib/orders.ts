@@ -1,4 +1,4 @@
-import { apiFetch } from "./apiClient";
+import { apiFetch, resolveMediaUrl } from "./apiClient";
 
 export interface OrderItem {
   /** Id real do produto no backend - usado por `<OrderReviewForm/>` pra
@@ -77,10 +77,18 @@ export interface OrderDetail extends Order {
  * mesmo cliente) - agora que o login é real (ver `@/lib/auth`), cada
  * cliente vê só os próprios pedidos de verdade.
  */
+function resolveOrderItemImages<T extends { items: { imageUrl: string }[] }>(order: T): T {
+  // `item.imageUrl` é um retrato ("snapshot") do `Product.image_url` no
+  // momento da compra - pode ser `/media/products/...` pra um produto com
+  // foto enviada pelo painel admin, que precisa da origem do backend pra
+  // não quebrar (ver `resolveMediaUrl` em `@/lib/apiClient`).
+  return { ...order, items: order.items.map((item) => ({ ...item, imageUrl: resolveMediaUrl(item.imageUrl) ?? item.imageUrl })) };
+}
+
 export async function getRecentOrders(token: string | null): Promise<Order[]> {
   if (!token) return [];
   const data = await apiFetch<OrdersResponse>("/me/orders", { token });
-  return data.items;
+  return data.items.map(resolveOrderItemImages);
 }
 
 /**
@@ -93,5 +101,5 @@ export async function getRecentOrders(token: string | null): Promise<Order[]> {
  */
 export async function getOrderById(token: string, orderId: string): Promise<OrderDetail> {
   const data = await apiFetch<{ order: OrderDetail }>(`/orders/${encodeURIComponent(orderId)}`, { token });
-  return data.order;
+  return resolveOrderItemImages(data.order);
 }

@@ -188,17 +188,9 @@ export async function uploadProductImage(token: string, productId: string, file:
 }
 
 /**
- * Resolve uma URL de imagem de produto pra exibir no painel admin. Fotos
- * enviadas pelo upload (`/media/products/...`, servidas pelo Flask) precisam
- * da origem do BACKEND, igual `resolveMediaUrl` já faz pro avatar (ver o doc
- * comment lá: sem isso, o navegador resolveria contra a origem do FRONTEND,
- * onde essa rota não existe). Fotos antigas do catálogo (`/category/...`,
- * `/specimen/...` - assets estáticos do próprio frontend em `public/`)
- * continuam resolvendo contra o frontend sem nenhum prefixo - só `/media/...`
- * é redirecionado pro backend.
+ * Mesma função de `@/lib/apiClient` (ver o doc comment lá pro contrato
+ * completo: só `/media/...` ganha a origem do backend, o resto passa reto) -
+ * reexportada aqui com um nome do domínio de produto só pra deixar claro,
+ * em quem importa de `@/lib/adminProducts`, por que ela está sendo chamada.
  */
-export function resolveProductImageUrl(path: string | null | undefined): string | null {
-  if (!path) return null;
-  if (!path.startsWith("/media/")) return path;
-  return resolveMediaUrl(path);
-}
+export const resolveProductImageUrl = resolveMediaUrl;

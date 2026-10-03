@@ -1,4 +1,4 @@
-import { apiFetch } from "./apiClient";
+import { apiFetch, resolveMediaUrl } from "./apiClient";
 
 export interface InventoryItem {
   productId: string;
@@ -26,7 +26,13 @@ interface InventoryListResponse {
  */
 export async function getInventory(token: string): Promise<InventoryItem[]> {
   const data = await apiFetch<InventoryListResponse>("/admin/inventory?perPage=100", { token });
-  return data.items;
+  // `imageUrl` vem cru do backend (`product.cover_image or product.image_url`)
+  // - uma foto enviada pelo upload do admin é `/media/products/...`, que
+  // precisa da origem do backend pra não quebrar (ver `resolveMediaUrl` em
+  // `@/lib/apiClient`). `@/lib/products`'s `mapSummary` já resolve isso pro
+  // resto do site, mas esta tela usa um endpoint/formato próprio
+  // (`GET /admin/inventory`), então resolve aqui também.
+  return data.items.map((item) => ({ ...item, imageUrl: resolveMediaUrl(item.imageUrl) }));
 }
 
 /** Define um saldo exato (ex.: depois de uma recontagem manual). Clamp em >= 0 já é feito pelo backend. */

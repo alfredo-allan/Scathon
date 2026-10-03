@@ -42,21 +42,33 @@ function computeMediaOrigin(apiBaseUrl: string): string {
 const MEDIA_ORIGIN = computeMediaOrigin(API_BASE_URL);
 
 /**
- * `User.avatar_url` (ver `app/models/user.py` no backend) é salvo como um
- * caminho RELATIVO servido pelo Flask - `/media/avatars/user_7.jpg?v=...`,
- * nunca uma URL completa. Passar isso direto pra `<Image src={...}>` faz o
- * navegador resolver contra a origem do PRÓPRIO FRONTEND (`localhost:3000`,
- * onde essa rota não existe) em vez do backend (`localhost:5000`) - a
- * imagem quebra, e o React/Next renderiza o `alt` (o nome completo do
- * usuário) no lugar, estourando pra fora do círculo de 32/64px do avatar.
- * Foi exatamente esse bug visto em produção (nome inteiro quebrando linha
- * por cima do header, sem foto nenhuma). Toda vez que `avatarUrl` vira
- * `src` de uma `<Image>`, passa por aqui primeiro.
+ * `User.avatar_url`/fotos de produto enviadas pelo admin (ver
+ * `app/models/user.py`/`app/admin/product_images.py` no backend) são salvas
+ * como um caminho RELATIVO servido pelo Flask - `/media/avatars/user_7.jpg`,
+ * `/media/products/p-123456/<uuid>.jpg`, nunca uma URL completa. Passar isso
+ * direto pra `<Image src={...}>` faz o navegador resolver contra a origem do
+ * PRÓPRIO FRONTEND (a Vercel, onde essa rota não existe) em vez do backend -
+ * a imagem quebra (ver o bug real visto em produção: avatar quebrando e
+ * mostrando o `alt` por cima do header; o mesmo aconteceu com a capa de um
+ * produto recém-cadastrado via upload - "a foto de capa já não é exibida").
+ * Toda vez que um desses campos vira `src` de uma `<Image>`, passa por aqui
+ * primeiro - ver `@/lib/products`'s `mapSummary`/`mapDetail`, que já resolve
+ * isso pra todo produto na origem, então nenhum componente downstream
+ * (`<ProductCard/>`, `<ProductGallery/>`, carrinho, wishlist...) precisa
+ * lembrar de chamar isto de novo.
+ *
+ * Só `/media/...` (servido pelo BACKEND) é reescrito - um caminho relativo
+ * que NÃO comece com `/media/` é um asset ESTÁTICO DO PRÓPRIO FRONTEND
+ * (`/category/...`, `/specimen/...`, em `public/`, usado pelo catálogo
+ * seedado antes de existir upload de foto) e já resolve certo contra a
+ * origem atual - prefixar esses quebraria a imagem ao contrário. Uma URL já
+ * absoluta (`https://...`) passa direto também.
  */
 export function resolveMediaUrl(path: string | null | undefined): string | null {
   if (!path) return null;
   if (/^https?:\/\//i.test(path)) return path; // já é uma URL completa - nada a fazer.
-  return `${MEDIA_ORIGIN}${path.startsWith("/") ? path : `/${path}`}`;
+  if (!path.startsWith("/media/")) return path; // asset estático do frontend - não mexe.
+  return `${MEDIA_ORIGIN}${path}`;
 }
 
 export class ApiError extends Error {

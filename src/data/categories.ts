@@ -20,13 +20,30 @@ export const categories: Category[] = [
 // URL to read in Portuguese too (e.g. /shop/moletons), not carry over the
 // old English internal names (hoodies, tees, ...) that only ever showed up
 // in code, never on screen.
+//
+// IMPORTANTE - precisa bater 1:1 com as categorias reais do backend
+// (`Category`, tabela seedada por `SEED_CATEGORIES` em `seed.py`:
+// moletons/camisetas/casacos/calcas/acessorios). `getCategoryBySlug` abaixo
+// é quem decide se `/shop/[category]/[product]` existe ou dá 404 (ver o
+// `!category` check em `app/shop/[category]/[product]/page.tsx`) - antes
+// deste ajuste, "casacos" e "acessorios" estavam comentados aqui (nenhum
+// produto do catálogo inicial usava essas duas), então o primeiro produto
+// cadastrado pelo Alfredo numa delas via `<AdminProductsTab/>` ficava
+// "indisponível" ao clicar, mesmo existindo de verdade no banco - o painel
+// admin deixa escolher QUALQUER categoria real (`GET /categories`), mas esta
+// lista aqui é estática e só sabia de parte delas. "bermudas" nunca existiu
+// como categoria real no backend (era só um resquício do mock antigo em
+// `src/data/products.ts`) - removida daqui também, já que selecioná-la no
+// admin é impossível (o dropdown só lista categorias reais) e o link nunca
+// levava a produto nenhum. Se um dia o admin ganhar uma tela de "criar
+// categoria", esta lista precisa voltar a ser buscada de `GET /categories`
+// em vez de mantida à mão feito agora.
 export const popularCategories: Category[] = [
   { id: "moletons", label: "Moletons", href: "/shop/moletons" },
   { id: "camisetas", label: "Camisetas", href: "/shop/camisetas" },
-  // { id: "casacos", label: "Casacos", href: "/shop/casacos" },
+  { id: "casacos", label: "Casacos", href: "/shop/casacos" },
   { id: "calcas", label: "Calças", href: "/shop/calcas" },
-  { id: "bermudas", label: "Bermudas", href: "/shop/bermudas" },
-  // { id: "acessorios", label: "Acessórios", href: "/shop/acessorios" },
+  { id: "acessorios", label: "Acessórios", href: "/shop/acessorios" },
 ];
 
 /**

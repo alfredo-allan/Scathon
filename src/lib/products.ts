@@ -1,5 +1,5 @@
 import type { ColorVariant, Product } from "@/types";
-import { apiFetch, ApiError } from "./apiClient";
+import { apiFetch, ApiError, resolveMediaUrl } from "./apiClient";
 
 /**
  * Catálogo real contra o backend Flask (`scathon-api` - ver
@@ -62,9 +62,21 @@ interface ProductDetailResponse {
 }
 
 function mapColors(colors: ApiColorVariant[]): ColorVariant[] {
-  return colors.map((color) => ({ name: color.name, hex: color.hex, imageUrl: color.imageUrl }));
+  return colors.map((color) => ({ name: color.name, hex: color.hex, imageUrl: resolveMediaUrl(color.imageUrl) ?? color.imageUrl }));
 }
 
+/**
+ * Toda foto de produto passa por `resolveMediaUrl` (ver o doc comment dela
+ * em `@/lib/apiClient`) bem aqui, uma vez só, na origem - assim nenhum
+ * componente que consome `Product` (`<ProductCard/>`, `<ProductGallery/>`,
+ * carrinho, wishlist, busca...) precisa lembrar de resolver de novo. Sem
+ * isso, uma foto enviada pelo painel admin (`/media/products/...`, ver
+ * `<AdminProductsTab/>`) resolvia contra a origem do FRONTEND em vez do
+ * backend e simplesmente não aparecia - bug real visto em produção logo
+ * depois do primeiro upload ("a foto de capa já não é exibida").
+ * `coverImage`/`hoverImageUrl` continuam `undefined` (não `null`) quando
+ * ausentes - mesmo contrato de antes, só o valor em si muda quando presente.
+ */
 function mapSummary(product: ApiProductSummary): Product {
   return {
     id: product.id,
@@ -78,9 +90,9 @@ function mapSummary(product: ApiProductSummary): Product {
     isNew: product.isNew,
     isBestSeller: product.isBestSeller,
     availability: product.availability,
-    imageUrl: product.imageUrl ?? "",
-    coverImage: product.coverImage ?? undefined,
-    hoverImageUrl: product.hoverImageUrl ?? undefined,
+    imageUrl: resolveMediaUrl(product.imageUrl) ?? "",
+    coverImage: resolveMediaUrl(product.coverImage) ?? undefined,
+    hoverImageUrl: resolveMediaUrl(product.hoverImageUrl) ?? undefined,
     colors: mapColors(product.colors),
   };
 }
@@ -91,7 +103,10 @@ function mapDetail(product: ApiProductDetail): Product {
     styleCode: product.styleCode ?? undefined,
     description: product.description ?? undefined,
     sizes: product.sizes.length > 0 ? product.sizes : undefined,
-    specimenImages: product.specimenImages.length > 0 ? product.specimenImages : undefined,
+    specimenImages:
+      product.specimenImages.length > 0
+        ? product.specimenImages.map((url) => resolveMediaUrl(url) ?? url)
+        : undefined,
   };
 }
 

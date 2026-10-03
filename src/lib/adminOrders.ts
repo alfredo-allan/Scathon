@@ -1,4 +1,4 @@
-import { apiFetch } from "./apiClient";
+import { apiFetch, resolveMediaUrl } from "./apiClient";
 
 export type PaymentMethod = "pix" | "credito" | "boleto";
 export type PaymentStatus = "approved" | "pending" | "refunded" | "rejected";
@@ -53,7 +53,15 @@ export async function getAdminOrders(token: string, status?: OrderStatus): Promi
   const query = new URLSearchParams({ perPage: String(MAX_PAGE_SIZE) });
   if (status) query.set("status", status);
   const data = await apiFetch<AdminOrdersResponse>(`/admin/orders?${query.toString()}`, { token });
-  return data.items;
+  // `item.imageUrl` é um retrato ("snapshot") do `Product.image_url` no
+  // momento da compra (ver `OrderItem.image_url` no backend) - pode ser
+  // `/media/products/...` pra um produto com foto enviada pelo admin, que
+  // precisa da origem do backend pra não quebrar (ver `resolveMediaUrl` em
+  // `@/lib/apiClient`).
+  return data.items.map((order) => ({
+    ...order,
+    items: order.items.map((item) => ({ ...item, imageUrl: resolveMediaUrl(item.imageUrl) ?? item.imageUrl })),
+  }));
 }
 
 export async function updateOrderStatus(token: string, orderId: string, status: OrderStatus): Promise<void> {
