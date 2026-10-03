@@ -107,18 +107,27 @@ function InventoryRow({
       </div>
 
       {isLow && (
-        <span className="shrink-0 rounded-app border border-amber-300 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-amber-700 dark:border-amber-900 dark:text-amber-400">
+        <span className="shrink-0 rounded-app border border-amber-300 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-amber-700 dark:border-amber-900 dark:text-amber-400 md:text-xs">
           {item.quantity === 0 ? "Esgotado" : "Estoque baixo"}
         </span>
       )}
 
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2 md:gap-3">
+        {/* Spinner inline (não troca a lista inteira por um "Carregando…" -
+            ver o doc comment de `reload()` em `useInventory`) - some sozinho
+            assim que `onChanged()` (o `reload()` em segundo plano) termina. */}
+        {isSaving && (
+          <span
+            aria-hidden
+            className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-700 dark:border-neutral-700 dark:border-t-neutral-300"
+          />
+        )}
         <button
           type="button"
           onClick={() => handleAdjust(-1)}
           disabled={item.quantity === 0 || isSaving}
           aria-label="Remover uma unidade"
-          className="flex h-7 w-7 items-center justify-center rounded-app border border-neutral-300 text-neutral-700 transition-colors hover:border-neutral-500 disabled:opacity-30 dark:border-neutral-700 dark:text-neutral-300"
+          className="flex h-7 w-7 items-center justify-center rounded-app border border-neutral-300 text-neutral-700 transition-colors hover:border-neutral-500 disabled:opacity-30 dark:border-neutral-700 dark:text-neutral-300 md:h-9 md:w-9 md:text-lg"
         >
           −
         </button>
@@ -134,14 +143,14 @@ function InventoryRow({
               event.currentTarget.blur();
             }
           }}
-          className="w-14 rounded-app border border-neutral-300 bg-transparent px-2 py-1 text-center text-sm outline-none focus:border-neutral-900 disabled:opacity-50 dark:border-neutral-700 dark:focus:border-neutral-100"
+          className="w-14 rounded-app border border-neutral-300 bg-transparent px-2 py-1 text-center text-sm outline-none focus:border-neutral-900 disabled:opacity-50 dark:border-neutral-700 dark:focus:border-neutral-100 md:w-16 md:py-1.5 md:text-base"
         />
         <button
           type="button"
           onClick={() => handleAdjust(1)}
           disabled={isSaving}
           aria-label="Adicionar uma unidade"
-          className="flex h-7 w-7 items-center justify-center rounded-app border border-neutral-300 text-neutral-700 transition-colors hover:border-neutral-500 disabled:opacity-30 dark:border-neutral-700 dark:text-neutral-300"
+          className="flex h-7 w-7 items-center justify-center rounded-app border border-neutral-300 text-neutral-700 transition-colors hover:border-neutral-500 disabled:opacity-30 dark:border-neutral-700 dark:text-neutral-300 md:h-9 md:w-9 md:text-lg"
         >
           +
         </button>

@@ -105,7 +105,7 @@ export function AdminOrdersTab() {
             key={option.id}
             type="button"
             onClick={() => setFilter(option.id)}
-            className={`rounded-app border px-3 py-1.5 text-xs font-semibold uppercase tracking-widest transition-colors ${
+            className={`rounded-app border px-3 py-1.5 text-xs font-semibold uppercase tracking-widest transition-colors md:px-4 md:py-2 md:text-sm ${
               filter === option.id
                 ? "border-neutral-950 bg-neutral-950 text-neutral-50 dark:border-neutral-100 dark:bg-neutral-100 dark:text-neutral-950"
                 : "border-neutral-300 text-neutral-600 hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-400"
@@ -132,7 +132,7 @@ export function AdminOrdersTab() {
                 value={order.status}
                 disabled={updatingId === order.id}
                 onChange={(event) => handleStatusChange(order.id, event.target.value as OrderStatus)}
-                className={`rounded-app border bg-transparent px-2 py-1 text-[10px] font-semibold uppercase tracking-widest outline-none disabled:opacity-50 ${ORDER_STATUS_STYLE[order.status]}`}
+                className={`rounded-app border bg-transparent px-2 py-1 text-[10px] font-semibold uppercase tracking-widest outline-none disabled:opacity-50 md:px-3 md:py-2 md:text-xs ${ORDER_STATUS_STYLE[order.status]}`}
               >
                 {STATUS_OPTIONS.map((status) => (
                   <option key={status} value={status} className="bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100">

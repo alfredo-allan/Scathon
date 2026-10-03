@@ -6,11 +6,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { AdminOverviewTab } from "./AdminOverviewTab";
 import { AdminOrdersTab } from "./AdminOrdersTab";
 import { AdminInventoryTab } from "./AdminInventoryTab";
+import { AdminProductsTab } from "./AdminProductsTab";
 import { AdminCustomersTab } from "./AdminCustomersTab";
 import { AdminShippingTab } from "./AdminShippingTab";
 import { AdminIntegrationsTab } from "./AdminIntegrationsTab";
 
-type TabId = "visao-geral" | "pedidos" | "estoque" | "clientes" | "frete" | "integracoes";
+type TabId = "visao-geral" | "pedidos" | "estoque" | "produtos" | "clientes" | "frete" | "integracoes";
 
 // A plain config array - not a switch scattered across the file - so
 // adding a 7th tab later (a real backend endpoint, a marketing panel,
@@ -21,6 +22,7 @@ const TABS: Array<{ id: TabId; label: string }> = [
   { id: "visao-geral", label: "Visão Geral" },
   { id: "pedidos", label: "Pedidos" },
   { id: "estoque", label: "Estoque" },
+  { id: "produtos", label: "Produtos" },
   { id: "clientes", label: "Clientes" },
   { id: "frete", label: "Frete & Despacho" },
   { id: "integracoes", label: "Integrações" },
@@ -137,6 +139,7 @@ export function AdminView() {
         {activeTab === "visao-geral" && <AdminOverviewTab />}
         {activeTab === "pedidos" && <AdminOrdersTab />}
         {activeTab === "estoque" && <AdminInventoryTab />}
+        {activeTab === "produtos" && <AdminProductsTab />}
         {activeTab === "clientes" && <AdminCustomersTab />}
         {activeTab === "frete" && <AdminShippingTab />}
         {activeTab === "integracoes" && <AdminIntegrationsTab />}
