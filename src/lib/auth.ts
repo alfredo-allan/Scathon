@@ -148,6 +148,98 @@ export async function removeAvatar(token: string): Promise<void> {
   await apiFetch<void>("/me/avatar", { method: "DELETE", token });
 }
 
+// ---------------------------------------------------------------------------
+// Recuperação de senha (sem login) e alterações sensíveis (logado) - Fase 6,
+// parte 2 do briefing. O backend já tinha tudo isso pronto desde antes do
+// SMTP funcionar de verdade (ver `app/auth/__init__.py`/`app/account/
+// __init__.py`); agora que o e-mail sai de verdade, `<LoginView/>`/
+// `<AccountEditView/>` passam a usar essas funções em vez de mostrar "em
+// breve".
+// ---------------------------------------------------------------------------
+
+/**
+ * `POST /api/v1/auth/forgot-password` - sempre devolve sucesso (o backend
+ * nunca revela se o e-mail tem conta ou não, pra não virar um jeito de
+ * descobrir e-mails cadastrados) e dispara um código de 6 dígitos pro e-mail
+ * SE ele tiver uma conta. Rate-limitado por IP (5/hora) pelo próprio backend.
+ */
+export async function forgotPasswordRequest(email: string): Promise<void> {
+  await apiFetch<{ ok: boolean; message: string }>("/auth/forgot-password", {
+    method: "POST",
+    body: { email },
+  });
+}
+
+/**
+ * `POST /api/v1/auth/reset-password` - troca a senha de quem esqueceu, usando
+ * o código de `forgotPasswordRequest`. Lança `ApiError` com `code:
+ * "invalid_code"` pra código errado/expirado ou e-mail errado - mesma
+ * mensagem genérica pros dois casos (não dá pra saber qual dos dois foi).
+ */
+export async function resetPasswordRequest(email: string, code: string, newPassword: string): Promise<void> {
+  await apiFetch<{ ok: boolean }>("/auth/reset-password", {
+    method: "POST",
+    body: { email, code, newPassword },
+  });
+}
+
+export type VerificationPurpose = "profile_change" | "password_change" | "email_change";
+
+/**
+ * `POST /api/v1/me/verification-code` - pede o envio de um código novo por
+ * e-mail pra confirmar uma troca de e-mail/senha (ou uma 2ª+ edição de perfil
+ * no mesmo dia - ver `<AccountEditView/>`'s uso de `password_change`/
+ * `email_change`). Pra `purpose: "email_change"`, o código vai pro e-mail
+ * NOVO (`newEmail`), não pro atual - é assim que o backend confirma que quem
+ * pediu a troca realmente tem acesso a essa caixa de entrada. Rate-limitado
+ * por conta (5/hora) pelo próprio backend.
+ */
+export async function requestAccountVerificationCode(
+  token: string,
+  purpose: VerificationPurpose,
+  newEmail?: string,
+): Promise<{ expiresInMinutes: number }> {
+  return apiFetch<{ ok: boolean; expiresInMinutes: number }>("/me/verification-code", {
+    method: "POST",
+    token,
+    body: { purpose, newEmail },
+  });
+}
+
+/**
+ * `POST /api/v1/me/email` - confirma a troca de e-mail com o código que
+ * chegou no e-mail NOVO (ver `requestAccountVerificationCode` acima). Devolve
+ * o usuário já com o e-mail atualizado.
+ */
+export async function confirmEmailChange(token: string, code: string): Promise<User> {
+  const data = await apiFetch<{ user: ApiUser }>("/me/email", {
+    method: "POST",
+    token,
+    body: { code },
+  });
+  return mapUser(data.user);
+}
+
+/**
+ * `POST /api/v1/me/password` - troca a senha de uma conta JÁ LOGADA
+ * (diferente de `resetPasswordRequest`, pra quem esqueceu a senha e não
+ * consegue entrar). Exige a senha atual (prova que é a própria pessoa no
+ * teclado) + o código de `requestAccountVerificationCode` com `purpose:
+ * "password_change"`.
+ */
+export async function changePassword(
+  token: string,
+  currentPassword: string,
+  newPassword: string,
+  code: string,
+): Promise<void> {
+  await apiFetch<{ ok: boolean }>("/me/password", {
+    method: "POST",
+    token,
+    body: { currentPassword, newPassword, code },
+  });
+}
+
 function dataUrlToFile(dataUrl: string, filename: string): File {
   const [header, base64] = dataUrl.split(",");
   const mimeMatch = /data:(.*?);base64/.exec(header ?? "");

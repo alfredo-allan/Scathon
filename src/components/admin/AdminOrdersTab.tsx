@@ -39,6 +39,12 @@ export function AdminOrdersTab() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [filter, setFilter] = useState<OrderStatus | "todos">("todos");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  // Rascunho do campo "código de rastreio" por pedido - separado de
+  // `orders` pra digitar sem re-renderizar a lista inteira a cada tecla;
+  // inicializado com o valor já salvo (`order.trackingCode`) assim que a
+  // lista carrega.
+  const [trackingDrafts, setTrackingDrafts] = useState<Record<string, string>>({});
+  const [savingTrackingId, setSavingTrackingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!token) {
@@ -48,7 +54,9 @@ export function AdminOrdersTab() {
     setIsLoading(true);
     setErrorMessage(null);
     try {
-      setOrders(await getAdminOrders(token));
+      const fetched = await getAdminOrders(token);
+      setOrders(fetched);
+      setTrackingDrafts(Object.fromEntries(fetched.map((order) => [order.id, order.trackingCode ?? ""])));
     } catch {
       setErrorMessage("Não foi possível carregar os pedidos agora.");
     } finally {
@@ -69,12 +77,33 @@ export function AdminOrdersTab() {
     if (!token) return;
     setUpdatingId(orderId);
     try {
+      // Sem `trackingCode` aqui de propósito - só o status muda, o código de
+      // rastreio já salvo (se houver) fica como está (ver doc comment de
+      // `updateOrderStatus` em `@/lib/adminOrders`).
       await updateOrderStatus(token, orderId, status);
       setOrders((current) => current.map((order) => (order.id === orderId ? { ...order, status } : order)));
     } catch {
       setErrorMessage("Não foi possível atualizar o status desse pedido agora.");
     } finally {
       setUpdatingId(null);
+    }
+  }
+
+  async function handleSaveTracking(order: AdminOrder) {
+    if (!token) return;
+    const trimmed = (trackingDrafts[order.id] ?? "").trim();
+    setSavingTrackingId(order.id);
+    setErrorMessage(null);
+    try {
+      await updateOrderStatus(token, order.id, order.status, trimmed || null);
+      setOrders((current) =>
+        current.map((item) => (item.id === order.id ? { ...item, trackingCode: trimmed || null } : item)),
+      );
+      setTrackingDrafts((current) => ({ ...current, [order.id]: trimmed }));
+    } catch {
+      setErrorMessage("Não foi possível salvar o código de rastreio agora.");
+    } finally {
+      setSavingTrackingId(null);
     }
   }
 
@@ -157,6 +186,42 @@ export function AdminOrdersTab() {
                   </p>
                 </div>
               ))}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 border-t border-neutral-200 px-4 py-3 dark:border-neutral-800">
+              <label
+                htmlFor={`tracking-${order.id}`}
+                className="text-[10px] font-semibold uppercase tracking-widest text-neutral-500 dark:text-neutral-400"
+              >
+                Código de rastreio
+              </label>
+              <input
+                id={`tracking-${order.id}`}
+                type="text"
+                value={trackingDrafts[order.id] ?? ""}
+                onChange={(event) =>
+                  setTrackingDrafts((current) => ({ ...current, [order.id]: event.target.value }))
+                }
+                placeholder="Ex.: BR1234567890BR"
+                className="min-w-[160px] flex-1 rounded-app border border-neutral-300 bg-transparent px-2 py-1.5 text-xs text-neutral-900 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
+              />
+              <button
+                type="button"
+                onClick={() => handleSaveTracking(order)}
+                disabled={
+                  savingTrackingId === order.id ||
+                  (trackingDrafts[order.id] ?? "").trim() === (order.trackingCode ?? "")
+                }
+                className="rounded-app border border-neutral-300 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-neutral-900 transition-colors hover:border-neutral-500 disabled:opacity-40 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-500"
+              >
+                {savingTrackingId === order.id ? "Salvando…" : "Salvar"}
+              </button>
+              {order.trackingCode && (trackingDrafts[order.id] ?? "").trim() === order.trackingCode && (
+                <span className="text-[10px] text-green-700 dark:text-green-500">Salvo</span>
+              )}
+              <span className="basis-full text-[10px] text-neutral-500 dark:text-neutral-400">
+                Salvar avisa o cliente por e-mail, com o código incluído.
+              </span>
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-neutral-200 bg-neutral-50 px-4 py-3 text-xs dark:border-neutral-800 dark:bg-neutral-900/40">

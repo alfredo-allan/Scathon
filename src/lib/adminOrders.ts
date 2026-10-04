@@ -30,6 +30,13 @@ export interface AdminOrder {
   shippingMethod: "melhor_envio" | "combinar_com_vendedor";
   shippingCarrier?: string | null;
   shippingCost: number;
+  /**
+   * Preenchido manualmente pelo admin (`<AdminOrdersTab/>`, junto da troca
+   * de status) ou automaticamente pelo webhook da Melhor Envio (`POST /
+   * webhooks/melhor-envio`, evento "shipped") quando a integração real
+   * estiver ligada - `null` enquanto ninguém despachou ainda.
+   */
+  trackingCode?: string | null;
   items: AdminOrderItem[];
   payment: PaymentReceipt | null;
 }
@@ -64,11 +71,25 @@ export async function getAdminOrders(token: string, status?: OrderStatus): Promi
   }));
 }
 
-export async function updateOrderStatus(token: string, orderId: string, status: OrderStatus): Promise<void> {
+/**
+ * `trackingCode` é opcional de propósito (ver doc comment de
+ * `OrderStatusUpdateSchema` no backend): omitido (chamada só com `status`),
+ * o código de rastreio já salvo não é mexido - só entra no corpo quando
+ * `<AdminOrdersTab/>` está especificamente salvando um código novo (string)
+ * ou limpando um existente (`null`).
+ */
+export async function updateOrderStatus(
+  token: string,
+  orderId: string,
+  status: OrderStatus,
+  trackingCode?: string | null,
+): Promise<void> {
+  const body: { status: OrderStatus; trackingCode?: string | null } = { status };
+  if (trackingCode !== undefined) body.trackingCode = trackingCode;
   await apiFetch(`/admin/orders/${encodeURIComponent(orderId)}/status`, {
     method: "PATCH",
     token,
-    body: { status },
+    body,
   });
 }
 

@@ -5,15 +5,16 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import { ApiError, loginRequest, registerRequest, updateProfile } from '@/lib/auth'
+import { ApiError, forgotPasswordRequest, loginRequest, registerRequest, resetPasswordRequest, updateProfile } from '@/lib/auth'
 import { resolveMediaUrl } from '@/lib/apiClient'
 import { saveAddress } from '@/lib/addresses'
 import { formatCep, isCompleteCep, lookupAddressByCep, type ViaCepAddress } from '@/lib/viaCep'
 import { formatPhone, isCompletePhone } from '@/lib/phone'
 import { readImageAsDataUrl } from '@/lib/imageFile'
 
-type Mode = 'entrar' | 'criar'
+type Mode = 'entrar' | 'criar' | 'esqueci'
 type CepStatus = 'idle' | 'loading' | 'done' | 'invalid'
+type ForgotStep = 'pedir' | 'confirmar'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -70,9 +71,92 @@ export function LoginView() {
   const [addressNumber, setAddressNumber] = useState('')
   const [addressComplement, setAddressComplement] = useState('')
 
+  // "Esqueci minha senha" - fluxo de 2 passos próprio (pedir código -> usar
+  // código + nova senha), separado do `handleSubmit` principal de propósito:
+  // é um par de requisições diferente (`POST /auth/forgot-password` +
+  // `POST /auth/reset-password`, ver `@/lib/auth`), sem token nenhum
+  // envolvido (quem esqueceu a senha não está logado). Campos próprios em
+  // vez de reaproveitar `email`/`password` de cima - trocar de aba sem
+  // perder o que já tinha digitado em cada formulário.
+  const [forgotStep, setForgotStep] = useState<ForgotStep>('pedir')
+  const [forgotEmail, setForgotEmail] = useState('')
+  const [forgotCode, setForgotCode] = useState('')
+  const [forgotNewPassword, setForgotNewPassword] = useState('')
+  // Mensagem neutra (não é erro) - usada tanto pro "mandamos um código" do
+  // passo 1 quanto pro "senha alterada" que aparece de volta na aba
+  // "Entrar" depois do passo 2 - ver `handleForgotConfirm`.
+  const [infoMessage, setInfoMessage] = useState<string | null>(null)
+
   function switchMode(next: Mode) {
     setMode(next)
     setError(null)
+    setInfoMessage(null)
+    if (next === 'esqueci') {
+      setForgotStep('pedir')
+    }
+  }
+
+  async function handleForgotRequest(event: FormEvent) {
+    event.preventDefault()
+    const trimmedEmail = forgotEmail.trim()
+    if (!EMAIL_PATTERN.test(trimmedEmail)) {
+      setError('Digite um e-mail válido.')
+      return
+    }
+
+    setError(null)
+    setIsSubmitting(true)
+    try {
+      await forgotPasswordRequest(trimmedEmail)
+      // Mesma mensagem genérica que o backend devolve (nunca revela se o
+      // e-mail existe ou não - ver `forgot_password` em `app/auth/
+      // __init__.py`) - sempre avança pro passo 2, exista conta ou não.
+      setInfoMessage('Se esse e-mail tiver uma conta, enviamos um código de verificação pra ele.')
+      setForgotStep('confirmar')
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : 'Não foi possível pedir o código agora. Tente de novo em instantes.'
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  async function handleForgotConfirm(event: FormEvent) {
+    event.preventDefault()
+    if (forgotCode.trim().length !== 6) {
+      setError('Digite o código de 6 dígitos que chegou no seu e-mail.')
+      return
+    }
+    if (forgotNewPassword.length < 8) {
+      setError('A nova senha precisa ter pelo menos 8 caracteres.')
+      return
+    }
+
+    setError(null)
+    setIsSubmitting(true)
+    try {
+      await resetPasswordRequest(forgotEmail.trim(), forgotCode.trim(), forgotNewPassword)
+      // Já deixa o e-mail preenchido na aba "Entrar", pronto pra digitar a
+      // senha nova - um passo a menos depois de acabar de trocá-la.
+      setEmail(forgotEmail.trim())
+      setPassword('')
+      setForgotCode('')
+      setForgotNewPassword('')
+      setMode('entrar')
+      setError(null)
+      setInfoMessage('Senha alterada! Entre com a sua senha nova.')
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : 'Código inválido ou expirado. Peça um novo código.'
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   async function runAddressLookup(rawCep: string) {
@@ -325,29 +409,118 @@ export function LoginView() {
           />
         </Link>
 
-        <div className="mb-7 flex border-b border-neutral-200 dark:border-neutral-800">
-          <button
-            type="button"
-            onClick={() => switchMode('entrar')}
-            className={`flex-1 border-b-2 pb-3 text-xs font-semibold uppercase tracking-widest transition-colors ${
-              mode === 'entrar'
-                ? 'border-neutral-950 text-neutral-950 dark:border-neutral-100 dark:text-neutral-100'
-                : 'border-transparent text-neutral-400 hover:text-neutral-700 dark:text-neutral-600 dark:hover:text-neutral-300'
-            }`}>
-            Entrar
-          </button>
-          <button
-            type="button"
-            onClick={() => switchMode('criar')}
-            className={`flex-1 border-b-2 pb-3 text-xs font-semibold uppercase tracking-widest transition-colors ${
-              mode === 'criar'
-                ? 'border-neutral-950 text-neutral-950 dark:border-neutral-100 dark:text-neutral-100'
-                : 'border-transparent text-neutral-400 hover:text-neutral-700 dark:text-neutral-600 dark:hover:text-neutral-300'
-            }`}>
-            Criar Conta
-          </button>
-        </div>
+        {mode === 'esqueci' ? (
+          <div className="mb-7 flex items-center justify-between border-b border-neutral-200 pb-3 dark:border-neutral-800">
+            <p className="text-xs font-semibold uppercase tracking-widest text-neutral-950 dark:text-neutral-100">
+              Recuperar senha
+            </p>
+            <button
+              type="button"
+              onClick={() => switchMode('entrar')}
+              className="text-xs font-semibold uppercase tracking-widest text-neutral-500 underline underline-offset-4 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100">
+              Voltar
+            </button>
+          </div>
+        ) : (
+          <div className="mb-7 flex border-b border-neutral-200 dark:border-neutral-800">
+            <button
+              type="button"
+              onClick={() => switchMode('entrar')}
+              className={`flex-1 border-b-2 pb-3 text-xs font-semibold uppercase tracking-widest transition-colors ${
+                mode === 'entrar'
+                  ? 'border-neutral-950 text-neutral-950 dark:border-neutral-100 dark:text-neutral-100'
+                  : 'border-transparent text-neutral-400 hover:text-neutral-700 dark:text-neutral-600 dark:hover:text-neutral-300'
+              }`}>
+              Entrar
+            </button>
+            <button
+              type="button"
+              onClick={() => switchMode('criar')}
+              className={`flex-1 border-b-2 pb-3 text-xs font-semibold uppercase tracking-widest transition-colors ${
+                mode === 'criar'
+                  ? 'border-neutral-950 text-neutral-950 dark:border-neutral-100 dark:text-neutral-100'
+                  : 'border-transparent text-neutral-400 hover:text-neutral-700 dark:text-neutral-600 dark:hover:text-neutral-300'
+              }`}>
+              Criar Conta
+            </button>
+          </div>
+        )}
 
+        {mode === 'esqueci' && (
+          <form
+            onSubmit={forgotStep === 'pedir' ? handleForgotRequest : handleForgotConfirm}
+            className="flex flex-col gap-4">
+            {forgotStep === 'pedir' ? (
+              <label className="flex flex-col gap-1.5 text-xs font-semibold uppercase tracking-widest text-neutral-700 dark:text-neutral-300">
+                E-mail da sua conta
+                <input
+                  type="email"
+                  autoComplete="email"
+                  value={forgotEmail}
+                  onChange={(event) => setForgotEmail(event.target.value)}
+                  placeholder="seu@email.com"
+                  className="w-full rounded-app border border-neutral-300 bg-transparent px-3 py-3 text-sm font-normal normal-case tracking-normal text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
+                />
+              </label>
+            ) : (
+              <>
+                <p className="text-xs normal-case tracking-normal text-neutral-600 dark:text-neutral-400">
+                  Enviamos um código de 6 dígitos para <strong className="text-neutral-900 dark:text-neutral-100">{forgotEmail}</strong>. Ele vale por alguns minutos.
+                </p>
+                <label className="flex flex-col gap-1.5 text-xs font-semibold uppercase tracking-widest text-neutral-700 dark:text-neutral-300">
+                  Código de verificação
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    autoComplete="one-time-code"
+                    value={forgotCode}
+                    onChange={(event) => setForgotCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="000000"
+                    className="w-full rounded-app border border-neutral-300 bg-transparent px-3 py-3 text-center text-lg font-semibold tracking-[0.3em] text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
+                  />
+                </label>
+                <label className="flex flex-col gap-1.5 text-xs font-semibold uppercase tracking-widest text-neutral-700 dark:text-neutral-300">
+                  Nova senha
+                  <input
+                    type="password"
+                    autoComplete="new-password"
+                    value={forgotNewPassword}
+                    onChange={(event) => setForgotNewPassword(event.target.value)}
+                    placeholder="••••••••"
+                    className="w-full rounded-app border border-neutral-300 bg-transparent px-3 py-3 text-sm font-normal normal-case tracking-normal text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForgotStep('pedir')
+                    setError(null)
+                    setInfoMessage(null)
+                  }}
+                  className="self-start text-[11px] normal-case tracking-normal text-neutral-500 underline underline-offset-4 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100">
+                  Pedir um código novo
+                </button>
+              </>
+            )}
+
+            {infoMessage && <p className="text-xs normal-case tracking-normal text-neutral-600 dark:text-neutral-400">{infoMessage}</p>}
+            {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="mt-2 w-full rounded-app bg-neutral-950 py-3.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-950">
+              {isSubmitting
+                ? 'Enviando…'
+                : forgotStep === 'pedir'
+                  ? 'Enviar código'
+                  : 'Trocar senha'}
+            </button>
+          </form>
+        )}
+
+        {mode !== 'esqueci' && (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {mode === 'criar' && (
             <>
@@ -426,6 +599,15 @@ export function LoginView() {
             />
           </label>
 
+          {mode === 'entrar' && (
+            <button
+              type="button"
+              onClick={() => switchMode('esqueci')}
+              className="self-start text-[11px] normal-case tracking-normal text-neutral-500 underline underline-offset-4 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100">
+              Esqueci minha senha
+            </button>
+          )}
+
           {mode === 'criar' && (
             <div className="flex flex-col gap-3 border-t border-neutral-200 pt-4 dark:border-neutral-800">
               <p className="text-xs font-semibold uppercase tracking-widest text-neutral-700 dark:text-neutral-300">
@@ -484,6 +666,9 @@ export function LoginView() {
             </div>
           )}
 
+          {mode === 'entrar' && infoMessage && (
+            <p className="text-xs normal-case tracking-normal text-green-700 dark:text-green-500">{infoMessage}</p>
+          )}
           {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
 
           <button
@@ -493,6 +678,7 @@ export function LoginView() {
             {isSubmitting ? 'Entrando…' : mode === 'entrar' ? 'Entrar' : 'Criar conta'}
           </button>
         </form>
+        )}
 
         {mode === 'entrar' && (
           <p className="mt-4 text-center text-[11px] leading-relaxed text-neutral-400 dark:text-neutral-600">
@@ -503,7 +689,7 @@ export function LoginView() {
         )}
 
         <p className="mt-6 text-center text-xs text-neutral-500 dark:text-neutral-400">
-          {mode === 'entrar' ? (
+          {mode === 'entrar' && (
             <>
               Ainda não tem conta?{' '}
               <button
@@ -513,9 +699,21 @@ export function LoginView() {
                 Criar conta
               </button>
             </>
-          ) : (
+          )}
+          {mode === 'criar' && (
             <>
               Já tem conta?{' '}
+              <button
+                type="button"
+                onClick={() => switchMode('entrar')}
+                className="text-neutral-900 underline underline-offset-2 dark:text-neutral-100">
+                Entrar
+              </button>
+            </>
+          )}
+          {mode === 'esqueci' && (
+            <>
+              Lembrou a senha?{' '}
               <button
                 type="button"
                 onClick={() => switchMode('entrar')}
