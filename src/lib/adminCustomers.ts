@@ -9,6 +9,8 @@ export interface AdminCustomer {
   joinedAt: string;
   ordersCount: number;
   totalSpent: number;
+  /** Mesmo caminho servível de `User.to_public_dict()`'s `avatarUrl` - passa por `resolveMediaUrl()` antes de virar `src` de `<img>`. */
+  avatarUrl: string | null;
 }
 
 interface AdminCustomersResponse {
