@@ -26,6 +26,21 @@ export const ORDER_STATUS_STYLE: Record<OrderStatus, string> = {
   cancelado: "border-red-300 text-red-600 dark:border-red-900 dark:text-red-400",
 };
 
+/**
+ * Remove acento/maiúscula pra busca - "joão" encontra "João", "SCT-100482"
+ * encontra "sct-100482". Nasceu em `<AdminOrdersTab/>` (pedido do Alfredo,
+ * 2026-10-08: filtrar pedido por nome do cliente ou número do pedido) e foi
+ * puxado pra cá quando `<AdminOverviewTab/>` passou a precisar da mesma
+ * busca pros "Últimos comprovantes" - mesma normalização nos dois lugares,
+ * nunca duas implementações que podem divergir.
+ */
+export function normalizeSearchText(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase();
+}
+
 const PAYMENT_STATUS_CONFIG: Record<PaymentStatus, { dot: string; label: string }> = {
   approved: { dot: "bg-emerald-500", label: "Aprovado" },
   pending: { dot: "bg-amber-500", label: "Pendente" },

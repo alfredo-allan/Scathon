@@ -10,7 +10,13 @@ import {
   type AdminOrder,
   type OrderStatus,
 } from "@/lib/adminOrders";
-import { ImageLightbox, ORDER_STATUS_LABEL, ORDER_STATUS_STYLE, PaymentStatusBadge } from "./adminShared";
+import {
+  ImageLightbox,
+  normalizeSearchText,
+  ORDER_STATUS_LABEL,
+  ORDER_STATUS_STYLE,
+  PaymentStatusBadge,
+} from "./adminShared";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
@@ -30,18 +36,6 @@ const FILTERS: Array<{ id: OrderStatus | "todos"; label: string }> = [
 ];
 
 const STATUS_OPTIONS: OrderStatus[] = ["processando", "a caminho", "entregue", "cancelado"];
-
-/**
- * Remove acento/maiúscula pra busca - "joão" encontra "João", "SCT-100482"
- * encontra "sct-100482". Pedido do Alfredo (2026-10-08): filtrar pedido por
- * nome do cliente ou número do pedido.
- */
-function normalizeSearchText(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase();
-}
 
 /**
  * "Pedidos" tab: todo pedido de toda a loja (`GET /api/v1/admin/orders` -

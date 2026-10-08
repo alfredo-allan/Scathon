@@ -5,10 +5,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { useInventory } from "@/hooks/useInventory";
 import { computeOverviewStats, getAdminOrders, type AdminOrder, type OrderStatus } from "@/lib/adminOrders";
 import { getAdminCustomers, type AdminCustomer } from "@/lib/adminCustomers";
-import { LOW_STOCK_THRESHOLD, ORDER_STATUS_LABEL, PaymentStatusBadge } from "./adminShared";
+import { LOW_STOCK_THRESHOLD, normalizeSearchText, ORDER_STATUS_LABEL, PaymentStatusBadge } from "./adminShared";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" });
+
+// Pedido do Alfredo (2026-10-08): "Últimos comprovantes" não tinha busca nem
+// limite - crescia pra sempre, virando uma lista sem fim pra rolar. Mesmo
+// teto usado como "últimos N" em outros lugares do painel; acima disso,
+// a lista é ocultada (não removida) e um aviso avisa quantos ficaram de fora.
+const RECEIPTS_LIMIT = 55;
 
 const STATUS_ORDER: OrderStatus[] = ["processando", "a caminho", "entregue", "cancelado"];
 // Reserved status colors (never reused for anything else) - paired with a
@@ -36,6 +42,7 @@ export function AdminOverviewTab() {
   const [customers, setCustomers] = useState<AdminCustomer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [receiptSearch, setReceiptSearch] = useState("");
   const { items: inventoryItems } = useInventory();
 
   const load = useCallback(async () => {
@@ -65,10 +72,24 @@ export function AdminOverviewTab() {
 
   const stats = useMemo(() => computeOverviewStats(orders), [orders]);
   const lowStockCount = useMemo(() => inventoryItems.filter((item) => item.lowStock).length, [inventoryItems]);
-  const recentReceipts = useMemo(
-    () => [...orders].sort((a, b) => (a.placedAt < b.placedAt ? 1 : -1)).slice(0, 5),
+  const receiptsWithPayment = useMemo(
+    () =>
+      [...orders]
+        .filter((order) => order.payment)
+        .sort((a, b) => (a.placedAt < b.placedAt ? 1 : -1)),
     [orders],
   );
+  const filteredReceipts = useMemo(() => {
+    const query = normalizeSearchText(receiptSearch.trim());
+    if (!query) return receiptsWithPayment;
+    return receiptsWithPayment.filter((order) =>
+      [order.id, order.customerName, order.customerEmail, order.payment?.paymentId ?? ""].some((field) =>
+        normalizeSearchText(field).includes(query),
+      ),
+    );
+  }, [receiptsWithPayment, receiptSearch]);
+  const visibleReceipts = useMemo(() => filteredReceipts.slice(0, RECEIPTS_LIMIT), [filteredReceipts]);
+  const hiddenReceiptsCount = filteredReceipts.length - visibleReceipts.length;
 
   const maxStatusCount = Math.max(1, ...STATUS_ORDER.map((status) => stats.ordersByStatus[status]));
 
@@ -135,11 +156,35 @@ export function AdminOverviewTab() {
       </div>
 
       <div>
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">
-          Últimos comprovantes
-        </h2>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">
+            Últimos comprovantes
+          </h2>
+
+          {/* Mesmo padrão de busca de `<AdminOrdersTab/>` - `type="search"`
+              pelo "x" nativo de limpar, full-width no celular. */}
+          <div className="relative w-full sm:w-72">
+            <svg
+              viewBox="0 0 24 24"
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400"
+              fill="none"
+              aria-hidden
+            >
+              <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.75" />
+              <path d="m20 20-3-3" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+            </svg>
+            <input
+              type="search"
+              value={receiptSearch}
+              onChange={(event) => setReceiptSearch(event.target.value)}
+              placeholder="Buscar por cliente"
+              className="w-full rounded-app border border-neutral-300 bg-transparent py-2 pl-9 pr-3 text-sm text-neutral-900 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
+            />
+          </div>
+        </div>
+
         <div className="mt-3 flex flex-col divide-y divide-neutral-100 rounded-app border border-neutral-200 dark:divide-neutral-900 dark:border-neutral-800">
-          {recentReceipts.map((order) =>
+          {visibleReceipts.map((order) =>
             order.payment ? (
               <div key={order.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
                 <div className="min-w-0">
@@ -157,12 +202,19 @@ export function AdminOverviewTab() {
               </div>
             ) : null,
           )}
-          {recentReceipts.length === 0 && (
+          {visibleReceipts.length === 0 && (
             <p className="px-4 py-6 text-center text-sm text-neutral-500 dark:text-neutral-400">
-              Nenhum pedido ainda.
+              {receiptSearch.trim() ? "Nenhum comprovante encontrado para essa busca." : "Nenhum pedido ainda."}
             </p>
           )}
         </div>
+
+        {hiddenReceiptsCount > 0 && (
+          <p className="mt-2 text-[11px] text-neutral-500 dark:text-neutral-400">
+            Mostrando os {RECEIPTS_LIMIT} mais recentes · {hiddenReceiptsCount} oculto
+            {hiddenReceiptsCount === 1 ? "" : "s"}. Use a busca para encontrar um comprovante específico.
+          </p>
+        )}
       </div>
     </div>
   );
