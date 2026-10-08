@@ -1,3 +1,7 @@
+"use client";
+
+import Image from "next/image";
+import { useEffect } from "react";
 import type { OrderStatus, PaymentStatus } from "@/lib/adminOrders";
 
 /** Below this stock count, `<AdminInventoryTab/>`/`<AdminOverviewTab/>` flag a product as "estoque baixo" instead of waiting for it to hit zero. */
@@ -42,5 +46,81 @@ export function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
       <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${config.dot}`} aria-hidden />
       {config.label}
     </span>
+  );
+}
+
+/**
+ * Lightbox genérico - foto em destaque, fundo com opacidade
+ * (`bg-neutral-950/80` + leve blur). Extraído de `<AdminCustomersTab/>`
+ * (onde nasceu, pra foto de perfil do cliente) pra ser reaproveitado por
+ * `<AdminOrdersTab/>` também (nota fiscal anexada ao pedido) - mesmo
+ * componente, só `src`/`alt`/`caption` mudam.
+ *
+ * Um modal fixo em tela cheia já é, por natureza, a solução mobile aqui
+ * (não tem layout de tabela/coluna pra adaptar) - os únicos cuidados extras
+ * pra toque são: botão de fechar com alvo de ≥44px (`h-11 w-11`, recomendação
+ * de acessibilidade pra toque), e a imagem sempre limitada a `vw`/`vh`
+ * (nunca vaza da tela, celular ou desktop). Fecha ao clicar fora, no X, ou
+ * com Esc; trava o scroll do body enquanto aberto pra não "vazar" o fundo
+ * rolando atrás no celular.
+ */
+export function ImageLightbox({
+  src,
+  alt,
+  caption,
+  onClose,
+}: {
+  src: string;
+  alt: string;
+  caption?: string;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={alt}
+      onClick={onClose}
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-neutral-950/80 p-4 backdrop-blur-sm"
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Fechar"
+        className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 sm:right-6 sm:top-6"
+      >
+        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>
+          <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+        </svg>
+      </button>
+
+      {/* `stopPropagation` aqui - senão clicar na própria imagem "vaza" pro
+          backdrop e fecha o lightbox junto, já que os dois são o mesmo
+          elemento clicável em cascata. */}
+      <figure onClick={(event) => event.stopPropagation()} className="flex flex-col items-center gap-3">
+        <Image
+          src={src}
+          alt={alt}
+          width={480}
+          height={480}
+          unoptimized
+          className="max-h-[75vh] max-w-[90vw] rounded-2xl object-contain shadow-2xl sm:max-h-[80vh] sm:max-w-[70vw]"
+        />
+        {caption && <figcaption className="text-sm font-medium text-white/90">{caption}</figcaption>}
+      </figure>
+    </div>
   );
 }

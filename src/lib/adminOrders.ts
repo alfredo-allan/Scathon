@@ -37,6 +37,12 @@ export interface AdminOrder {
    * estiver ligada - `null` enquanto ninguém despachou ainda.
    */
   trackingCode?: string | null;
+  /**
+   * Foto da nota fiscal/comprovante anexada pelo admin (`POST /admin/orders/
+   * {id}/invoice` - ver `<AdminOrdersTab/>`) e encaminhada ao cliente por
+   * e-mail na hora do upload - `null` enquanto nada foi anexado ainda.
+   */
+  invoiceUrl?: string | null;
   items: AdminOrderItem[];
   payment: PaymentReceipt | null;
 }
@@ -51,6 +57,22 @@ interface AdminOrdersResponse {
 const MAX_PAGE_SIZE = 100;
 
 /**
+ * `item.imageUrl`/`invoiceUrl` são caminhos relativos quando apontam pro
+ * backend (`/media/products/...`, `/media/invoices/...`) - sempre passam por
+ * `resolveMediaUrl` antes de virar `src` de `<img>`/link, senão quebram (ver
+ * doc comment dela em `@/lib/apiClient`). Compartilhado entre `getAdminOrders`
+ * e `getCustomerOrders` (`@/lib/adminCustomers`) pra nunca divergir - os dois
+ * devolvem o mesmo formato `AdminOrder`, só filtrado por pedido diferente.
+ */
+export function normalizeAdminOrder(order: AdminOrder): AdminOrder {
+  return {
+    ...order,
+    invoiceUrl: resolveMediaUrl(order.invoiceUrl) ?? order.invoiceUrl,
+    items: order.items.map((item) => ({ ...item, imageUrl: resolveMediaUrl(item.imageUrl) ?? item.imageUrl })),
+  };
+}
+
+/**
  * Pedidos de toda a loja (`GET /api/v1/admin/orders` - ver `app/admin/
  * __init__.py`), fase 4 do roadmap. Substitui `getAdminOrders()`, que
  * devolvia um array mockado fixo - agora é a tabela `orders`/`payments`
@@ -60,15 +82,25 @@ export async function getAdminOrders(token: string, status?: OrderStatus): Promi
   const query = new URLSearchParams({ perPage: String(MAX_PAGE_SIZE) });
   if (status) query.set("status", status);
   const data = await apiFetch<AdminOrdersResponse>(`/admin/orders?${query.toString()}`, { token });
-  // `item.imageUrl` é um retrato ("snapshot") do `Product.image_url` no
-  // momento da compra (ver `OrderItem.image_url` no backend) - pode ser
-  // `/media/products/...` pra um produto com foto enviada pelo admin, que
-  // precisa da origem do backend pra não quebrar (ver `resolveMediaUrl` em
-  // `@/lib/apiClient`).
-  return data.items.map((order) => ({
-    ...order,
-    items: order.items.map((item) => ({ ...item, imageUrl: resolveMediaUrl(item.imageUrl) ?? item.imageUrl })),
-  }));
+  return data.items.map(normalizeAdminOrder);
+}
+
+/**
+ * Anexa a foto da nota fiscal/comprovante a um pedido - o backend processa,
+ * salva e já encaminha a foto pro cliente por e-mail na mesma chamada (ver
+ * `POST /admin/orders/{id}/invoice` em `app/admin/__init__.py`); aqui só
+ * devolve o pedido atualizado (`invoiceUrl` novo) pra `<AdminOrdersTab/>`
+ * atualizar a lista sem precisar recarregar tudo de novo.
+ */
+export async function uploadOrderInvoice(token: string, orderId: string, file: File): Promise<AdminOrder> {
+  const form = new FormData();
+  form.append("file", file);
+  const data = await apiFetch<{ order: AdminOrder }>(`/admin/orders/${encodeURIComponent(orderId)}/invoice`, {
+    method: "POST",
+    token,
+    body: form,
+  });
+  return normalizeAdminOrder(data.order);
 }
 
 /**

@@ -1,4 +1,5 @@
 import { apiFetch } from "./apiClient";
+import { normalizeAdminOrder, type AdminOrder } from "./adminOrders";
 
 export interface AdminCustomer {
   email: string;
@@ -30,4 +31,20 @@ interface AdminCustomersResponse {
 export async function getAdminCustomers(token: string): Promise<AdminCustomer[]> {
   const data = await apiFetch<AdminCustomersResponse>("/admin/customers?perPage=100", { token });
   return data.items;
+}
+
+/**
+ * Últimos pedidos de UM cliente (`GET /api/v1/admin/customers/{email}/orders`
+ * - ver `app/admin/__init__.py`) - pedido do Alfredo (2026-10-08): ao clicar
+ * num cliente na aba "Clientes", ver o histórico dele sem precisar ir pra
+ * aba "Pedidos" caçar por nome. Mesmo formato `AdminOrder` de `getAdminOrders`
+ * (`@/lib/adminOrders`), normalizado do mesmo jeito (`normalizeAdminOrder`)
+ * pra `imageUrl`/`invoiceUrl` nunca quebrarem.
+ */
+export async function getCustomerOrders(token: string, email: string): Promise<AdminOrder[]> {
+  const data = await apiFetch<{ items: AdminOrder[] }>(
+    `/admin/customers/${encodeURIComponent(email)}/orders`,
+    { token },
+  );
+  return data.items.map(normalizeAdminOrder);
 }

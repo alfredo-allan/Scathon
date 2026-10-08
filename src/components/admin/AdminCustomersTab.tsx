@@ -4,7 +4,9 @@ import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { resolveMediaUrl } from "@/lib/apiClient";
-import { getAdminCustomers, type AdminCustomer } from "@/lib/adminCustomers";
+import { getAdminCustomers, getCustomerOrders, type AdminCustomer } from "@/lib/adminCustomers";
+import type { AdminOrder } from "@/lib/adminOrders";
+import { ImageLightbox, ORDER_STATUS_LABEL, ORDER_STATUS_STYLE } from "./adminShared";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
@@ -17,6 +19,11 @@ const dateFormatter = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: 
  * (`onOpen`) quando existe foto de verdade - sem foto não tem o que "ver em
  * destaque", então o círculo de iniciais fica só decorativo, sem
  * `cursor-pointer` nem handler.
+ *
+ * `stopPropagation` no clique - a partir de 2026-10-08 a LINHA inteira
+ * também é clicável (abre o painel de detalhes do cliente), então sem isso
+ * clicar no avatar abriria os dois ao mesmo tempo (o clique "vaza" pro `tr`
+ * por baixo).
  */
 function CustomerAvatar({
   customer,
@@ -43,7 +50,10 @@ function CustomerAvatar({
   return (
     <button
       type="button"
-      onClick={() => onOpen(customer)}
+      onClick={(event) => {
+        event.stopPropagation();
+        onOpen(customer);
+      }}
       aria-label={`Ver foto de ${customer.name} em destaque`}
       className="group shrink-0 rounded-full ring-1 ring-neutral-200 transition-all hover:ring-2 hover:ring-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500 dark:ring-neutral-800 dark:hover:ring-neutral-600"
     >
@@ -61,22 +71,33 @@ function CustomerAvatar({
 }
 
 /**
- * Lightbox - foto do cliente em destaque, fundo com opacidade
- * (`bg-neutral-950/80` + leve blur). Um modal fixo em tela cheia já é, por
- * natureza, a solução mobile aqui (não tem layout de tabela/coluna pra
- * adaptar) - os únicos cuidados extras pra toque são: botão de fechar com
- * alvo de ≥44px (`h-11 w-11`, recomendação de acessibilidade pra toque), e a
- * imagem sempre limitada a `vw`/`vh` (nunca vaza da tela, celular ou
- * desktop). Fecha ao clicar fora, no X, ou com Esc; trava o scroll do body
- * enquanto aberto pra não "vazar" o fundo rolando atrás no celular.
+ * Painel de detalhes do cliente - pedido do Alfredo (2026-10-08): clicar num
+ * cliente pra "examinar os últimos pedidos e todos os dados dele", sem
+ * precisar ir pra aba "Pedidos" caçar por nome.
+ *
+ * Solução mobile/desktop num componente só: em telas pequenas sobe como uma
+ * folha no rodapé (`items-end` + `rounded-t-2xl`, `max-h-[85vh]` com scroll
+ * interno - o padrão mais comum de "ver detalhes" em app mobile, não exige
+ * gesto nenhum além de tocar fora/no X pra fechar); a partir de `sm` vira um
+ * painel lateral fixo (`sm:inset-y-0 sm:w-full sm:max-w-md`), mais
+ * apropriado pra tela larga do que ocupar o centro inteiro. Mesmo
+ * fundo-com-opacidade + trava de scroll do `<ImageLightbox/>` (`adminShared`).
  */
-function CustomerAvatarLightbox({
+function CustomerDetailDrawer({
   customer,
+  token,
   onClose,
+  onOpenPhoto,
 }: {
   customer: AdminCustomer;
+  token: string | null;
   onClose: () => void;
+  onOpenPhoto: (customer: AdminCustomer) => void;
 }) {
+  const [orders, setOrders] = useState<AdminOrder[] | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
@@ -90,42 +111,169 @@ function CustomerAvatarLightbox({
     };
   }, [onClose]);
 
+  useEffect(() => {
+    let cancelled = false;
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+    setErrorMessage(null);
+    getCustomerOrders(token, customer.email)
+      .then((items) => {
+        if (!cancelled) setOrders(items);
+      })
+      .catch(() => {
+        if (!cancelled) setErrorMessage("Não foi possível carregar os pedidos desse cliente agora.");
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token, customer.email]);
+
   const avatarSrc = resolveMediaUrl(customer.avatarUrl);
-  if (!avatarSrc) return null;
 
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={`Foto de ${customer.name}`}
+      aria-label={`Detalhes de ${customer.name}`}
       onClick={onClose}
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-neutral-950/80 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-neutral-950/60 sm:items-stretch sm:justify-end"
     >
-      <button
-        type="button"
-        onClick={onClose}
-        aria-label="Fechar"
-        className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 sm:right-6 sm:top-6"
+      <div
+        onClick={(event) => event.stopPropagation()}
+        className="flex max-h-[85vh] w-full flex-col overflow-hidden rounded-t-2xl bg-white dark:bg-neutral-950 sm:h-full sm:max-h-none sm:w-full sm:max-w-md sm:rounded-none sm:rounded-l-2xl"
       >
-        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>
-          <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-        </svg>
-      </button>
+        <div className="flex items-start justify-between gap-3 border-b border-neutral-200 p-5 dark:border-neutral-800">
+          <div className="flex min-w-0 items-center gap-3">
+            {avatarSrc ? (
+              <button
+                type="button"
+                onClick={() => onOpenPhoto(customer)}
+                aria-label={`Ver foto de ${customer.name} em destaque`}
+                className="shrink-0 rounded-full ring-1 ring-neutral-200 transition-all hover:ring-2 hover:ring-neutral-400 dark:ring-neutral-800"
+              >
+                <Image
+                  src={avatarSrc}
+                  alt={customer.name}
+                  width={56}
+                  height={56}
+                  unoptimized
+                  className="h-14 w-14 rounded-full object-cover"
+                />
+              </button>
+            ) : (
+              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-lg font-semibold text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200">
+                {customer.name.charAt(0).toUpperCase()}
+              </span>
+            )}
+            <div className="min-w-0">
+              <p className="truncate text-base font-semibold text-neutral-900 dark:text-neutral-100">
+                {customer.name}
+              </p>
+              <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">{customer.email}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Fechar"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-neutral-500 transition-colors hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-900"
+          >
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>
+              <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
 
-      {/* `stopPropagation` aqui - senão clicar na própria foto "vaza" pro
-          backdrop e fecha o lightbox junto, já que os dois são o mesmo
-          elemento clicável em cascata. */}
-      <figure onClick={(event) => event.stopPropagation()} className="flex flex-col items-center gap-3">
-        <Image
-          src={avatarSrc}
-          alt={customer.name}
-          width={480}
-          height={480}
-          unoptimized
-          className="max-h-[75vh] max-w-[90vw] rounded-2xl object-contain shadow-2xl sm:max-h-[80vh] sm:max-w-[70vw]"
-        />
-        <figcaption className="text-sm font-medium text-white/90">{customer.name}</figcaption>
-      </figure>
+        <div className="flex-1 overflow-y-auto p-5">
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="rounded-app border border-neutral-200 p-3 dark:border-neutral-800">
+              <p className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">{customer.ordersCount}</p>
+              <p className="text-[10px] uppercase tracking-widest text-neutral-500 dark:text-neutral-400">Pedidos</p>
+            </div>
+            <div className="rounded-app border border-neutral-200 p-3 dark:border-neutral-800">
+              <p className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+                {currencyFormatter.format(customer.totalSpent)}
+              </p>
+              <p className="text-[10px] uppercase tracking-widest text-neutral-500 dark:text-neutral-400">
+                Total gasto
+              </p>
+            </div>
+            <div className="rounded-app border border-neutral-200 p-3 dark:border-neutral-800">
+              <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                {dateFormatter.format(new Date(customer.joinedAt))}
+              </p>
+              <p className="text-[10px] uppercase tracking-widest text-neutral-500 dark:text-neutral-400">
+                Cliente desde
+              </p>
+            </div>
+          </div>
+
+          <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <dt className="text-[10px] uppercase tracking-widest text-neutral-500 dark:text-neutral-400">
+                Telefone
+              </dt>
+              <dd className="text-neutral-900 dark:text-neutral-100">{customer.phone ?? "—"}</dd>
+            </div>
+            <div>
+              <dt className="text-[10px] uppercase tracking-widest text-neutral-500 dark:text-neutral-400">
+                Localização
+              </dt>
+              <dd className="text-neutral-900 dark:text-neutral-100">
+                {customer.city ? `${customer.city}/${customer.state}` : "—"}
+              </dd>
+            </div>
+          </dl>
+
+          <div className="mt-6">
+            <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-neutral-500 dark:text-neutral-400">
+              Últimos pedidos
+            </p>
+
+            {isLoading && <p className="text-sm text-neutral-500 dark:text-neutral-400">Carregando pedidos…</p>}
+            {errorMessage && <p className="text-sm text-red-600 dark:text-red-400">{errorMessage}</p>}
+            {!isLoading && !errorMessage && orders?.length === 0 && (
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                Esse cliente ainda não fez nenhum pedido.
+              </p>
+            )}
+
+            <div className="flex flex-col gap-3">
+              {orders?.map((order) => (
+                <div key={order.id} className="rounded-app border border-neutral-200 p-3 dark:border-neutral-800">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">
+                      {order.id}
+                    </p>
+                    <span
+                      className={`rounded-app border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest ${ORDER_STATUS_STYLE[order.status]}`}
+                    >
+                      {ORDER_STATUS_LABEL[order.status]}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                    {dateFormatter.format(new Date(order.placedAt))} · {order.items.length} item(ns)
+                  </p>
+                  <div className="mt-2 flex items-center justify-between text-sm">
+                    <span className="text-neutral-600 dark:text-neutral-400">
+                      {order.trackingCode ? `Rastreio: ${order.trackingCode}` : "Sem rastreio"}
+                    </span>
+                    <span className="font-semibold text-neutral-900 dark:text-neutral-100">
+                      {currencyFormatter.format((order.payment?.grossAmount ?? 0) + order.shippingCost)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -141,6 +289,7 @@ export function AdminCustomersTab() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [lightboxCustomer, setLightboxCustomer] = useState<AdminCustomer | null>(null);
+  const [detailCustomer, setDetailCustomer] = useState<AdminCustomer | null>(null);
 
   const load = useCallback(async () => {
     if (!token) {
@@ -199,7 +348,20 @@ export function AdminCustomersTab() {
           </thead>
           <tbody className="divide-y divide-neutral-100 dark:divide-neutral-900">
             {sortedCustomers.map((customer) => (
-              <tr key={customer.email}>
+              <tr
+                key={customer.email}
+                onClick={() => setDetailCustomer(customer)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setDetailCustomer(customer);
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-label={`Ver detalhes de ${customer.name}`}
+                className="cursor-pointer transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:bg-neutral-50 dark:hover:bg-neutral-900/60 dark:focus-visible:bg-neutral-900/60"
+              >
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <CustomerAvatar customer={customer} onOpen={setLightboxCustomer} />
@@ -233,8 +395,22 @@ export function AdminCustomersTab() {
         </table>
       </div>
 
-      {lightboxCustomer && (
-        <CustomerAvatarLightbox customer={lightboxCustomer} onClose={() => setLightboxCustomer(null)} />
+      {detailCustomer && (
+        <CustomerDetailDrawer
+          customer={detailCustomer}
+          token={token}
+          onClose={() => setDetailCustomer(null)}
+          onOpenPhoto={setLightboxCustomer}
+        />
+      )}
+
+      {lightboxCustomer && resolveMediaUrl(lightboxCustomer.avatarUrl) && (
+        <ImageLightbox
+          src={resolveMediaUrl(lightboxCustomer.avatarUrl)!}
+          alt={`Foto de ${lightboxCustomer.name}`}
+          caption={lightboxCustomer.name}
+          onClose={() => setLightboxCustomer(null)}
+        />
       )}
     </>
   );
