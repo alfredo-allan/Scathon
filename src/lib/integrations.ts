@@ -26,3 +26,19 @@ export async function getIntegrations(token: string): Promise<IntegrationStatus[
   const data = await apiFetch<IntegrationsResponse>("/admin/integrations", { token });
   return data.integrations;
 }
+
+/**
+ * Inicia a conexão OAuth com a Melhor Envio (`POST /admin/integrations/
+ * melhor-envio/connect` - ver `app/admin/__init__.py`) - pedido do Alfredo
+ * (2026-10-10): diferente do Mercado Pago/SMTP (credencial fixa, só preenche
+ * o `.env`), a Melhor Envio exige autorizar numa tela deles, então o botão
+ * "Conectar" pega essa URL e redireciona a página inteira pra lá
+ * (`window.location.href = authorizeUrl` - ver `<AdminIntegrationsTab/>`),
+ * nunca um `fetch` de novo depois.
+ */
+export async function connectMelhorEnvio(token: string): Promise<{ authorizeUrl: string }> {
+  return apiFetch<{ authorizeUrl: string }>("/admin/integrations/melhor-envio/connect", {
+    method: "POST",
+    token,
+  });
+}

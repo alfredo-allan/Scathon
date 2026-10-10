@@ -61,7 +61,17 @@ const TABS: Array<{ id: TabId; label: string }> = [
  */
 export function AdminView() {
   const { user, isAuthenticated, isAdmin } = useAuth();
-  const [activeTab, setActiveTab] = useState<TabId>("visao-geral");
+  // Pousa direto na aba "Integrações" quando a URL chega com `?melhorEnvio=
+  // ...` - é o redirect de volta do OAuth da Melhor Envio (`GET /webhooks/
+  // melhor-envio/oauth-callback` no backend); sem isso, o admin aprovaria o
+  // acesso lá e voltaria pra "Visão Geral" sem ver o aviso de sucesso/erro
+  // que `<AdminIntegrationsTab/>` mostra. Lido só na primeira renderização -
+  // o próprio `<AdminIntegrationsTab/>` limpa o parâmetro da URL depois.
+  const [activeTab, setActiveTab] = useState<TabId>(() =>
+    typeof window !== "undefined" && new URLSearchParams(window.location.search).has("melhorEnvio")
+      ? "integracoes"
+      : "visao-geral",
+  );
 
   if (!isAuthenticated || !user) {
     return (
