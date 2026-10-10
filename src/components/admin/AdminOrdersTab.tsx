@@ -3,13 +3,16 @@
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { ApiError } from "@/lib/apiClient";
 import {
+  buyOrderShippingLabel,
   getAdminOrders,
   updateOrderStatus,
   uploadOrderInvoice,
   type AdminOrder,
   type OrderStatus,
 } from "@/lib/adminOrders";
+import { formatDocument, isValidDocument } from "@/lib/documentValidation";
 import {
   ImageLightbox,
   normalizeSearchText,
@@ -17,6 +20,112 @@ import {
   ORDER_STATUS_STYLE,
   PaymentStatusBadge,
 } from "./adminShared";
+
+/**
+ * Modal de "Comprar etiqueta" - RESERVA desde 2026-10-10 (segunda decisão
+ * do Alfredo no mesmo dia): o normal agora é o cliente já ter digitado o
+ * CPF/CNPJ dele no checkout (`order.recipientDocument`, modal
+ * `<RecipientDocumentModal/>` lá no site) - este modal só aparece pra
+ * pedido sem esse dado salvo (feito antes dessa mudança), ou quando o
+ * admin clica em "Corrigir CPF/CNPJ" pra substituir um valor que o cliente
+ * digitou errado. Mesmo padrão visual de overlay/Escape de
+ * `<ImageLightbox/>` em `./adminShared`, mas um formulário em vez de uma
+ * imagem, então fica local a este arquivo em vez de virar um terceiro
+ * componente genérico em `adminShared.tsx`.
+ */
+function ShippingLabelModal({
+  order,
+  isSubmitting,
+  errorMessage,
+  onClose,
+  onSubmit,
+}: {
+  order: AdminOrder;
+  isSubmitting: boolean;
+  errorMessage: string | null;
+  onClose: () => void;
+  onSubmit: (recipientDocument: string) => void;
+}) {
+  // Pré-preenche com o que já estiver salvo (fluxo "Corrigir CPF/CNPJ") -
+  // vazio pra pedido sem documento nenhum ainda. Nome evita sombrear o
+  // `document` global do DOM (usado logo abaixo, no `useEffect`, pra
+  // registrar o listener de Escape) - bug bobo de pegar desatento numa
+  // revisão rápida.
+  const [recipientDocumentDraft, setRecipientDocumentDraft] = useState(
+    order.recipientDocument ? formatDocument(order.recipientDocument) : "",
+  );
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !isSubmitting) onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isSubmitting, onClose]);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Comprar etiqueta do pedido ${order.id}`}
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-neutral-950/80 p-4 backdrop-blur-sm"
+      onClick={() => !isSubmitting && onClose()}
+    >
+      <div
+        onClick={(event) => event.stopPropagation()}
+        className="w-full max-w-sm rounded-app bg-white p-5 dark:bg-neutral-900"
+      >
+        <p className="text-xs font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">
+          Comprar etiqueta · Pedido {order.id}
+        </p>
+        <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
+          A Melhor Envio exige o CPF ou CNPJ de {order.customerName} pra gerar a etiqueta. Isso
+          cobra do saldo pré-pago da loja na Melhor Envio.
+        </p>
+        <label
+          htmlFor={`recipient-document-${order.id}`}
+          className="mt-4 block text-[10px] font-semibold uppercase tracking-widest text-neutral-500 dark:text-neutral-400"
+        >
+          CPF/CNPJ do destinatário
+        </label>
+        <input
+          id={`recipient-document-${order.id}`}
+          type="text"
+          autoFocus
+          value={recipientDocumentDraft}
+          onChange={(event) => setRecipientDocumentDraft(formatDocument(event.target.value))}
+          placeholder="000.000.000-00"
+          disabled={isSubmitting}
+          className="mt-1 w-full rounded-app border border-neutral-300 bg-transparent px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-900 disabled:opacity-50 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
+        />
+        {errorMessage && <p className="mt-2 text-xs text-red-600 dark:text-red-400">{errorMessage}</p>}
+        <div className="mt-4 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="rounded-app border border-neutral-300 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-neutral-900 disabled:opacity-40 dark:border-neutral-700 dark:text-neutral-100"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={() => onSubmit(recipientDocumentDraft)}
+            disabled={isSubmitting || !isValidDocument(recipientDocumentDraft)}
+            className="rounded-app bg-neutral-950 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-neutral-50 disabled:opacity-40 dark:bg-neutral-100 dark:text-neutral-950"
+          >
+            {isSubmitting ? "Comprando…" : "Comprar etiqueta"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
@@ -60,6 +169,17 @@ export function AdminOrdersTab() {
   const [savingTrackingId, setSavingTrackingId] = useState<string | null>(null);
   const [uploadingInvoiceId, setUploadingInvoiceId] = useState<string | null>(null);
   const [invoiceLightboxOrder, setInvoiceLightboxOrder] = useState<AdminOrder | null>(null);
+  const [labelModalOrder, setLabelModalOrder] = useState<AdminOrder | null>(null);
+  const [isBuyingLabel, setIsBuyingLabel] = useState(false);
+  const [labelError, setLabelError] = useState<string | null>(null);
+  // Compra "direta" (sem abrir o modal) - caminho normal desde 2026-10-10,
+  // quando `order.recipientDocument` já vem salvo do checkout do cliente.
+  // Separado de `isBuyingLabel`/`labelError` acima (que seguem só pro fluxo
+  // de reserva, com o modal) pra não misturar o estado de loading/erro de
+  // um pedido com o de outro - igual ao padrão de `savingTrackingId`/
+  // `uploadingInvoiceId` já usados neste componente.
+  const [buyingLabelOrderId, setBuyingLabelOrderId] = useState<string | null>(null);
+  const [directLabelErrors, setDirectLabelErrors] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     if (!token) {
@@ -142,6 +262,46 @@ export function AdminOrdersTab() {
       setErrorMessage("Não foi possível anexar a nota fiscal agora.");
     } finally {
       setUploadingInvoiceId(null);
+    }
+  }
+
+  async function handleBuyLabel(recipientDocument: string) {
+    if (!token || !labelModalOrder) return;
+    setIsBuyingLabel(true);
+    setLabelError(null);
+    try {
+      const { order: updated } = await buyOrderShippingLabel(token, labelModalOrder.id, recipientDocument);
+      setOrders((current) => current.map((item) => (item.id === updated.id ? updated : item)));
+      setLabelModalOrder(null);
+    } catch (err) {
+      // Mensagem de `LabelPurchaseError` já vem pronta em português do
+      // backend (CPF inválido, saldo insuficiente, escopo faltando etc.) -
+      // só cai no genérico se nem isso vier (rede fora do ar).
+      setLabelError(err instanceof ApiError ? err.message : "Não foi possível comprar a etiqueta agora.");
+    } finally {
+      setIsBuyingLabel(false);
+    }
+  }
+
+  /**
+   * Caminho normal desde 2026-10-10: `order.recipientDocument` já vem do
+   * checkout do cliente, então compra direto - sem abrir modal nenhum pra
+   * pedir CPF/CNPJ de novo (o admin só clica "Comprar etiqueta" e pronto).
+   */
+  async function handleBuyLabelDirect(order: AdminOrder) {
+    if (!token) return;
+    setBuyingLabelOrderId(order.id);
+    setDirectLabelErrors((current) => ({ ...current, [order.id]: "" }));
+    try {
+      const { order: updated } = await buyOrderShippingLabel(token, order.id);
+      setOrders((current) => current.map((item) => (item.id === updated.id ? updated : item)));
+    } catch (err) {
+      setDirectLabelErrors((current) => ({
+        ...current,
+        [order.id]: err instanceof ApiError ? err.message : "Não foi possível comprar a etiqueta agora.",
+      }));
+    } finally {
+      setBuyingLabelOrderId(null);
     }
   }
 
@@ -284,6 +444,26 @@ export function AdminOrdersTab() {
               <span className="basis-full text-[10px] text-neutral-500 dark:text-neutral-400">
                 Salvar avisa o cliente por e-mail, com o código incluído.
               </span>
+              {/* CPF/CNPJ do destinatário - desde 2026-10-10 (segunda
+                  decisão do Alfredo no mesmo dia) o próprio cliente digita
+                  isso no checkout (`<RecipientDocumentModal/>`) quando o
+                  frete é pela Melhor Envio; só aparece "não informado" pra
+                  pedido "combinar com o vendedor" (sem etiqueta pra
+                  comprar) ou feito antes dessa mudança existir. */}
+              {order.shippingMethod === "melhor_envio" && (
+                <span className="basis-full text-[10px] text-neutral-500 dark:text-neutral-400">
+                  CPF/CNPJ do destinatário:{" "}
+                  {order.recipientDocument ? (
+                    <span className="text-neutral-700 dark:text-neutral-300">
+                      {formatDocument(order.recipientDocument)}
+                    </span>
+                  ) : (
+                    <span className="text-amber-600 dark:text-amber-500">
+                      não informado pelo cliente - digite na hora de comprar a etiqueta
+                    </span>
+                  )}
+                </span>
+              )}
             </div>
 
             {/* Nota fiscal/comprovante - pedido do Alfredo (2026-10-08),
@@ -345,6 +525,77 @@ export function AdminOrdersTab() {
               </span>
             </div>
 
+            {/* Compra de etiqueta de verdade na Melhor Envio - pedido do
+                Alfredo em 2026-10-10 (`POST /admin/orders/{id}/shipping-label`).
+                Só aparece pra pedido com frete `melhor_envio` E com um
+                `melhorEnvioServiceId` salvo (pedidos "combinar com o
+                vendedor", ou feitos antes dessa coluna existir, não têm como
+                comprar - mesmo critério do backend em `buy_label()`). Já
+                comprada, vira link direto pro PDF em vez do botão.
+
+                Com `order.recipientDocument` já salvo (normal, desde que o
+                checkout passou a coletar isso do cliente), "Comprar
+                etiqueta" chama `handleBuyLabelDirect` direto, sem abrir
+                modal pra pedir CPF/CNPJ de novo - só o "Corrigir CPF/CNPJ"
+                ao lado abre `<ShippingLabelModal/>`, pré-preenchido, pra
+                quando o admin precisa substituir um valor digitado errado.
+                Sem documento salvo (reserva), o único caminho é o modal. */}
+            {order.shippingMethod === "melhor_envio" && order.melhorEnvioServiceId && (
+              <div className="flex flex-wrap items-center gap-2 border-t border-neutral-200 px-4 py-3 dark:border-neutral-800">
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-neutral-500 dark:text-neutral-400">
+                  Etiqueta
+                </span>
+                {order.melhorEnvioLabelUrl ? (
+                  <a
+                    href={order.melhorEnvioLabelUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-app border border-neutral-300 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-neutral-900 transition-colors hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-500"
+                  >
+                    Abrir/imprimir etiqueta
+                  </a>
+                ) : order.recipientDocument ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => handleBuyLabelDirect(order)}
+                      disabled={buyingLabelOrderId === order.id}
+                      className="rounded-app border border-neutral-300 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-neutral-900 transition-colors hover:border-neutral-500 disabled:opacity-40 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-500"
+                    >
+                      {buyingLabelOrderId === order.id ? "Comprando…" : "Comprar etiqueta"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLabelError(null);
+                        setLabelModalOrder(order);
+                      }}
+                      disabled={buyingLabelOrderId === order.id}
+                      className="text-[10px] font-semibold uppercase tracking-widest text-neutral-500 underline underline-offset-4 disabled:opacity-40 dark:text-neutral-400"
+                    >
+                      Corrigir CPF/CNPJ
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLabelError(null);
+                      setLabelModalOrder(order);
+                    }}
+                    className="rounded-app border border-neutral-300 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-neutral-900 transition-colors hover:border-neutral-500 dark:border-neutral-700 dark:text-neutral-100 dark:hover:border-neutral-500"
+                  >
+                    Comprar etiqueta (informar CPF/CNPJ)
+                  </button>
+                )}
+                {directLabelErrors[order.id] && (
+                  <span className="basis-full text-[10px] text-red-600 dark:text-red-400">
+                    {directLabelErrors[order.id]}
+                  </span>
+                )}
+              </div>
+            )}
+
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-neutral-200 bg-neutral-50 px-4 py-3 text-xs dark:border-neutral-800 dark:bg-neutral-900/40">
               <div className="flex flex-wrap items-center gap-4 text-neutral-600 dark:text-neutral-400">
                 <span>
@@ -378,6 +629,16 @@ export function AdminOrdersTab() {
           alt={`Nota fiscal do pedido ${invoiceLightboxOrder.id}`}
           caption={`Pedido ${invoiceLightboxOrder.id}`}
           onClose={() => setInvoiceLightboxOrder(null)}
+        />
+      )}
+
+      {labelModalOrder && (
+        <ShippingLabelModal
+          order={labelModalOrder}
+          isSubmitting={isBuyingLabel}
+          errorMessage={labelError}
+          onClose={() => !isBuyingLabel && setLabelModalOrder(null)}
+          onSubmit={handleBuyLabel}
         />
       )}
     </div>

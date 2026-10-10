@@ -18,6 +18,16 @@ export interface SubmitCheckoutInput {
   shippingQuoteId?: string | null;
   /** Só usado quando `deliveryMethod` é "combinar_com_vendedor". */
   shippingNote?: string | null;
+  /**
+   * CPF/CNPJ (com ou sem pontuação) do destinatário - obrigatório quando
+   * `deliveryMethod` é "melhor_envio" (ver `CheckoutSchema.
+   * _recipient_document_required_for_melhor_envio` no backend); nunca usado
+   * em "combinar_com_vendedor". Coletado no modal `<RecipientDocument
+   * Modal/>` de `<CheckoutView/>` - pedido do Alfredo em 2026-10-10,
+   * segunda decisão do dia (antes só o admin digitava isso na hora de
+   * comprar a etiqueta).
+   */
+  recipientDocument?: string | null;
   paymentMethod: PaymentMethod;
 }
 
@@ -80,6 +90,7 @@ export async function submitCheckout(
       deliveryMethod: input.deliveryMethod,
       shippingQuoteId: input.shippingQuoteId ?? undefined,
       shippingNote: input.shippingNote ?? undefined,
+      recipientDocument: input.recipientDocument ?? undefined,
       paymentMethod: input.paymentMethod,
     },
   });

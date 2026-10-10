@@ -43,6 +43,30 @@ export interface AdminOrder {
    * e-mail na hora do upload - `null` enquanto nada foi anexado ainda.
    */
   invoiceUrl?: string | null;
+  /**
+   * Id do serviço de frete (Correios/SEDEX/Jadlog/...) escolhido pelo
+   * cliente no checkout - `null` em pedidos "combinar com o vendedor" ou
+   * feitos antes dessa coluna existir. `<AdminOrdersTab/>` só mostra o botão
+   * "Comprar etiqueta" quando isto existe (sem ele, `buy_label()` no
+   * backend recusa a compra).
+   */
+  melhorEnvioServiceId?: string | null;
+  /**
+   * Link (PDF) da etiqueta já comprada e gerada de verdade na Melhor Envio
+   * (`POST /admin/orders/{id}/shipping-label` - ver `buyOrderShippingLabel`
+   * abaixo). `null` até o admin comprar.
+   */
+  melhorEnvioLabelUrl?: string | null;
+  /**
+   * CPF/CNPJ (só dígitos) do destinatário - desde 2026-10-10 (segunda
+   * decisão do Alfredo no mesmo dia) é o PRÓPRIO CLIENTE que digita isso no
+   * checkout (modal `<RecipientDocumentModal/>`) quando o frete é pela
+   * Melhor Envio, não mais o admin na hora de comprar a etiqueta. `null`
+   * em pedidos "combinar com o vendedor", ou feitos antes dessa mudança -
+   * nesses casos `<AdminOrdersTab/>` ainda pede pro admin digitar na hora
+   * (reserva, ver `buyOrderShippingLabel` abaixo).
+   */
+  recipientDocument?: string | null;
   items: AdminOrderItem[];
   payment: PaymentReceipt | null;
 }
@@ -123,6 +147,33 @@ export async function updateOrderStatus(
     token,
     body,
   });
+}
+
+/**
+ * Compra, paga, gera e imprime a etiqueta de verdade desse pedido na Melhor
+ * Envio (`POST /admin/orders/{id}/shipping-label` - ver `app/admin/
+ * __init__.py`'s `buy_order_shipping_label`).
+ *
+ * `recipientDocument` agora é OPCIONAL (mudou em 2026-10-10, segunda
+ * decisão do dia): o normal é o cliente já ter digitado o CPF/CNPJ dele no
+ * checkout (`AdminOrder.recipientDocument` acima) - `<AdminOrdersTab/>`
+ * chama isto SEM esse argumento nesse caso, e o backend usa o valor já
+ * salvo. Só é passado quando o pedido não tem documento salvo (reserva -
+ * `<ShippingLabelModal/>` ainda pede pro admin digitar na hora). Lança se a
+ * Melhor Envio recusar (saldo insuficiente, CPF inválido ou ausente, pedido
+ * sem serviço associado etc.) - `<AdminOrdersTab/>` mostra a mensagem de
+ * erro (`err.message`, já em português, vem pronta do backend) pro admin.
+ */
+export async function buyOrderShippingLabel(
+  token: string,
+  orderId: string,
+  recipientDocument?: string,
+): Promise<{ order: AdminOrder; labelUrl: string }> {
+  const data = await apiFetch<{ order: AdminOrder; labelUrl: string }>(
+    `/admin/orders/${encodeURIComponent(orderId)}/shipping-label`,
+    { method: "POST", token, body: recipientDocument ? { recipientDocument } : {} },
+  );
+  return { order: normalizeAdminOrder(data.order), labelUrl: data.labelUrl };
 }
 
 export interface AdminOverviewStats {

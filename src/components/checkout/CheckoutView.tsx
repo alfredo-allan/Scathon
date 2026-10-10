@@ -2,13 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 import { useCheckoutShipping } from "@/hooks/useCheckoutShipping";
 import { resetShippingSelection } from "@/lib/checkoutShipping";
+import { formatDocument } from "@/lib/documentValidation";
 import { submitCheckout, type PaymentMethod } from "@/lib/mercadoPago";
 import { PixPaymentModal } from "./PixPaymentModal";
+import { RecipientDocumentModal } from "./RecipientDocumentModal";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -52,12 +54,41 @@ export function CheckoutView() {
     qrCode: string;
     qrCodeBase64: string;
   } | null>(null);
+  // CPF/CNPJ do destinatário - só relevante quando `selection.method` é
+  // "melhor_envio" (pedido do Alfredo em 2026-10-10, segunda decisão do
+  // dia). Fica em estado local, não no `checkoutShippingStore` compartilhado
+  // com `<CartView/>`, porque `update()` daquele hook zera `confirmedAt` a
+  // cada chamada (ver `useCheckoutShipping`) - gravar o documento ali
+  // mandaria o cliente de volta pro carrinho pra "confirmar envio" de novo.
+  const [recipientDocument, setRecipientDocument] = useState<string | null>(null);
+  const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false);
 
   const shippingCost = selection.method === "melhor_envio" ? selection.quote?.price ?? 0 : 0;
   const total = totalAmount + shippingCost;
 
+  // Abre o modal automaticamente assim que a página carrega com frete
+  // "melhor_envio" confirmado e ainda sem documento - não espera o cliente
+  // clicar em "Finalizar compra" pra só então descobrir que falta algo.
+  // Depois de um checkout bem-sucedido `selection.method` já não é mais
+  // "melhor_envio" (ver `resetShippingSelection()` em `handleFinalize`), e
+  // esse efeito não dispara de novo por conta própria.
+  useEffect(() => {
+    if (selection.method === "melhor_envio" && selection.confirmedAt && !recipientDocument) {
+      setIsDocumentModalOpen(true);
+    }
+  }, [selection.method, selection.confirmedAt, recipientDocument]);
+
+  function handleDocumentConfirmed(digits: string) {
+    setRecipientDocument(digits);
+    setIsDocumentModalOpen(false);
+  }
+
   async function handleFinalize() {
     if (!token || !selection.addressId || !selection.method) return;
+    if (selection.method === "melhor_envio" && !recipientDocument) {
+      setIsDocumentModalOpen(true);
+      return;
+    }
     setIsSubmitting(true);
     setErrorMessage(null);
     try {
@@ -72,6 +103,7 @@ export function CheckoutView() {
         deliveryMethod: selection.method,
         shippingQuoteId: selection.method === "melhor_envio" ? selection.quote?.id ?? null : null,
         shippingNote: selection.method === "combinar_com_vendedor" ? selection.customNote : null,
+        recipientDocument: selection.method === "melhor_envio" ? recipientDocument : null,
         paymentMethod,
       });
       clearCart();
@@ -210,6 +242,33 @@ export function CheckoutView() {
                     úteis
                   </p>
                 )}
+                {/* CPF/CNPJ do destinatário, coletado no modal
+                    `<RecipientDocumentModal/>` (abre automaticamente logo
+                    acima via `useEffect`) - pedido do Alfredo em
+                    2026-10-10. Precisa disso pra "Finalizar compra"
+                    funcionar (ver guard em `handleFinalize`). */}
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-neutral-600 dark:text-neutral-400">
+                  {recipientDocument ? (
+                    <>
+                      <span>CPF/CNPJ do destinatário: {formatDocument(recipientDocument)}</span>
+                      <button
+                        type="button"
+                        onClick={() => setIsDocumentModalOpen(true)}
+                        className="font-semibold uppercase tracking-widest text-neutral-900 underline underline-offset-4 dark:text-neutral-100"
+                      >
+                        Editar
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setIsDocumentModalOpen(true)}
+                      className="font-semibold uppercase tracking-widest text-red-600 underline underline-offset-4 dark:text-red-400"
+                    >
+                      Informar CPF/CNPJ do destinatário
+                    </button>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="mt-2 text-sm text-neutral-700 dark:text-neutral-300">
@@ -317,7 +376,7 @@ export function CheckoutView() {
           <button
             type="button"
             onClick={handleFinalize}
-            disabled={isSubmitting}
+            disabled={isSubmitting || (selection.method === "melhor_envio" && !recipientDocument)}
             className="w-full rounded-app bg-neutral-950 py-3.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-950"
           >
             {isSubmitting ? "Finalizando..." : "Finalizar compra"}
@@ -335,6 +394,14 @@ export function CheckoutView() {
           qrCode={pixPayment.qrCode}
           qrCodeBase64={pixPayment.qrCodeBase64}
           onClose={() => setPixPayment(null)}
+        />
+      )}
+
+      {isDocumentModalOpen && (
+        <RecipientDocumentModal
+          initialValue={recipientDocument}
+          onClose={() => setIsDocumentModalOpen(false)}
+          onSubmit={handleDocumentConfirmed}
         />
       )}
     </div>
