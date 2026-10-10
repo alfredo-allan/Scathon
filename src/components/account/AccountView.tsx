@@ -49,7 +49,13 @@ export function AccountView() {
   const avatarSrc = resolveMediaUrl(user.avatarUrl);
 
   return (
-    <div className="px-4 md:px-8 py-6">
+    // `max-w-2xl mx-auto` - pedido do Alfredo (2026-10-10): sem isso, o
+    // conteúdo (avatar/nome, os cards de atalho, os dados da conta) se
+    // espalhava pela largura inteira da tela em desktop, com um respiro
+    // enorme entre os elementos que deixava a página confusa de olhar. Um
+    // comprimento de coluna fixo e centralizado lê melhor - mobile não muda
+    // em nada, já que a tela é naturalmente mais estreita que o limite.
+    <div className="mx-auto max-w-2xl px-4 md:px-8 py-6">
       <nav aria-label="Breadcrumb" className="mb-3 text-xs text-neutral-500 dark:text-neutral-400">
         <ol className="flex flex-wrap items-center gap-1.5">
           <li>
