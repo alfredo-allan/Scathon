@@ -311,7 +311,14 @@ export function AccountEditView() {
   }
 
   return (
-    <div className="px-4 md:px-8 py-6">
+    // `max-w-2xl mx-auto` - mesmo ajuste de `<AccountView/>`/`<AccountOrdersView/>`
+    // (pedido do Alfredo em 2026-10-10, estendido pra todas as views do painel):
+    // sem isso, o form (que já tinha seu próprio `max-w-md` interno, mas sem
+    // `mx-auto`) ficava colado na borda esquerda da tela em desktop, com todo
+    // o resto do espaço vazio à direita. Mesma largura de coluna das outras
+    // páginas de conta, pra não dar um salto de layout ao navegar entre elas -
+    // mobile não muda em nada.
+    <div className="mx-auto max-w-2xl px-4 md:px-8 py-6">
       <nav aria-label="Breadcrumb" className="mb-3 text-xs text-neutral-500 dark:text-neutral-400">
         <ol className="flex flex-wrap items-center gap-1.5">
           <li>

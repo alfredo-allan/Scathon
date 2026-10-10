@@ -128,7 +128,13 @@ export function AccountOrdersView() {
   }
 
   return (
-    <div className="px-4 md:px-8 py-6">
+    // `max-w-2xl mx-auto` - mesmo ajuste de `<AccountView/>` ("Minha
+    // Conta", pedido do Alfredo em 2026-10-10): sem isso, a lista de
+    // pedidos se espalhava pela largura inteira da tela em desktop, com
+    // respiro enorme entre os elementos. Mesma largura de coluna das outras
+    // páginas de conta, pra não dar um salto de layout ao navegar entre
+    // elas - mobile não muda em nada.
+    <div className="mx-auto max-w-2xl px-4 md:px-8 py-6">
       <nav aria-label="Breadcrumb" className="mb-3 text-xs text-neutral-500 dark:text-neutral-400">
         <ol className="flex flex-wrap items-center gap-1.5">
           <li>
