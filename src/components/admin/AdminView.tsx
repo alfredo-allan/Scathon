@@ -1,17 +1,18 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { AdminOverviewTab } from "./AdminOverviewTab";
-import { AdminOrdersTab } from "./AdminOrdersTab";
-import { AdminInventoryTab } from "./AdminInventoryTab";
-import { AdminProductsTab } from "./AdminProductsTab";
-import { AdminCustomersTab } from "./AdminCustomersTab";
-import { AdminShippingTab } from "./AdminShippingTab";
-import { AdminIntegrationsTab } from "./AdminIntegrationsTab";
+import Link from 'next/link'
+import { useState } from 'react'
+import { useAuth } from '@/hooks/useAuth'
+import { AdminOverviewTab } from './AdminOverviewTab'
+import { AdminOrdersTab } from './AdminOrdersTab'
+import { AdminInventoryTab } from './AdminInventoryTab'
+import { AdminProductsTab } from './AdminProductsTab'
+import { AdminCustomersTab } from './AdminCustomersTab'
+import { AdminShippingTab } from './AdminShippingTab'
+import { AdminIntegrationsTab } from './AdminIntegrationsTab'
+import { AdminReviewsTab } from './AdminReviewsTab'
 
-type TabId = "visao-geral" | "pedidos" | "estoque" | "produtos" | "clientes" | "frete" | "integracoes";
+type TabId = 'visao-geral' | 'pedidos' | 'estoque' | 'produtos' | 'clientes' | 'avaliacoes' | 'frete' | 'integracoes'
 
 // A plain config array - not a switch scattered across the file - so
 // adding a 7th tab later (a real backend endpoint, a marketing panel,
@@ -19,14 +20,15 @@ type TabId = "visao-geral" | "pedidos" | "estoque" | "produtos" | "clientes" | "
 // several places that all need to agree. This is the "estrutura que
 // permita escalar" part of the brief as far as the *page layout* goes.
 const TABS: Array<{ id: TabId; label: string }> = [
-  { id: "visao-geral", label: "Visão Geral" },
-  { id: "pedidos", label: "Pedidos" },
-  { id: "estoque", label: "Estoque" },
-  { id: "produtos", label: "Produtos" },
-  { id: "clientes", label: "Clientes" },
-  { id: "frete", label: "Frete & Despacho" },
-  { id: "integracoes", label: "Integrações" },
-];
+  { id: 'visao-geral', label: 'Visão Geral' },
+  { id: 'pedidos', label: 'Pedidos' },
+  { id: 'estoque', label: 'Estoque' },
+  { id: 'produtos', label: 'Produtos' },
+  { id: 'clientes', label: 'Clientes' },
+  { id: 'avaliacoes', label: 'Avaliações' },
+  { id: 'frete', label: 'Frete & Despacho' },
+  { id: 'integracoes', label: 'Integrações' }
+]
 
 /**
  * `/admin` page body - the internal dashboard for `role: "admin"` accounts
@@ -60,7 +62,7 @@ const TABS: Array<{ id: TabId; label: string }> = [
  * uma aba client-side sem autorização de verdade por trás.
  */
 export function AdminView() {
-  const { user, isAuthenticated, isAdmin } = useAuth();
+  const { user, isAuthenticated, isAdmin } = useAuth()
   // Pousa direto na aba "Integrações" quando a URL chega com `?melhorEnvio=
   // ...` - é o redirect de volta do OAuth da Melhor Envio (`GET /webhooks/
   // melhor-envio/oauth-callback` no backend); sem isso, o admin aprovaria o
@@ -68,10 +70,8 @@ export function AdminView() {
   // que `<AdminIntegrationsTab/>` mostra. Lido só na primeira renderização -
   // o próprio `<AdminIntegrationsTab/>` limpa o parâmetro da URL depois.
   const [activeTab, setActiveTab] = useState<TabId>(() =>
-    typeof window !== "undefined" && new URLSearchParams(window.location.search).has("melhorEnvio")
-      ? "integracoes"
-      : "visao-geral",
-  );
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('melhorEnvio') ? 'integracoes' : 'visao-geral'
+  )
 
   if (!isAuthenticated || !user) {
     return (
@@ -81,28 +81,24 @@ export function AdminView() {
         </p>
         <Link
           href="/login"
-          className="rounded-app bg-neutral-950 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
-        >
+          className="rounded-app bg-neutral-950 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950">
           Entrar
         </Link>
       </div>
-    );
+    )
   }
 
   if (!isAdmin) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
-        <p className="text-sm text-neutral-600 dark:text-neutral-400">
-          Sua conta ({user.email}) não tem acesso ao painel administrativo.
-        </p>
+        <p className="text-sm text-neutral-600 dark:text-neutral-400">Sua conta ({user.email}) não tem acesso ao painel administrativo.</p>
         <Link
           href="/account"
-          className="rounded-app bg-neutral-950 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
-        >
+          className="rounded-app bg-neutral-950 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950">
           Minha Conta
         </Link>
       </div>
-    );
+    )
   }
 
   return (
@@ -120,9 +116,7 @@ export function AdminView() {
       </nav>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold tracking-tight text-neutral-950 dark:text-neutral-50 md:text-2xl">
-          Painel Admin
-        </h1>
+        <h1 className="text-xl font-semibold tracking-tight text-neutral-950 dark:text-neutral-50 md:text-2xl">Painel Admin</h1>
         <span className="text-xs text-neutral-500 dark:text-neutral-400">
           Conectado como <span className="font-medium text-neutral-900 dark:text-neutral-100">{user.displayName}</span>
         </span>
@@ -136,24 +130,24 @@ export function AdminView() {
             onClick={() => setActiveTab(tab.id)}
             className={`shrink-0 border-b-2 pb-3 transition-colors ${
               activeTab === tab.id
-                ? "border-neutral-950 text-neutral-950 dark:border-neutral-100 dark:text-neutral-100"
-                : "border-transparent text-neutral-400 hover:text-neutral-700 dark:text-neutral-600 dark:hover:text-neutral-300"
-            }`}
-          >
+                ? 'border-neutral-950 text-neutral-950 dark:border-neutral-100 dark:text-neutral-100'
+                : 'border-transparent text-neutral-400 hover:text-neutral-700 dark:text-neutral-600 dark:hover:text-neutral-300'
+            }`}>
             {tab.label}
           </button>
         ))}
       </div>
 
       <div className="mt-6">
-        {activeTab === "visao-geral" && <AdminOverviewTab />}
-        {activeTab === "pedidos" && <AdminOrdersTab />}
-        {activeTab === "estoque" && <AdminInventoryTab />}
-        {activeTab === "produtos" && <AdminProductsTab />}
-        {activeTab === "clientes" && <AdminCustomersTab />}
-        {activeTab === "frete" && <AdminShippingTab />}
-        {activeTab === "integracoes" && <AdminIntegrationsTab />}
+        {activeTab === 'visao-geral' && <AdminOverviewTab />}
+        {activeTab === 'pedidos' && <AdminOrdersTab />}
+        {activeTab === 'estoque' && <AdminInventoryTab />}
+        {activeTab === 'produtos' && <AdminProductsTab />}
+        {activeTab === 'clientes' && <AdminCustomersTab />}
+        {activeTab === 'avaliacoes' && <AdminReviewsTab />}
+        {activeTab === 'frete' && <AdminShippingTab />}
+        {/* {activeTab === "integracoes" && <AdminIntegrationsTab />} */}
       </div>
     </div>
-  );
+  )
 }

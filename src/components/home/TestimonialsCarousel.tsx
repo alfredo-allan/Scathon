@@ -5,8 +5,7 @@ import { config } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faInstagram } from "@fortawesome/free-brands-svg-icons";
 import { useState } from "react";
-import type { Testimonial } from "@/types";
-import { testimonials } from "@/data/testimonials";
+import type { ProductReview } from "@/lib/reviews";
 
 // Render icons as plain inline SVG sized by our own Tailwind classes,
 // instead of FontAwesome auto-injecting its own <style> tag with
@@ -32,42 +31,44 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
-function TestimonialCard({
-  testimonial,
-  duplicate = false,
-}: {
-  testimonial: Testimonial;
-  duplicate?: boolean;
-}) {
+function TestimonialCard({ review, duplicate = false }: { review: ProductReview; duplicate?: boolean }) {
+  const instagramUrl = review.instagramHandle
+    ? `https://instagram.com/${review.instagramHandle.replace(/^@/, "")}`
+    : null;
+
   return (
     <figure
       aria-hidden={duplicate}
       className="w-72 sm:w-80 shrink-0 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-6"
     >
-      <Stars rating={testimonial.rating} />
-      <figcaption className="mt-3 text-xs font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">
-        {testimonial.title}
-      </figcaption>
-      <blockquote className="mt-2 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
-        {testimonial.quote}
+      <Stars rating={review.rating} />
+      <blockquote className="mt-3 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+        {review.comment}
       </blockquote>
 
       <div className="mt-4 flex items-center gap-3 border-t border-neutral-100 dark:border-neutral-800 pt-4">
-        <Image
-          src={testimonial.avatarUrl}
-          alt={testimonial.author}
-          width={36}
-          height={36}
-          unoptimized
-          className="h-9 w-9 shrink-0 rounded-full object-cover"
-        />
+        {review.photoUrl ? (
+          <Image
+            src={review.photoUrl}
+            alt={review.author}
+            width={36}
+            height={36}
+            unoptimized
+            className="h-9 w-9 shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <span
+            aria-hidden
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-sm font-semibold text-neutral-800 dark:bg-neutral-800 dark:text-neutral-100"
+          >
+            {review.author.charAt(0).toUpperCase()}
+          </span>
+        )}
         <div className="min-w-0 flex-1">
-          <p className="truncate text-xs font-medium text-neutral-900 dark:text-neutral-100">
-            {testimonial.author}
-          </p>
-          <p className="truncate text-[11px] text-neutral-500 dark:text-neutral-500">
-            {testimonial.instagramHandle}
-          </p>
+          <p className="truncate text-xs font-medium text-neutral-900 dark:text-neutral-100">{review.author}</p>
+          {review.instagramHandle && (
+            <p className="truncate text-[11px] text-neutral-500 dark:text-neutral-500">{review.instagramHandle}</p>
+          )}
         </div>
         {/*
           Both copies stay fully clickable - the marquee keeps scrolling,
@@ -77,16 +78,18 @@ function TestimonialCard({
           -1), matching its figure-level aria-hidden so screen-reader/
           keyboard users don't tab into content announced as hidden.
         */}
-        <a
-          href={testimonial.instagramUrl}
-          target="_blank"
-          rel="noreferrer"
-          tabIndex={duplicate ? -1 : 0}
-          aria-label={`Ver perfil de ${testimonial.author} no Instagram`}
-          className="shrink-0 p-1.5 text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
-        >
-          <FontAwesomeIcon icon={faInstagram} className="h-4 w-4" aria-hidden />
-        </a>
+        {instagramUrl && (
+          <a
+            href={instagramUrl}
+            target="_blank"
+            rel="noreferrer"
+            tabIndex={duplicate ? -1 : 0}
+            aria-label={`Ver perfil de ${review.author} no Instagram`}
+            className="shrink-0 p-1.5 text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+          >
+            <FontAwesomeIcon icon={faInstagram} className="h-4 w-4" aria-hidden />
+          </a>
+        )}
       </div>
     </figure>
   );
@@ -100,8 +103,16 @@ function TestimonialCard({
  * press/release - so a shopper can read the full quote and count the
  * stars before it drifts on. The track renders the list twice and
  * animates exactly -50%, looping seamlessly.
+ *
+ * `reviews` vem de `getFeaturedReviews()` (`GET /api/v1/reviews/featured`),
+ * buscado no servidor por `<Home/>` (`src/app/page.tsx`) - são avaliações
+ * REAIS (nota alta + comentário de verdade), nunca mais os 7 depoimentos
+ * fabricados que viviam em `src/data/testimonials.ts` (apagado - pedido do
+ * Alfredo em 2026-10-11: "apagar os comentários que são fakes do site").
+ * Sem avaliação real suficiente ainda pra mostrar, a seção inteira some
+ * (ver `<Home/>`) em vez de aparecer vazia ou com depoimento inventado.
  */
-export function TestimonialsCarousel() {
+export function TestimonialsCarousel({ reviews }: { reviews: ProductReview[] }) {
   const [isPaused, setIsPaused] = useState(false);
 
   const pause = () => setIsPaused(true);
@@ -128,15 +139,11 @@ export function TestimonialsCarousel() {
           onPointerUp={resume}
           onPointerCancel={resume}
         >
-          {testimonials.map((testimonial) => (
-            <TestimonialCard key={`a-${testimonial.id}`} testimonial={testimonial} />
+          {reviews.map((review) => (
+            <TestimonialCard key={`a-${review.id}`} review={review} />
           ))}
-          {testimonials.map((testimonial) => (
-            <TestimonialCard
-              key={`b-${testimonial.id}`}
-              testimonial={testimonial}
-              duplicate
-            />
+          {reviews.map((review) => (
+            <TestimonialCard key={`b-${review.id}`} review={review} duplicate />
           ))}
         </div>
       </div>

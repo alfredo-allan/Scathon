@@ -203,7 +203,7 @@ export function LoginView() {
       setError(null)
       setIsSubmitting(true)
       try {
-        const { token, user } = await loginRequest(trimmedEmail, password)
+        const { token, csrfToken, user } = await loginRequest(trimmedEmail, password)
 
         // Also asks the Next.js server to open a real, signed session (see
         // `POST /api/auth/login`) - this is what `src/proxy.ts` actually
@@ -215,6 +215,14 @@ export function LoginView() {
         // time an admin account is routed straight to `/admin`. A customer
         // account just gets `ok: false` here - harmless, since it never
         // needed the cookie to begin with.
+        //
+        // SECURITY NOTE (2026-10-11): `token` (the real JWT) is used ONLY
+        // for this one server-to-server call, right here, transiently - it
+        // is never persisted. The backend already set it as an httpOnly
+        // cookie on its own response (see `app/auth/jwt_utils.py`), which is
+        // what authenticates every future call to the Flask API; what this
+        // component persists below is `csrfToken`, not `token` (see
+        // `<AuthContext/>`'s doc comment for why).
         //
         // For the seeded admin account, though, `ok: true` here is not
         // optional: it's the only thing that actually gets the visitor past
@@ -251,7 +259,7 @@ export function LoginView() {
           return
         }
 
-        login(token, user)
+        login(csrfToken, user)
         router.push(user.role === 'admin' ? '/admin' : '/')
       } catch (err) {
         setIsSubmitting(false)
@@ -288,21 +296,28 @@ export function LoginView() {
         displayName: trimmedName,
         avatarDataUrl: avatarPreview
       })
-      const token = registered.token
+      // Cadastro novo sempre cria `role: "customer"` (forçado no servidor -
+      // ver `registerRequest`'s doc comment), então nunca precisa abrir o
+      // cookie de `/admin` - diferente do login acima, `registered.token`
+      // (o JWT real) não é usado em lugar nenhum aqui; `csrfToken` é o valor
+      // certo pra autenticar as chamadas logo abaixo (o cookie httpOnly já
+      // foi gravado sozinho pela resposta do cadastro - ver
+      // `<AuthContext/>`'s doc comment).
+      const { csrfToken } = registered
       let user = registered.user
 
       // O cadastro em si não tem campo de telefone (ver `registerRequest`'s
       // doc comment) - persiste o que foi digitado logo em seguida, pra não
       // simplesmente descartar um dado que o visitante já preencheu.
       try {
-        user = await updateProfile(token, { phone })
+        user = await updateProfile(csrfToken, { phone })
       } catch {
         // Conta e login já são reais nesse ponto - um telefone que não
         // salvou não deveria travar o cadastro inteiro; só fica sem
         // telefone até a próxima edição de perfil.
       }
 
-      await saveAddress(token, {
+      await saveAddress(csrfToken, {
         label: 'Principal',
         cep: addressCep,
         street: resolvedAddress.street,
@@ -313,7 +328,7 @@ export function LoginView() {
         state: resolvedAddress.state
       })
 
-      login(token, user)
+      login(csrfToken, user)
       router.push('/')
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Não foi possível criar sua conta agora. Tente de novo em instantes.')

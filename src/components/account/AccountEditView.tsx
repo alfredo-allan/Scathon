@@ -36,7 +36,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  */
 export function AccountEditView() {
   const router = useRouter();
-  const { user, token, isAuthenticated, updateUser } = useAuth();
+  const { user, token, isAuthenticated, updateUser, login } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Hooks sempre antes de qualquer `return` condicional (regra dos hooks).
@@ -285,7 +285,9 @@ export function AccountEditView() {
   }
 
   async function handleConfirmPasswordChange() {
-    if (!token) return;
+    // Mesmo motivo do guard em `handleRemovePhoto` acima (closure não herda
+    // o narrowing do `return` condicional lá em cima).
+    if (!token || !user) return;
 
     const trimmedCode = passwordChangeCode.trim();
     if (!/^\d{6}$/.test(trimmedCode)) {
@@ -296,7 +298,15 @@ export function AccountEditView() {
     setPasswordChangeError(null);
     setIsConfirmingPassword(true);
     try {
-      await changePassword(token, currentPassword, newPassword, trimmedCode);
+      // Trocar a senha invalida (`token_version`, backend) qualquer sessão
+      // emitida ANTES da troca - inclusive, tecnicamente, esta mesma chamada.
+      // O backend reemite a sessão atual na resposta (cookie novo +
+      // `csrfToken` novo); sem atualizar `<AuthContext/>` com esse valor
+      // novo aqui, a PRÓXIMA ação do usuário (qualquer uma que mude dado)
+      // falharia o CSRF - o `csrfToken` guardado localmente ainda seria o
+      // antigo, que o backend não reconhece mais.
+      const { csrfToken } = await changePassword(token, currentPassword, newPassword, trimmedCode);
+      login(csrfToken, user);
       handleCancelPasswordChange();
       setPasswordChangeSuccess(true);
     } catch (err) {

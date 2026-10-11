@@ -2,26 +2,48 @@
  * Cliente mínimo pra falar com o backend Flask real (`scathon-api`) - ver
  * `NEXT_PUBLIC_API_BASE_URL` em `.env.example`.
  *
- * Usado por todo o app agora (fase 4 do roadmap: catálogo, conta, endereços,
- * checkout, admin...), não só por `@/lib/auth`/`@/lib/waitlist` como nas
- * primeiras rodadas. Como o login é real (`<AuthContext/>` guarda o JWT de
- * verdade emitido por `POST /api/v1/auth/login`, válido por 12h), qualquer
- * chamada feita aqui com `token` já é reconhecida como autenticada pelo
- * backend - nada especial pra fazer além de passar o `token` que `useAuth()`
- * devolve.
+ * Usado por todo o app (catálogo, conta, endereços, checkout, admin...), não
+ * só por `@/lib/auth`/`@/lib/waitlist`.
  *
- * **Token morto (expirado, ou de uma sessão/segredo que não existe mais no
- * servidor):** quando uma chamada autenticada volta 401, isso nunca é "o
- * produto não existe" nem um erro passageiro de rede - é a prova de que a
- * sessão local não é mais válida pro servidor, então toda chamada seguinte
- * com o mesmo token vai falhar do mesmo jeito até alguém logar de novo.
- * Em vez de deixar cada hook/tela descobrir isso sozinho (e cada um
- * mostrando seu próprio erro, ou pior, uma rejeição não tratada - foi
- * exatamente isso que aconteceu com `useSavedAddresses`/`useInventory`
- * antes desta correção), dispara um evento global (`scathon:session-expired`)
- * que `<AuthContext/>` escuta pra limpar a sessão sozinho - o próximo render
- * já mostra o app como deslogado, em vez de continuar "logado" na aparência
- * enquanto toda chamada autenticada quebra por baixo.
+ * **Medida de segurança (Alfredo, 2026-10-11) - sessão agora é cookie
+ * httpOnly, não mais JWT em `localStorage`:** o JWT de verdade vive num
+ * cookie `scathon_access_token` que o backend grava (`Set-Cookie`,
+ * `httpOnly`) no login/registro - nenhum JavaScript desta página consegue
+ * ler esse valor, nem um script injetado por XSS (ver o histórico deste
+ * arquivo e de `@/context/AuthContext` antes desta mudança: o JWT ficava
+ * puro em `localStorage`, exposto a qualquer XSS no site inteiro). Por isso:
+ *
+ * - `credentials: "include"` em TODA chamada abaixo - é isso que faz o
+ *   navegador mandar/aceitar esse cookie numa chamada cross-site (frontend
+ *   na Vercel, API numa VPS diferente).
+ * - NÃO manda mais `Authorization: Bearer ${token}` - o `token` que
+ *   `useAuth()` devolve não é mais o JWT (é só um valor de CSRF, inofensivo
+ *   sozinho - ver `@/context/AuthContext`/`@/lib/auth`). Mandar isso como
+ *   Bearer seria um JWT inválido e quebraria a autenticação (o cookie, que
+ *   É válido, nem chegaria a ser conferido - `token_required` no backend
+ *   prioriza o header `Authorization` quando presente).
+ * - Em compensação, toda chamada que MUDA dado (POST/PATCH/DELETE) manda
+ *   esse mesmo `token` no header `X-CSRF-Token` - é o valor de CSRF que o
+ *   backend embutiu no JWT do cookie (`csrf` claim - ver doc comment de
+ *   `app/auth/jwt_utils.py` no backend pro porquê de não ser um segundo
+ *   cookie: frontend e backend são domínios diferentes, JS de um não lê
+ *   cookie do outro). Um site malicioso cross-site consegue fazer o
+ *   navegador da vítima mandar o cookie sozinho, mas não tem como descobrir
+ *   esse valor pra montar o header - é isso que bloqueia um CSRF forjado.
+ *
+ * **Token morto (expirado, senha trocada em outra sessão, ou de um
+ * segredo/DB que o backend não reconhece mais):** quando uma chamada
+ * autenticada volta 401, isso nunca é "o produto não existe" nem um erro
+ * passageiro de rede - é a prova de que a sessão local não é mais válida
+ * pro servidor, então toda chamada seguinte vai falhar do mesmo jeito até
+ * alguém logar de novo. Em vez de deixar cada hook/tela descobrir isso
+ * sozinho (e cada um mostrando seu próprio erro, ou pior, uma rejeição não
+ * tratada - foi exatamente isso que aconteceu com
+ * `useSavedAddresses`/`useInventory` antes daquela correção), dispara um
+ * evento global (`scathon:session-expired`) que `<AuthContext/>` escuta pra
+ * limpar a sessão sozinho - o próximo render já mostra o app como
+ * deslogado, em vez de continuar "logado" na aparência enquanto toda
+ * chamada autenticada quebra por baixo.
  */
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://srv2027628.hstgr.cloud/api/v1";
@@ -92,7 +114,14 @@ interface ApiFetchOptions {
    * `fetch` define sozinho - setá-lo à mão aqui quebraria o multipart.
    */
   body?: unknown;
-  /** Bearer token, se houver uma sessão - omitido quando `null`/`undefined`. */
+  /**
+   * Apesar do nome (mantido por compatibilidade com todo chamador
+   * existente), NÃO é mais o JWT - é o valor de CSRF da sessão atual (ver
+   * `@/context/AuthContext`/doc comment do módulo). Omitido/`null` quando
+   * deslogado. Usado só pra marcar "essa chamada espera estar autenticada"
+   * (dispara `SESSION_EXPIRED_EVENT` num 401 - ver abaixo) e, em chamadas
+   * que mudam dado, mandado como `X-CSRF-Token`.
+   */
   token?: string | null;
   /**
    * Repassado como `next.revalidate` do Next.js (cache de dados do App
@@ -122,16 +151,22 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
   const { method = "GET", body, token, revalidate } = options;
 
   const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+  const isMutating = method === "POST" || method === "PATCH" || method === "DELETE";
 
   const headers: Record<string, string> = {};
   if (body !== undefined && !isFormData) headers["Content-Type"] = "application/json";
-  if (token) headers.Authorization = `Bearer ${token}`;
+  // Não manda mais `Authorization: Bearer` - a sessão de verdade vai no
+  // cookie httpOnly (`credentials: "include"` abaixo). `token` aqui é só o
+  // valor de CSRF (ver doc comment do módulo) - só faz sentido mandado como
+  // `X-CSRF-Token`, e só em chamadas que mudam dado (GET nunca precisa).
+  if (token && isMutating) headers["X-CSRF-Token"] = token;
 
   let response: Response;
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
       method,
       headers,
+      credentials: "include",
       body: body === undefined ? undefined : isFormData ? (body as FormData) : JSON.stringify(body),
       ...(revalidate !== undefined ? { next: { revalidate } } : {}),
     });

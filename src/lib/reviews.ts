@@ -1,4 +1,4 @@
-import { apiFetch, ApiError } from "./apiClient";
+import { apiFetch, ApiError, resolveMediaUrl } from "./apiClient";
 
 /**
  * Avaliações de produto reais (seção 2 do briefing: "rotas de comentários e
@@ -8,6 +8,12 @@ import { apiFetch, ApiError } from "./apiClient";
  * fonte de verdade agora é sempre o backend, que também é quem decide se o
  * cliente pode avaliar - só quem tem um pedido `entregue` com aquele
  * produto, nunca uma alegação do cliente.
+ *
+ * `getFeaturedReviews`/`getReviewInvite`/`submitReviewInvite` abaixo (pedido
+ * do Alfredo, 2026-10-11) são o segundo caminho, SEM login, pra chegar
+ * nessa mesma tabela `reviews` - ver `app/models/review_invite.py` no
+ * backend. O formulário de dentro da conta (`submitReview` abaixo) continua
+ * exatamente como estava.
  */
 
 export interface ProductReview {
@@ -18,6 +24,15 @@ export interface ProductReview {
   author: string;
   rating: number;
   comment: string | null;
+  /** Foto opcional anexada via convite sem login (ver doc comment do
+   * módulo) - `null` pra qualquer avaliação sem foto, inclusive toda
+   * avaliação feita pelo formulário normal de dentro da conta (que nunca
+   * manda este campo). Caminho relativo (`/media/reviews/...`) já resolvido
+   * contra a origem do backend antes de chegar aqui - ver `normalizeReview`. */
+  photoUrl: string | null;
+  /** Perfil do Instagram mencionado na avaliação (sem validar contra o
+   * Instagram de verdade - é só o que o cliente digitou), opcional. */
+  instagramHandle: string | null;
   createdAt: string;
 }
 
@@ -31,15 +46,41 @@ export interface ProductReviewsPage {
   reviewCount: number;
 }
 
+/**
+ * `photoUrl` chega do backend como caminho relativo (`/media/reviews/...`)
+ * - mesmo motivo/padrão de `normalizeAdminOrder` em `@/lib/adminOrders`:
+ * sem isso, `<Image src={review.photoUrl}>` resolveria contra a origem do
+ * FRONTEND (onde essa rota não existe) em vez do backend, e a foto
+ * quebraria.
+ */
+function normalizeReview(review: ProductReview): ProductReview {
+  return { ...review, photoUrl: resolveMediaUrl(review.photoUrl) };
+}
+
 /** `GET /api/v1/products/{slug}/reviews` - público, sem autenticação. */
 export async function getProductReviews(slug: string): Promise<ProductReviewsPage> {
-  return apiFetch<ProductReviewsPage>(`/products/${encodeURIComponent(slug)}/reviews`);
+  const data = await apiFetch<ProductReviewsPage>(`/products/${encodeURIComponent(slug)}/reviews`);
+  return { ...data, items: data.items.map(normalizeReview) };
+}
+
+/**
+ * Avaliações reais em destaque (nota alta + com comentário de verdade) -
+ * alimenta `<TestimonialsCarousel/>` na home, no lugar dos depoimentos
+ * fabricados que viviam em `src/data/testimonials.ts` (apagado - pedido do
+ * Alfredo: "apagar os comentários que são fakes do site"). Público, sem
+ * autenticação - `GET /api/v1/reviews/featured`.
+ */
+export async function getFeaturedReviews(limit = 8): Promise<ProductReview[]> {
+  const data = await apiFetch<{ items: ProductReview[] }>(`/reviews/featured?limit=${limit}`);
+  return data.items.map(normalizeReview);
 }
 
 export interface OwnReview {
   productId: string;
   rating: number;
   comment: string | null;
+  photoUrl: string | null;
+  instagramHandle: string | null;
   createdAt: string;
 }
 
@@ -81,6 +122,76 @@ export async function submitReview(
     token,
     body: { rating, comment: comment.trim() || undefined },
   });
+}
+
+// ---------------------------------------------------------------------------
+// Convite de avaliação sem login - pedido do Alfredo, 2026-10-11: o admin
+// manda um link (gerado em `<AdminReviewsTab/>`, ver `@/lib/adminReviews`)
+// pro cliente simplesmente postar o comentário, sem precisar logar nem ter
+// o pedido verificado de novo (o admin já escolheu o pedido/produto na hora
+// de gerar o link - ver `app/models/review_invite.py` no backend). As duas
+// funções abaixo são o que a página pública `/avaliar/[token]` usa; nenhuma
+// das duas manda `token` de sessão pra `apiFetch` - o token do LINK (no
+// próprio caminho da URL) é a única autorização.
+// ---------------------------------------------------------------------------
+
+export interface ReviewInviteInfo {
+  orderId: string;
+  productTitle: string;
+  productSlug: string;
+  productImageUrl: string | null;
+  expiresAt: string;
+}
+
+/**
+ * `GET /api/v1/review-invites/{token}` - dados do produto/pedido pra
+ * pré-carregar a página antes do cliente preencher qualquer coisa. Lança
+ * `ApiError` com `code: "not_found"`/`"invite_used"`/`"invite_expired"` -
+ * `<ReviewInviteView/>` mostra uma mensagem diferente pra cada um (link
+ * errado vs. já usado vs. expirado), em vez de um "algo deu errado" genérico.
+ */
+export async function getReviewInvite(token: string): Promise<ReviewInviteInfo> {
+  const info = await apiFetch<ReviewInviteInfo>(`/review-invites/${encodeURIComponent(token)}`);
+  return { ...info, productImageUrl: resolveMediaUrl(info.productImageUrl) };
+}
+
+export interface SubmitReviewInviteInput {
+  rating: number;
+  /** Obrigatório aqui (diferente do formulário de dentro da conta) - pedido
+   * explícito do Alfredo: "pelo menos a nota e comentário é exigido para
+   * publicar". */
+  comment: string;
+  /** Sem o "@" ou com - o backend só guarda o que foi digitado, nunca
+   * valida contra o Instagram de verdade. */
+  instagramHandle?: string;
+  /** Arquivo original do `<input type="file">` - o backend processa/
+   * redimensiona do zero (ver `app/catalog/review_photos.py`), então não
+   * precisa de nenhum tratamento client-side antes de anexar aqui. */
+  photo?: File | null;
+}
+
+/**
+ * `POST /api/v1/review-invites/{token}` - sempre `multipart/form-data`
+ * (mesmo sem foto, pra ter um único contrato) - ver doc comment de
+ * `submit_review_invite` no backend. Um convite só aceita UM envio (ver
+ * `code: "invite_used"` acima) - `<ReviewInviteView/>` troca pra uma tela
+ * de "obrigado" depois desta chamada, nunca deixa reenviar.
+ */
+export async function submitReviewInvite(
+  token: string,
+  input: SubmitReviewInviteInput,
+): Promise<{ review: ProductReview }> {
+  const form = new FormData();
+  form.set("rating", String(input.rating));
+  form.set("comment", input.comment);
+  if (input.instagramHandle?.trim()) form.set("instagramHandle", input.instagramHandle.trim());
+  if (input.photo) form.set("photo", input.photo);
+
+  const data = await apiFetch<{ review: ProductReview }>(`/review-invites/${encodeURIComponent(token)}`, {
+    method: "POST",
+    body: form,
+  });
+  return { review: normalizeReview(data.review) };
 }
 
 export { ApiError };

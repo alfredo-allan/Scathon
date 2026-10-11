@@ -7,6 +7,7 @@ import { TestimonialsCarousel } from "@/components/home/TestimonialsCarousel";
 import { heroSlides } from "@/data/hero-slides";
 import { dividerSlides } from "@/data/dividers";
 import { getBestSellers, listProducts } from "@/lib/products";
+import { getFeaturedReviews } from "@/lib/reviews";
 
 // One product grid per catalog "slice", no more. With only a dozen
 // products, an earlier version of this page also showed a "Novidades" grid
@@ -39,9 +40,16 @@ import { getBestSellers, listProducts } from "@/lib/products";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [bestSellers, allProducts] = await Promise.all([
+  const [bestSellers, allProducts, featuredReviews] = await Promise.all([
     getBestSellers(60),
     listProducts({ revalidate: 60 }),
+    // Avaliações reais (nota alta + comentário) pro carrossel de
+    // depoimentos - pedido do Alfredo em 2026-10-11: "apagar os comentários
+    // que são fakes do site" (substitui `src/data/testimonials.ts`, apagado).
+    // Falha isolada (backend fora do ar, rede) não derruba a home inteira -
+    // cai pra lista vazia, e a seção some (ver abaixo) em vez de quebrar a
+    // página.
+    getFeaturedReviews().catch(() => []),
   ]);
 
   return (
@@ -63,8 +71,11 @@ export default async function Home() {
 
       <ProductGrid title="Todos os Produtos" products={allProducts} />
 
-      {/* Right above <Footer/>, which layout.tsx renders after {children}. */}
-      <TestimonialsCarousel />
+      {/* Right above <Footer/>, which layout.tsx renders after {children}.
+          Some inteira sem avaliação real suficiente ainda (nota alta +
+          comentário - ver `getFeaturedReviews`) em vez de mostrar um
+          carrossel vazio ou voltar a inventar depoimento. */}
+      {featuredReviews.length > 0 && <TestimonialsCarousel reviews={featuredReviews} />}
     </>
   );
 }

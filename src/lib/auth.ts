@@ -28,12 +28,31 @@ interface ApiUser {
 }
 
 interface AuthResponse {
+  /**
+   * O JWT de verdade - continua vindo no corpo só porque
+   * `POST /api/auth/login` do Next.js (`src/app/api/auth/login/route.ts`)
+   * precisa dele pra verificar servidor-a-servidor antes de abrir o cookie
+   * que libera `/admin` (ver doc comment de `app/auth/jwt_utils.py` no
+   * backend). Use-o SÓ pra isso, de forma transitória - NUNCA o guarde em
+   * `localStorage`/`<AuthContext/>` (é exatamente isso que a medida de
+   * segurança de 2026-10-11 tirou de lá: o JWT agora vive só num cookie
+   * httpOnly que o backend já gravou sozinho nesta mesma resposta). Quem
+   * `<AuthContext/>`'s `login()` deve guardar é `csrfToken` abaixo.
+   */
   token: string;
+  /**
+   * Valor de CSRF da sessão nova (ver doc comment de `@/lib/apiClient`) -
+   * não autentica nada sozinho, mas precisa ser mandado de volta no header
+   * `X-CSRF-Token` em toda chamada que muda dado.
+   */
+  csrfToken: string;
   user: ApiUser;
 }
 
 export interface AuthResult {
+  /** Ver doc comment de `AuthResponse.token` acima - uso transitório só. */
   token: string;
+  csrfToken: string;
   user: User;
 }
 
@@ -56,7 +75,7 @@ export async function loginRequest(email: string, password: string): Promise<Aut
     method: "POST",
     body: { email, password },
   });
-  return { token: data.token, user: mapUser(data.user) };
+  return { token: data.token, csrfToken: data.csrfToken, user: mapUser(data.user) };
 }
 
 export interface RegisterInput {
@@ -95,7 +114,7 @@ export async function registerRequest(input: RegisterInput): Promise<AuthResult>
   }
 
   const data = await apiFetch<AuthResponse>("/auth/register", { method: "POST", body });
-  return { token: data.token, user: mapUser(data.user) };
+  return { token: data.token, csrfToken: data.csrfToken, user: mapUser(data.user) };
 }
 
 export interface ProfileUpdateInput {
@@ -226,14 +245,21 @@ export async function confirmEmailChange(token: string, code: string): Promise<U
  * consegue entrar). Exige a senha atual (prova que é a própria pessoa no
  * teclado) + o código de `requestAccountVerificationCode` com `purpose:
  * "password_change"`.
+ *
+ * Trocar a senha invalida (`token_version`, ver `app/models/user.py` no
+ * backend) qualquer sessão emitida ANTES da troca - inclusive, tecnicamente,
+ * a que acabou de fazer esta própria chamada. Por isso o backend reemite a
+ * sessão atual na mesma resposta (cookie novo + `csrfToken` novo) - devolve
+ * esse `csrfToken` pra quem chamou atualizar `<AuthContext/>` (`login(novoCsrfToken,
+ * user)`) e continuar logado, em vez de ser derrubado pela própria troca.
  */
 export async function changePassword(
   token: string,
   currentPassword: string,
   newPassword: string,
   code: string,
-): Promise<void> {
-  await apiFetch<{ ok: boolean }>("/me/password", {
+): Promise<{ csrfToken: string }> {
+  return apiFetch<{ ok: boolean; csrfToken: string }>("/me/password", {
     method: "POST",
     token,
     body: { currentPassword, newPassword, code },

@@ -10,9 +10,16 @@ import {
 } from "react";
 import type { User } from "@/types";
 import { createPersistedStore } from "@/lib/createPersistedStore";
-import { SESSION_EXPIRED_EVENT } from "@/lib/apiClient";
+import { apiFetch, SESSION_EXPIRED_EVENT } from "@/lib/apiClient";
 
 interface AuthSession {
+  /**
+   * Apesar do nome (mantido assim em todo o app por compatibilidade - dezenas
+   * de funções em `@/lib/*` recebem isto como `token`), este valor NÃO é mais
+   * o JWT desde a medida de segurança de 2026-10-11 - é o `csrfToken` que
+   * `@/lib/auth` devolve no login/registro/troca de senha. Ver o doc comment
+   * logo abaixo pro porquê da mudança.
+   */
   token: string | null;
   user: User | null;
 }
@@ -22,6 +29,12 @@ interface AuthContextValue {
   token: string | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  /**
+   * `token` aqui é o `csrfToken` de `@/lib/auth` (ver `AuthSession` acima),
+   * NUNCA o JWT que essas mesmas respostas também devolvem - `<LoginView/>`
+   * usa o JWT de forma transitória (pra abrir o cookie de `/admin`) e passa
+   * só o `csrfToken` pra cá.
+   */
   login: (token: string, user: User) => void;
   logout: () => void;
   /**
@@ -35,10 +48,22 @@ interface AuthContextValue {
 const EMPTY_SESSION: AuthSession = { token: null, user: null };
 
 // Real session now (ver `@/lib/auth`'s `loginRequest`/`registerRequest`):
-// `token` é o JWT de verdade emitido por `POST /api/v1/auth/login` no
-// backend Flask (`scathon-api`), válido por 12h (mesma janela do cookie de
-// `/admin` - ver `JWT_TTL_HOURS` em `app/auth/jwt_utils.py`), e `user` vem
-// de `User.to_public_dict()` - nenhum dos dois é mais inventado aqui.
+// `user` vem de `User.to_public_dict()` - não é mais inventado aqui.
+//
+// MEDIDA DE SEGURANÇA (Alfredo, 2026-10-11): até aqui, `token` guardava o
+// JWT de verdade em `localStorage` (via `createPersistedStore` abaixo), lido
+// por `@/lib/apiClient` e mandado como `Authorization: Bearer` em toda
+// chamada. O problema não era a expiração (já existia - 12h, ver
+// `JWT_TTL_HOURS` em `app/auth/jwt_utils.py`), era ONDE o token ficava:
+// `localStorage` é legível por qualquer JavaScript da página, então uma
+// falha de XSS em QUALQUER lugar do site bastaria pra roubar a sessão de
+// qualquer cliente logado. Agora o JWT de verdade vive só num cookie
+// `httpOnly` que o backend grava sozinho (`Set-Cookie`) - nenhum JavaScript
+// consegue ler esse valor. `token`, aqui, virou só o valor de CSRF
+// (`csrfToken` de `@/lib/auth`) - inofensivo sozinho (não autentica nada,
+// só prova "esta chamada veio do nosso próprio frontend" - ver doc comment
+// de `@/lib/apiClient`), por isso pode continuar em `localStorage` sem
+// reabrir o mesmo risco.
 //
 // `EMPTY_SESSION` é o default de propósito: um visitante novo chega
 // DESLOGADO, como em qualquer app de verdade. Antes disso existir, essa
@@ -87,6 +112,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // - it still never grants anything beyond what a fresh login to the
         // same account would.
       });
+      // MEDIDA DE SEGURANÇA (2026-10-11): também limpa o cookie httpOnly
+      // `scathon_access_token` do backend Flask (`POST /api/v1/auth/logout`,
+      // ver `app/auth/jwt_utils.py`'s `clear_session_cookie`) - sem isso,
+      // limpar só o `localStorage` acima deixaria esse cookie vivo e
+      // autenticando normalmente até as 12h naturais, mesmo com a UI já
+      // mostrando "deslogado" (importante sobretudo em computador
+      // compartilhado). Também fire-and-forget, mesmo motivo acima.
+      apiFetch("/auth/logout", { method: "POST" }).catch(() => {});
     }
   }, []);
 

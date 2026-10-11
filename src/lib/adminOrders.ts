@@ -5,6 +5,13 @@ export type PaymentStatus = "approved" | "pending" | "refunded" | "rejected";
 export type OrderStatus = "processando" | "a caminho" | "entregue" | "cancelado";
 
 export interface AdminOrderItem {
+  /**
+   * `OrderItem.id` de verdade (2026-10-11, pedido do Alfredo: convite de
+   * avaliação sem login) - é exatamente o que `<AdminReviewsTab/>` manda em
+   * `createReviewInvite` (ver `@/lib/adminReviews`) pra identificar qual
+   * item do pedido vira o convite.
+   */
+  id: number;
   slug: string;
   title: string;
   imageUrl: string;
