@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 
 export interface ColorOption {
   name: string;
@@ -106,6 +106,22 @@ export function CategoryFilters({
 }: CategoryFiltersProps) {
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set(["preco", "cores"]));
 
+  // `<CategoryFilters/>` é montado DUAS VEZES ao mesmo tempo no DOM
+  // (sidebar desktop e drawer mobile - ver `<CategoryListing/>`), uma
+  // escondida via CSS enquanto a outra aparece, dependendo do viewport. Um
+  // `name="rating"` fixo faria os rádios das duas cópias competirem pelo
+  // MESMO grupo nativo do navegador (agrupamento por `name` é por
+  // documento, não por instância de componente) - o navegador força só um
+  // input daquele nome a ficar marcado de verdade, o que conflita com o
+  // `checked` que o React escreve em cada cópia e é exatamente o motivo do
+  // "preenchido ao selecionar" não se comportar direito (bug reportado
+  // pelo Alfredo em 2026-10-11). `useId()` dá um sufixo único por
+  // instância montada, então cada cópia tem seu próprio grupo nativo -
+  // dentro de uma mesma cópia, os rádios continuam se excluindo
+  // mutuamente normalmente (é só o conflito ENTRE as duas cópias que
+  // desaparece).
+  const ratingGroupName = useId();
+
   function toggleGroup(id: string) {
     setOpenGroups((current) => {
       const next = new Set(current);
@@ -195,7 +211,7 @@ export function CategoryFilters({
               <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
                 <input
                   type="radio"
-                  name="rating"
+                  name={ratingGroupName}
                   checked={minRating === option.min}
                   onChange={() => onSetMinRating(option.min)}
                   className="h-4 w-4 accent-neutral-900 dark:accent-neutral-100"
