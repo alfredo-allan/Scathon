@@ -12,4 +12,4 @@ export const FLOATING_NAV_SCROLL_THRESHOLD = 80;
  * `wa.me` chat. Placeholder - swap for the real Scathon storefront number
  * once one exists; every caller reads this one constant.
  */
-export const SELLER_WHATSAPP_NUMBER = "5511999999999";
+export const SELLER_WHATSAPP_NUMBER = "5511945579388";
