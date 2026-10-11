@@ -24,6 +24,7 @@ export function ReviewInviteView({ token }: { token: string }) {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState("");
+  const [name, setName] = useState("");
   const [instagramHandle, setInstagramHandle] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
@@ -62,9 +63,12 @@ export function ReviewInviteView({ token }: { token: string }) {
     setPhoto(event.target.files?.[0] ?? null);
   }
 
+  const requiresName = invite?.requiresName ?? false;
+  const canSubmit = rating > 0 && comment.trim().length > 0 && (!requiresName || name.trim().length > 0);
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (rating === 0 || !comment.trim()) return;
+    if (!canSubmit) return;
     setSubmitError(null);
     setIsSubmitting(true);
     try {
@@ -73,6 +77,7 @@ export function ReviewInviteView({ token }: { token: string }) {
         comment: comment.trim(),
         instagramHandle: instagramHandle.trim() || undefined,
         photo,
+        name: requiresName ? name.trim() : undefined,
       });
       setIsDone(true);
     } catch (err) {
@@ -133,9 +138,32 @@ export function ReviewInviteView({ token }: { token: string }) {
       <h1 className="mt-1 text-xl font-semibold tracking-tight text-neutral-950 dark:text-neutral-50">
         {invite.productTitle}
       </h1>
-      <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Pedido {invite.orderId}</p>
+      {invite.orderId && (
+        <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Pedido {invite.orderId}</p>
+      )}
 
       <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
+        {requiresName && (
+          <div>
+            <label
+              htmlFor="review-invite-name"
+              className="block text-[10px] font-semibold uppercase tracking-widest text-neutral-500 dark:text-neutral-400"
+            >
+              Seu nome
+            </label>
+            <input
+              id="review-invite-name"
+              type="text"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="Como quer ser identificado na avaliação"
+              required
+              maxLength={120}
+              className="mt-1 w-full rounded-app border border-neutral-300 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:focus:border-neutral-100"
+            />
+          </div>
+        )}
+
         <div>
           <label className="block text-[10px] font-semibold uppercase tracking-widest text-neutral-500 dark:text-neutral-400">
             Sua nota
@@ -222,7 +250,7 @@ export function ReviewInviteView({ token }: { token: string }) {
 
         <button
           type="submit"
-          disabled={rating === 0 || !comment.trim() || isSubmitting}
+          disabled={!canSubmit || isSubmitting}
           className="mt-2 rounded-app bg-neutral-950 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 disabled:opacity-40 dark:bg-neutral-100 dark:text-neutral-950"
         >
           {isSubmitting ? "Enviando…" : "Enviar avaliação"}

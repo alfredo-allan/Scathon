@@ -111,12 +111,29 @@ function TestimonialCard({ review, duplicate = false }: { review: ProductReview;
  * Alfredo em 2026-10-11: "apagar os comentários que são fakes do site").
  * Sem avaliação real suficiente ainda pra mostrar, a seção inteira some
  * (ver `<Home/>`) em vez de aparecer vazia ou com depoimento inventado.
+ *
+ * `MIN_REVIEWS_TO_LOOP` (2026-10-11, bug reportado pelo Alfredo via
+ * screenshot: a avaliação dele aparecia repetida duas vezes seguidas) - a
+ * duplicação da lista acima só faz sentido visual quando há avaliação de
+ * sobra pra preencher a largura da tela antes de repetir; com só 1 (ou
+ * poucas) avaliação(ões), as duas metades do track ficam lado a lado e
+ * PARECEM um bug de card duplicado, não um loop contínuo. Abaixo desse
+ * número, mostra uma fileira estática (sem duplicar, sem animar) - ainda
+ * perfeitamente navegável (scroll horizontal normal se não couber na
+ * tela), só sem o efeito de esteira. Loja com poucas avaliações ainda hoje
+ * (é exatamente o caso do Alfredo agora) vai crescer esse número com o
+ * tempo via convites - o valor de corte (4) é arbitrário, ajustável sem
+ * nenhuma outra mudança.
  */
+const MIN_REVIEWS_TO_LOOP = 4;
+
 export function TestimonialsCarousel({ reviews }: { reviews: ProductReview[] }) {
   const [isPaused, setIsPaused] = useState(false);
 
   const pause = () => setIsPaused(true);
   const resume = () => setIsPaused(false);
+
+  const shouldLoop = reviews.length >= MIN_REVIEWS_TO_LOOP;
 
   return (
     <section
@@ -128,24 +145,32 @@ export function TestimonialsCarousel({ reviews }: { reviews: ProductReview[] }) 
       </h2>
 
       <div className="overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)]">
-        <div
-          role="group"
-          aria-label="Carrossel de avaliações - toque ou clique para pausar"
-          className="flex w-max gap-4 animate-marquee"
-          style={{ animationPlayState: isPaused ? "paused" : "running" }}
-          onPointerEnter={pause}
-          onPointerLeave={resume}
-          onPointerDown={pause}
-          onPointerUp={resume}
-          onPointerCancel={resume}
-        >
-          {reviews.map((review) => (
-            <TestimonialCard key={`a-${review.id}`} review={review} />
-          ))}
-          {reviews.map((review) => (
-            <TestimonialCard key={`b-${review.id}`} review={review} duplicate />
-          ))}
-        </div>
+        {shouldLoop ? (
+          <div
+            role="group"
+            aria-label="Carrossel de avaliações - toque ou clique para pausar"
+            className="flex w-max gap-4 animate-marquee"
+            style={{ animationPlayState: isPaused ? "paused" : "running" }}
+            onPointerEnter={pause}
+            onPointerLeave={resume}
+            onPointerDown={pause}
+            onPointerUp={resume}
+            onPointerCancel={resume}
+          >
+            {reviews.map((review) => (
+              <TestimonialCard key={`a-${review.id}`} review={review} />
+            ))}
+            {reviews.map((review) => (
+              <TestimonialCard key={`b-${review.id}`} review={review} duplicate />
+            ))}
+          </div>
+        ) : (
+          <div role="group" aria-label="Avaliações de clientes" className="flex gap-4 px-4 md:px-8">
+            {reviews.map((review) => (
+              <TestimonialCard key={review.id} review={review} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

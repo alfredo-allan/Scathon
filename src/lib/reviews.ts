@@ -136,10 +136,18 @@ export async function submitReview(
 // ---------------------------------------------------------------------------
 
 export interface ReviewInviteInfo {
-  orderId: string;
+  /** `null` pra convite "por produto" (2026-10-11, pedido do Alfredo: "tem
+   * clientes que ainda não tem cadastro no site") - sem pedido nenhum por
+   * trás. `requiresName` abaixo é o que diferencia os dois modos pra
+   * `<ReviewInviteView/>` decidir se mostra o campo "Seu nome". */
+  orderId: string | null;
   productTitle: string;
   productSlug: string;
   productImageUrl: string | null;
+  /** `true` só no convite "por produto" - sem conta/pedido, não tem de
+   * onde tirar o nome automaticamente, então o formulário público PRECISA
+   * perguntar. */
+  requiresName: boolean;
   expiresAt: string;
 }
 
@@ -168,6 +176,11 @@ export interface SubmitReviewInviteInput {
    * redimensiona do zero (ver `app/catalog/review_photos.py`), então não
    * precisa de nenhum tratamento client-side antes de anexar aqui. */
   photo?: File | null;
+  /** Só pra convite "por produto" (`invite.requiresName === true`) - o
+   * nome que a própria pessoa digitou, já que não há conta pra tirar o
+   * nome de outro jeito. O backend rejeita com `code: "name_required"` se
+   * faltar num convite desse tipo (ver `submit_review_invite`). */
+  name?: string;
 }
 
 /**
@@ -186,6 +199,7 @@ export async function submitReviewInvite(
   form.set("comment", input.comment);
   if (input.instagramHandle?.trim()) form.set("instagramHandle", input.instagramHandle.trim());
   if (input.photo) form.set("photo", input.photo);
+  if (input.name?.trim()) form.set("name", input.name.trim());
 
   const data = await apiFetch<{ review: ProductReview }>(`/review-invites/${encodeURIComponent(token)}`, {
     method: "POST",

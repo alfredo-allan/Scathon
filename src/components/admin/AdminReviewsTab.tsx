@@ -9,11 +9,14 @@ import {
   deleteReview,
   getAdminReviews,
   getReviewInvites,
+  setReviewHidden,
   type AdminReview,
   type AdminReviewInvite,
   type ReviewInviteStatus,
 } from "@/lib/adminReviews";
 import { ApiError } from "@/lib/apiClient";
+import { listProducts } from "@/lib/products";
+import type { Product } from "@/types";
 import { ImageLightbox, normalizeSearchText } from "./adminShared";
 
 /**
@@ -51,18 +54,34 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
+type InviteMode = "order" | "product";
+
 /**
- * Seção "Gerar link de avaliação" - o admin busca o pedido (mesmo padrão de
- * busca por cliente/nº do pedido de `<AdminOrdersTab/>`), escolhe o item
- * exato dentro dele, e gera um link específico daquele pedido+produto (
- * decisão confirmada com o Alfredo: nunca um link genérico).
+ * Seção "Gerar link de avaliação" - dois modos (pedido do Alfredo,
+ * 2026-10-11, segunda rodada da mesma conversa: "tem clientes que ainda não
+ * tem cadastro no site"):
+ *
+ * - "Por pedido" (o original): o admin busca o pedido (mesmo padrão de
+ *   busca por cliente/nº do pedido de `<AdminOrdersTab/>`) e escolhe o item
+ *   exato dentro dele - link específico daquele pedido+produto.
+ * - "Por produto": pra cliente sem conta/pedido no site - o admin escolhe
+ *   só o produto (busca no catálogo inteiro, igual `<AdminProductsTab/>`);
+ *   quem recebe o link digita o próprio nome além de avaliar.
  */
 function GenerateInviteSection({ token }: { token: string }) {
+  const [mode, setMode] = useState<InviteMode>("order");
+
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [orderSearchQuery, setOrderSearchQuery] = useState("");
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [generatingItemId, setGeneratingItemId] = useState<number | null>(null);
+
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+  const [productSearchQuery, setProductSearchQuery] = useState("");
+  const [generatingProductId, setGeneratingProductId] = useState<string | null>(null);
+
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [lastGeneratedLink, setLastGeneratedLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -77,6 +96,13 @@ function GenerateInviteSection({ token }: { token: string }) {
       .finally(() => setIsLoadingOrders(false));
   }, [token]);
 
+  useEffect(() => {
+    listProducts({ perPage: 100 })
+      .then(setProducts)
+      .catch(() => {})
+      .finally(() => setIsLoadingProducts(false));
+  }, []);
+
   const loadInvites = useCallback(() => {
     setIsLoadingInvites(true);
     getReviewInvites(token)
@@ -90,24 +116,32 @@ function GenerateInviteSection({ token }: { token: string }) {
   }, [loadInvites]);
 
   const filteredOrders = useMemo(() => {
-    const query = normalizeSearchText(searchQuery.trim());
+    const query = normalizeSearchText(orderSearchQuery.trim());
     if (!query) return [];
     return orders
       .filter((order) =>
         [order.id, order.customerName, order.customerEmail].some((field) => normalizeSearchText(field).includes(query)),
       )
       .slice(0, 8);
-  }, [orders, searchQuery]);
+  }, [orders, orderSearchQuery]);
 
-  async function handleGenerate(order: AdminOrder, item: AdminOrderItem) {
+  const filteredProducts = useMemo(() => {
+    const query = normalizeSearchText(productSearchQuery.trim());
+    if (!query) return [];
+    return products.filter((product) => normalizeSearchText(product.title).includes(query)).slice(0, 8);
+  }, [products, productSearchQuery]);
+
+  function resolveLink(link: string | null, inviteToken: string): string {
+    return link ?? `${typeof window !== "undefined" ? window.location.origin : ""}/avaliar/${inviteToken}`;
+  }
+
+  async function handleGenerateByOrderItem(item: AdminOrderItem) {
     setGeneratingItemId(item.id);
     setGenerateError(null);
     setLastGeneratedLink(null);
     try {
-      const { link, token: inviteToken } = await createReviewInvite(token, item.id);
-      const resolvedLink =
-        link ?? `${typeof window !== "undefined" ? window.location.origin : ""}/avaliar/${inviteToken}`;
-      setLastGeneratedLink(resolvedLink);
+      const { link, token: inviteToken } = await createReviewInvite(token, { orderItemId: item.id });
+      setLastGeneratedLink(resolveLink(link, inviteToken));
       loadInvites();
     } catch (err) {
       setGenerateError(
@@ -115,6 +149,23 @@ function GenerateInviteSection({ token }: { token: string }) {
       );
     } finally {
       setGeneratingItemId(null);
+    }
+  }
+
+  async function handleGenerateByProduct(product: Product) {
+    setGeneratingProductId(product.id);
+    setGenerateError(null);
+    setLastGeneratedLink(null);
+    try {
+      const { link, token: inviteToken } = await createReviewInvite(token, { productId: product.id });
+      setLastGeneratedLink(resolveLink(link, inviteToken));
+      loadInvites();
+    } catch (err) {
+      setGenerateError(
+        err instanceof ApiError ? err.message : "Não foi possível gerar o link agora - tenta de novo em instantes.",
+      );
+    } finally {
+      setGeneratingProductId(null);
     }
   }
 
@@ -130,74 +181,153 @@ function GenerateInviteSection({ token }: { token: string }) {
     }
   }
 
+  function switchMode(next: InviteMode) {
+    setMode(next);
+    setGenerateError(null);
+    setLastGeneratedLink(null);
+  }
+
   return (
     <div className="flex flex-col gap-4 rounded-app border border-neutral-200 p-4 dark:border-neutral-800">
       <p className="text-xs font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">
         Gerar link de avaliação
       </p>
-      <p className="text-xs text-neutral-500 dark:text-neutral-400">
-        Busque o pedido do cliente, escolha o produto e gere um link - o cliente abre e posta a avaliação sem
-        precisar logar.
-      </p>
 
-      <div className="relative w-full sm:w-96">
-        <input
-          type="search"
-          value={searchQuery}
-          onChange={(event) => setSearchQuery(event.target.value)}
-          placeholder="Buscar por cliente ou nº do pedido"
-          disabled={isLoadingOrders}
-          className="w-full rounded-app border border-neutral-300 bg-transparent px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-900 disabled:opacity-50 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
-        />
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => switchMode("order")}
+          className={`rounded-app border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest ${
+            mode === "order"
+              ? "border-neutral-950 bg-neutral-950 text-neutral-50 dark:border-neutral-100 dark:bg-neutral-100 dark:text-neutral-950"
+              : "border-neutral-300 text-neutral-600 dark:border-neutral-700 dark:text-neutral-400"
+          }`}
+        >
+          Por pedido
+        </button>
+        <button
+          type="button"
+          onClick={() => switchMode("product")}
+          className={`rounded-app border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest ${
+            mode === "product"
+              ? "border-neutral-950 bg-neutral-950 text-neutral-50 dark:border-neutral-100 dark:bg-neutral-100 dark:text-neutral-950"
+              : "border-neutral-300 text-neutral-600 dark:border-neutral-700 dark:text-neutral-400"
+          }`}
+        >
+          Por produto
+        </button>
       </div>
 
-      {isLoadingOrders && <p className="text-xs text-neutral-500 dark:text-neutral-400">Carregando pedidos…</p>}
+      {mode === "order" ? (
+        <>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
+            Busque o pedido do cliente, escolha o produto e gere um link - o cliente abre e posta a avaliação sem
+            precisar logar.
+          </p>
 
-      {!isLoadingOrders && searchQuery.trim() && filteredOrders.length === 0 && (
-        <p className="text-xs text-neutral-500 dark:text-neutral-400">Nenhum pedido encontrado para essa busca.</p>
-      )}
-
-      <div className="flex flex-col gap-2">
-        {filteredOrders.map((order) => (
-          <div key={order.id} className="overflow-hidden rounded-app border border-neutral-200 dark:border-neutral-800">
-            <button
-              type="button"
-              onClick={() => setExpandedOrderId((current) => (current === order.id ? null : order.id))}
-              className="flex w-full flex-wrap items-center justify-between gap-2 px-3 py-2.5 text-left"
-            >
-              <span className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
-                Pedido {order.id} · {order.customerName}
-              </span>
-              <span className="text-[10px] uppercase tracking-widest text-neutral-500 dark:text-neutral-400">
-                {order.items.length} {order.items.length === 1 ? "item" : "itens"}
-              </span>
-            </button>
-
-            {expandedOrderId === order.id && (
-              <div className="flex flex-col gap-2 border-t border-neutral-200 p-3 dark:border-neutral-800">
-                {order.items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-app border border-neutral-100 px-3 py-2 dark:border-neutral-800"
-                  >
-                    <span className="text-xs text-neutral-700 dark:text-neutral-300">
-                      {item.title} · qtd {item.quantity}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleGenerate(order, item)}
-                      disabled={generatingItemId === item.id}
-                      className="rounded-app bg-neutral-950 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-neutral-50 disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-950"
-                    >
-                      {generatingItemId === item.id ? "Gerando…" : "Gerar link"}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+          <div className="relative w-full sm:w-96">
+            <input
+              type="search"
+              value={orderSearchQuery}
+              onChange={(event) => setOrderSearchQuery(event.target.value)}
+              placeholder="Buscar por cliente ou nº do pedido"
+              disabled={isLoadingOrders}
+              className="w-full rounded-app border border-neutral-300 bg-transparent px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-900 disabled:opacity-50 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
+            />
           </div>
-        ))}
-      </div>
+
+          {isLoadingOrders && <p className="text-xs text-neutral-500 dark:text-neutral-400">Carregando pedidos…</p>}
+
+          {!isLoadingOrders && orderSearchQuery.trim() && filteredOrders.length === 0 && (
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">Nenhum pedido encontrado para essa busca.</p>
+          )}
+
+          <div className="flex flex-col gap-2">
+            {filteredOrders.map((order) => (
+              <div key={order.id} className="overflow-hidden rounded-app border border-neutral-200 dark:border-neutral-800">
+                <button
+                  type="button"
+                  onClick={() => setExpandedOrderId((current) => (current === order.id ? null : order.id))}
+                  className="flex w-full flex-wrap items-center justify-between gap-2 px-3 py-2.5 text-left"
+                >
+                  <span className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
+                    Pedido {order.id} · {order.customerName}
+                  </span>
+                  <span className="text-[10px] uppercase tracking-widest text-neutral-500 dark:text-neutral-400">
+                    {order.items.length} {order.items.length === 1 ? "item" : "itens"}
+                  </span>
+                </button>
+
+                {expandedOrderId === order.id && (
+                  <div className="flex flex-col gap-2 border-t border-neutral-200 p-3 dark:border-neutral-800">
+                    {order.items.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex flex-wrap items-center justify-between gap-2 rounded-app border border-neutral-100 px-3 py-2 dark:border-neutral-800"
+                      >
+                        <span className="text-xs text-neutral-700 dark:text-neutral-300">
+                          {item.title} · qtd {item.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleGenerateByOrderItem(item)}
+                          disabled={generatingItemId === item.id}
+                          className="rounded-app bg-neutral-950 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-neutral-50 disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-950"
+                        >
+                          {generatingItemId === item.id ? "Gerando…" : "Gerar link"}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
+            Pra cliente que ainda não tem cadastro/pedido no site - escolha o produto, gere o link, e quem receber
+            avalia (nota, comentário, Instagram opcional) e digita o próprio nome.
+          </p>
+
+          <div className="relative w-full sm:w-96">
+            <input
+              type="search"
+              value={productSearchQuery}
+              onChange={(event) => setProductSearchQuery(event.target.value)}
+              placeholder="Buscar produto pelo nome"
+              disabled={isLoadingProducts}
+              className="w-full rounded-app border border-neutral-300 bg-transparent px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-900 disabled:opacity-50 dark:border-neutral-700 dark:text-neutral-100 dark:focus:border-neutral-100"
+            />
+          </div>
+
+          {isLoadingProducts && <p className="text-xs text-neutral-500 dark:text-neutral-400">Carregando produtos…</p>}
+
+          {!isLoadingProducts && productSearchQuery.trim() && filteredProducts.length === 0 && (
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">Nenhum produto encontrado para essa busca.</p>
+          )}
+
+          <div className="flex flex-col gap-2">
+            {filteredProducts.map((product) => (
+              <div
+                key={product.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-app border border-neutral-200 px-3 py-2.5 dark:border-neutral-800"
+              >
+                <span className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">{product.title}</span>
+                <button
+                  type="button"
+                  onClick={() => handleGenerateByProduct(product)}
+                  disabled={generatingProductId === product.id}
+                  className="rounded-app bg-neutral-950 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-neutral-50 disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-950"
+                >
+                  {generatingProductId === product.id ? "Gerando…" : "Gerar link"}
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       {generateError && <p className="text-xs text-red-600 dark:text-red-400">{generateError}</p>}
 
@@ -237,7 +367,11 @@ function GenerateInviteSection({ token }: { token: string }) {
                 className="flex flex-wrap items-center justify-between gap-2 rounded-app border border-neutral-100 px-3 py-2 text-xs dark:border-neutral-800"
               >
                 <span className="text-neutral-700 dark:text-neutral-300">
-                  Pedido {invite.orderId ?? "—"} · {invite.productTitle ?? "Produto removido"}
+                  {invite.kind === "order" ? (
+                    <>Pedido {invite.orderId ?? "—"} · {invite.productTitle ?? "Produto removido"}</>
+                  ) : (
+                    <>Convite por produto · {invite.productTitle ?? "Produto removido"}</>
+                  )}
                 </span>
                 <span
                   className={`rounded-app border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest ${INVITE_STATUS_STYLE[invite.status]}`}
@@ -253,13 +387,20 @@ function GenerateInviteSection({ token }: { token: string }) {
   );
 }
 
-/** Seção "Avaliações" - lista toda avaliação real da loja, com apagar (moderação). */
+/**
+ * Seção "Avaliações" - lista toda avaliação real da loja, com duas ações de
+ * moderação (pedido do Alfredo, 2026-10-11: "temos que ter no painel de
+ * admin o potencial de ocultar ou apagar um comentário"): "Ocultar"
+ * (reversível - some das listagens públicas, mas continua aqui) e "Apagar"
+ * (definitivo).
+ */
 function ReviewListSection({ token }: { token: string }) {
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [togglingHiddenId, setTogglingHiddenId] = useState<number | null>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -291,6 +432,20 @@ function ReviewListSection({ token }: { token: string }) {
     }
   }
 
+  async function handleToggleHidden(review: AdminReview) {
+    setTogglingHiddenId(review.id);
+    try {
+      const updated = await setReviewHidden(token, review.id, !review.isHidden);
+      setReviews((current) => current.map((item) => (item.id === review.id ? updated : item)));
+    } catch {
+      setErrorMessage(
+        review.isHidden ? "Não foi possível reexibir essa avaliação agora." : "Não foi possível ocultar essa avaliação agora.",
+      );
+    } finally {
+      setTogglingHiddenId(null);
+    }
+  }
+
   if (isLoading) {
     return <p className="text-sm text-neutral-500 dark:text-neutral-400">Carregando avaliações…</p>;
   }
@@ -309,7 +464,11 @@ function ReviewListSection({ token }: { token: string }) {
           {reviews.map((review) => (
             <div
               key={review.id}
-              className="flex flex-col gap-2 rounded-app border border-neutral-200 p-3 dark:border-neutral-800 sm:flex-row sm:items-start sm:justify-between"
+              className={`flex flex-col gap-2 rounded-app border p-3 dark:border-neutral-800 sm:flex-row sm:items-start sm:justify-between ${
+                review.isHidden
+                  ? "border-neutral-300 bg-neutral-50 opacity-70 dark:bg-neutral-900/40"
+                  : "border-neutral-200"
+              }`}
             >
               <div className="flex gap-3">
                 {review.photoUrl && (
@@ -328,8 +487,19 @@ function ReviewListSection({ token }: { token: string }) {
                   <div className="flex flex-wrap items-center gap-2">
                     <Stars rating={review.rating} />
                     <span className="text-xs font-medium text-neutral-900 dark:text-neutral-100">{review.author}</span>
-                    {review.authorEmail && (
-                      <span className="text-[11px] text-neutral-500 dark:text-neutral-400">{review.authorEmail}</span>
+                    {review.isGuest ? (
+                      <span className="rounded-app border border-neutral-300 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-widest text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">
+                        Convidado
+                      </span>
+                    ) : (
+                      review.authorEmail && (
+                        <span className="text-[11px] text-neutral-500 dark:text-neutral-400">{review.authorEmail}</span>
+                      )
+                    )}
+                    {review.isHidden && (
+                      <span className="rounded-app border border-amber-400 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-widest text-amber-600 dark:border-amber-500 dark:text-amber-400">
+                        Oculta
+                      </span>
                     )}
                   </div>
                   <p className="mt-0.5 text-[11px] text-neutral-500 dark:text-neutral-400">
@@ -342,7 +512,16 @@ function ReviewListSection({ token }: { token: string }) {
                 </div>
               </div>
 
-              <div className="shrink-0 self-start">
+              <div className="flex shrink-0 items-center gap-3 self-start">
+                <button
+                  type="button"
+                  onClick={() => handleToggleHidden(review)}
+                  disabled={togglingHiddenId === review.id}
+                  className="text-[10px] font-semibold uppercase tracking-widest text-neutral-600 underline underline-offset-4 disabled:opacity-50 dark:text-neutral-400"
+                >
+                  {togglingHiddenId === review.id ? "Aguarde…" : review.isHidden ? "Reexibir" : "Ocultar"}
+                </button>
+
                 {confirmingDeleteId === review.id ? (
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] text-neutral-600 dark:text-neutral-400">Apagar?</span>
