@@ -1,11 +1,11 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import { useState } from "react";
-import { config } from "@fortawesome/fontawesome-svg-core";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faInstagram, faTiktok, faPinterest } from "@fortawesome/free-brands-svg-icons";
-import { ContactModal } from "./ContactModal";
+import Link from 'next/link'
+import { useState } from 'react'
+import { config } from '@fortawesome/fontawesome-svg-core'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faInstagram, faTiktok, faPinterest } from '@fortawesome/free-brands-svg-icons'
+import { ContactModal } from './ContactModal'
 
 // Same reasoning as `<TestimonialsCarousel/>`: render icons sized purely by
 // our own Tailwind classes instead of FontAwesome auto-injecting its own
@@ -14,26 +14,26 @@ import { ContactModal } from "./ContactModal";
 // including ones that never mount <TestimonialsCarousel/> (e.g. /login),
 // so this can't rely on that other file's copy of the same line having
 // already run first.
-config.autoAddCss = false;
+config.autoAddCss = false
 
 interface FooterLink {
-  label: string;
+  label: string
   /** Omitido pra um link que não navega pra lugar nenhum - hoje só
    * "Contato" (`isContactTrigger` abaixo), que abre o `<ContactModal/>`. */
-  href?: string;
+  href?: string
   /** Abre numa aba nova via `<a target="_blank">` em vez de `<Link>` do
    * Next - pro "Rastrear Pedido" (Melhor Envio, um domínio de verdade fora
    * do site), onde faz sentido o visitante nunca sair da própria loja. */
-  external?: boolean;
+  external?: boolean
   /** "Contato" não é mais um link - abre o `<ContactModal/>` (pedido do
    * Alfredo em 2026-10-11, substituindo o antigo placeholder "/"). */
-  isContactTrigger?: boolean;
+  isContactTrigger?: boolean
 }
 
 interface FooterSection {
-  id: string;
-  title: string;
-  links: FooterLink[];
+  id: string
+  title: string
+  links: FooterLink[]
 }
 
 // Pedido do Alfredo em 2026-10-11: removida a coluna "Empresa" inteira
@@ -45,25 +45,25 @@ interface FooterSection {
 // já têm destino real agora (ver `FooterLink` acima).
 const sections: FooterSection[] = [
   {
-    id: "menu",
-    title: "Menu",
+    id: 'menu',
+    title: 'Menu',
     links: [
-      { label: "Todos os Produtos", href: "/" },
-      { label: "Novidades", href: "/" },
-      { label: "Mais Vendidos", href: "/" },
-      { label: "SS26", href: "/" },
-    ],
+      { label: 'Todos os Produtos', href: '/' },
+      { label: 'Novidades', href: '/' },
+      { label: 'Mais Vendidos', href: '/' },
+      { label: 'SS26', href: '/' }
+    ]
   },
   {
-    id: "support",
-    title: "Suporte",
+    id: 'support',
+    title: 'Suporte',
     links: [
-      { label: "Contato", isContactTrigger: true },
-      { label: "Trocas e Devoluções", href: "/politicas/trocas-e-devolucoes" },
-      { label: "Rastrear Pedido", href: "https://melhorenvio.com.br/rastreio", external: true },
-    ],
-  },
-];
+      { label: 'Contato', isContactTrigger: true },
+      { label: 'Trocas e Devoluções', href: '/politicas/trocas-e-devolucoes' },
+      { label: 'Rastrear Pedido', href: 'https://melhorrastreio.com.br/', external: true }
+    ]
+  }
+]
 
 // Real brand marks instead of text labels ("INSTAGRAM", "TIKTOK",
 // "YOUTUBE") - Alfredo wants icons that are actually representative of
@@ -73,10 +73,10 @@ const sections: FooterSection[] = [
 // in the footer and need no separate light/dark asset - "acompanhem o tema
 // do site" falls out of that for free.
 const socials = [
-  { label: "Instagram", href: "https://www.instagram.com/scathonbr/", icon: faInstagram },
-  { label: "TikTok", href: "https://www.tiktok.com/@scathonbr", icon: faTiktok },
-  { label: "Pinterest", href: "https://br.pinterest.com/scathon01/", icon: faPinterest },
-];
+  { label: 'Instagram', href: 'https://www.instagram.com/scathonbr/', icon: faInstagram },
+  { label: 'TikTok', href: 'https://www.tiktok.com/@scathonbr', icon: faTiktok },
+  { label: 'Pinterest', href: 'https://br.pinterest.com/scathon01/', icon: faPinterest }
+]
 
 /**
  * Site footer. Sections collapse into an accordion on mobile and expand
@@ -103,37 +103,30 @@ const socials = [
  * in the original 3-column design.
  */
 export function Footer() {
-  const [openSection, setOpenSection] = useState<string | null>(null);
-  const [isContactOpen, setIsContactOpen] = useState(false);
+  const [openSection, setOpenSection] = useState<string | null>(null)
+  const [isContactOpen, setIsContactOpen] = useState(false)
 
   return (
     <footer className="border-t border-neutral-200 dark:border-neutral-800 py-6 text-sm text-neutral-600 dark:text-neutral-400 px-4 md:px-8">
       <div className="mx-auto max-w-[1200px]">
         <div className="flex flex-col gap-0 sm:flex-row sm:gap-12 lg:gap-20">
           {sections.map((section) => {
-            const isOpen = openSection === section.id;
+            const isOpen = openSection === section.id
             return (
-              <div
-                key={section.id}
-                className="border-b border-neutral-200 dark:border-neutral-800 sm:border-none"
-              >
+              <div key={section.id} className="border-b border-neutral-200 dark:border-neutral-800 sm:border-none">
                 <button
                   type="button"
-                  onClick={() =>
-                    setOpenSection((current) => (current === section.id ? null : section.id))
-                  }
-                  className="flex w-full items-center justify-between py-4 text-left text-sm font-semibold uppercase tracking-widest sm:tracking-[0.15em] text-neutral-900 dark:text-neutral-100 sm:pointer-events-none sm:pb-0 sm:mb-4"
-                >
+                  onClick={() => setOpenSection((current) => (current === section.id ? null : section.id))}
+                  className="flex w-full items-center justify-between py-4 text-left text-sm font-semibold uppercase tracking-widest sm:tracking-[0.15em] text-neutral-900 dark:text-neutral-100 sm:pointer-events-none sm:pb-0 sm:mb-4">
                   {section.title}
                   <span className="sm:hidden" aria-hidden>
-                    {isOpen ? "−" : "+"}
+                    {isOpen ? '−' : '+'}
                   </span>
                 </button>
                 <ul
                   className={`flex flex-col gap-3 overflow-hidden transition-all sm:block sm:space-y-3 sm:max-h-none sm:pb-2 ${
-                    isOpen ? "max-h-96 pb-4" : "max-h-0 sm:overflow-visible"
-                  }`}
-                >
+                    isOpen ? 'max-h-96 pb-4' : 'max-h-0 sm:overflow-visible'
+                  }`}>
                   {section.links.map((link) => (
                     // Keyed by label - "Menu" ainda compartilha o
                     // placeholder href "/" entre seus itens (ver o doc
@@ -144,21 +137,15 @@ export function Footer() {
                         <button
                           type="button"
                           onClick={() => setIsContactOpen(true)}
-                          className="hover:text-neutral-900 dark:hover:text-neutral-100"
-                        >
+                          className="hover:text-neutral-900 dark:hover:text-neutral-100">
                           {link.label}
                         </button>
                       ) : link.external ? (
-                        <a
-                          href={link.href}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="hover:text-neutral-900 dark:hover:text-neutral-100"
-                        >
+                        <a href={link.href} target="_blank" rel="noreferrer" className="hover:text-neutral-900 dark:hover:text-neutral-100">
                           {link.label}
                         </a>
                       ) : (
-                        <Link href={link.href ?? "/"} className="hover:text-neutral-900 dark:hover:text-neutral-100">
+                        <Link href={link.href ?? '/'} className="hover:text-neutral-900 dark:hover:text-neutral-100">
                           {link.label}
                         </Link>
                       )}
@@ -166,7 +153,7 @@ export function Footer() {
                   ))}
                 </ul>
               </div>
-            );
+            )
           })}
         </div>
 
@@ -179,20 +166,16 @@ export function Footer() {
                 target="_blank"
                 rel="noreferrer"
                 aria-label={social.label}
-                className="text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
-              >
+                className="text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100">
                 <FontAwesomeIcon icon={social.icon} className="h-5 w-5" aria-hidden />
               </a>
             ))}
           </div>
-          <p>
-            &copy; {new Date().getFullYear()} Scathon. Todos os direitos
-            reservados.
-          </p>
+          <p>&copy; {new Date().getFullYear()} Scathon. Todos os direitos reservados.</p>
         </div>
       </div>
 
       <ContactModal open={isContactOpen} onClose={() => setIsContactOpen(false)} />
     </footer>
-  );
+  )
 }
