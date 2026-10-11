@@ -5,6 +5,7 @@ import { useState } from "react";
 import { config } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faInstagram, faTiktok, faPinterest } from "@fortawesome/free-brands-svg-icons";
+import { ContactModal } from "./ContactModal";
 
 // Same reasoning as `<TestimonialsCarousel/>`: render icons sized purely by
 // our own Tailwind classes instead of FontAwesome auto-injecting its own
@@ -15,20 +16,33 @@ import { faInstagram, faTiktok, faPinterest } from "@fortawesome/free-brands-svg
 // already run first.
 config.autoAddCss = false;
 
+interface FooterLink {
+  label: string;
+  /** Omitido pra um link que não navega pra lugar nenhum - hoje só
+   * "Contato" (`isContactTrigger` abaixo), que abre o `<ContactModal/>`. */
+  href?: string;
+  /** Abre numa aba nova via `<a target="_blank">` em vez de `<Link>` do
+   * Next - pro "Rastrear Pedido" (Melhor Envio, um domínio de verdade fora
+   * do site), onde faz sentido o visitante nunca sair da própria loja. */
+  external?: boolean;
+  /** "Contato" não é mais um link - abre o `<ContactModal/>` (pedido do
+   * Alfredo em 2026-10-11, substituindo o antigo placeholder "/"). */
+  isContactTrigger?: boolean;
+}
+
 interface FooterSection {
   id: string;
   title: string;
-  links: { label: string; href: string }[];
+  links: FooterLink[];
 }
 
-// Every internal href in this file is "/" on purpose - none of these
-// pages exist yet (no all-products listing, no SS26 collection page, no
-// support/about/wholesale/careers/press pages), and they used to 404 from
-// the footer. No resources yet to build all of that out, so every one of
-// these sends the visitor home instead of into a dead end - same fix
-// applied to the header's CategoryBar (`@/data/categories`) and to
-// `<ProductDetail/>`'s "Relatar problema" link. Point each one at its real
-// destination once that page exists; only the hrefs need to change.
+// Pedido do Alfredo em 2026-10-11: removida a coluna "Empresa" inteira
+// (Sobre Nós/Atacado/Trabalhe Conosco/Imprensa não existem ainda e não há
+// previsão de página própria pra nenhuma) e "Guia de Medidas" (sem conteúdo
+// pronto). "Menu" continua apontando pra "/" - mesmo motivo de antes (essas
+// páginas - todos os produtos, novidades, mais vendidos, SS26 - ainda não
+// existem como rotas próprias). "Trocas e Devoluções" e "Rastrear Pedido"
+// já têm destino real agora (ver `FooterLink` acima).
 const sections: FooterSection[] = [
   {
     id: "menu",
@@ -44,20 +58,9 @@ const sections: FooterSection[] = [
     id: "support",
     title: "Suporte",
     links: [
-      { label: "Contato", href: "/" },
-      { label: "Trocas e Devoluções", href: "/" },
-      { label: "Guia de Medidas", href: "/" },
-      { label: "Rastrear Pedido", href: "/" },
-    ],
-  },
-  {
-    id: "business",
-    title: "Empresa",
-    links: [
-      { label: "Sobre Nós", href: "/" },
-      { label: "Atacado", href: "/" },
-      { label: "Trabalhe Conosco", href: "/" },
-      { label: "Imprensa", href: "/" },
+      { label: "Contato", isContactTrigger: true },
+      { label: "Trocas e Devoluções", href: "/politicas/trocas-e-devolucoes" },
+      { label: "Rastrear Pedido", href: "https://melhorenvio.com.br/rastreio", external: true },
     ],
   },
 ];
@@ -87,19 +90,26 @@ const socials = [
  * its own group at a glance instead of a wall of small text.
  *
  * The whole content block is also capped at `max-w-[1200px] mx-auto` - the
- * same cap already used on `<FloatingDock/>` - so the three columns don't
- * stretch edge-to-edge into huge, unevenly-spaced gaps on very wide desktop
+ * same cap already used on `<FloatingDock/>` - so the columns don't stretch
+ * edge-to-edge into huge, unevenly-spaced gaps on very wide desktop
  * monitors (exactly what made the columns feel scattered rather than
  * grouped in the screenshot Alfredo sent). Like the dock, this is a no-op
- * below 1200px - phones and most laptops are unaffected.
+ * below 1200px - phones and most laptops are unaffected. Switched from a
+ * 3-column `grid` to a `flex` row (`sm:flex-row`) since the "Empresa"
+ * section was removed (pedido do Alfredo em 2026-10-11) - a 2-column grid
+ * would've stretched "Menu"/"Suporte" to split the full 1200px width in
+ * half, leaving a huge, unbalanced gap between them; `flex` sizes each
+ * column to its own content instead, so the two stay close together like
+ * in the original 3-column design.
  */
 export function Footer() {
   const [openSection, setOpenSection] = useState<string | null>(null);
+  const [isContactOpen, setIsContactOpen] = useState(false);
 
   return (
     <footer className="border-t border-neutral-200 dark:border-neutral-800 py-6 text-sm text-neutral-600 dark:text-neutral-400 px-4 md:px-8">
       <div className="mx-auto max-w-[1200px]">
-        <div className="grid gap-0 sm:grid-cols-3 sm:gap-12 lg:gap-20">
+        <div className="flex flex-col gap-0 sm:flex-row sm:gap-12 lg:gap-20">
           {sections.map((section) => {
             const isOpen = openSection === section.id;
             return (
@@ -125,14 +135,33 @@ export function Footer() {
                   }`}
                 >
                   {section.links.map((link) => (
-                    // Keyed by label, not href - several links in the same
-                    // section now share the placeholder href "/" (see the
-                    // doc comment on `sections` above), so href alone is no
-                    // longer unique. Labels are unique within a section.
+                    // Keyed by label - "Menu" ainda compartilha o
+                    // placeholder href "/" entre seus itens (ver o doc
+                    // comment de `sections` acima), então href sozinho não
+                    // é único; labels são únicas dentro de cada seção.
                     <li key={link.label}>
-                      <Link href={link.href} className="hover:text-neutral-900 dark:hover:text-neutral-100">
-                        {link.label}
-                      </Link>
+                      {link.isContactTrigger ? (
+                        <button
+                          type="button"
+                          onClick={() => setIsContactOpen(true)}
+                          className="hover:text-neutral-900 dark:hover:text-neutral-100"
+                        >
+                          {link.label}
+                        </button>
+                      ) : link.external ? (
+                        <a
+                          href={link.href}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="hover:text-neutral-900 dark:hover:text-neutral-100"
+                        >
+                          {link.label}
+                        </a>
+                      ) : (
+                        <Link href={link.href ?? "/"} className="hover:text-neutral-900 dark:hover:text-neutral-100">
+                          {link.label}
+                        </Link>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -162,6 +191,8 @@ export function Footer() {
           </p>
         </div>
       </div>
+
+      <ContactModal open={isContactOpen} onClose={() => setIsContactOpen(false)} />
     </footer>
   );
 }
