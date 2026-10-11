@@ -4,6 +4,11 @@ import { createPersistedStore } from "./createPersistedStore";
 export interface WaitlistEntry {
   productId: string;
   email: string;
+  /** The visitor's name, if they typed one in - optional for a guest (see
+   * `notifyInterest`'s doc comment); always set for a signed-in visitor,
+   * taken from the account, never typed again. Pedido do Alfredo em
+   * 2026-10-11: ele quer saber QUEM manifestou interesse, não só o e-mail. */
+  name?: string;
   /** The apparel size the visitor had selected, if any, when they signed up. */
   size?: string;
   createdAt: string;
@@ -28,7 +33,13 @@ export interface WaitlistEntry {
 export const waitlistStore = createPersistedStore<WaitlistEntry[]>("scathon:waitlist", []);
 
 interface JoinWaitlistResponse {
-  entry: { productId: string; email: string; size: string | null; createdAt: string };
+  entry: {
+    productId: string;
+    email: string;
+    name: string | null;
+    size: string | null;
+    createdAt: string;
+  };
   alreadyRegistered: boolean;
 }
 
@@ -48,12 +59,18 @@ interface JoinWaitlistResponse {
  * Errors (invalid e-mail, rate-limited, product no longer `coming_soon`,
  * etc.) are re-thrown as `ApiError` for the caller to show a real message
  * instead of silently pretending it worked.
+ *
+ * `name` é opcional (pedido do Alfredo em 2026-10-11 - ver o doc comment de
+ * `WaitlistEntry.name` acima): pra quem está logado o backend IGNORA esse
+ * valor e usa sempre o nome da conta, mesmo critério já usado pro e-mail -
+ * `name` aqui só importa pra visitante sem conta.
  */
 export async function notifyInterest(
   productId: string,
   email: string,
   size?: string,
   token?: string | null,
+  name?: string,
 ): Promise<void> {
   const current = waitlistStore.getSnapshot();
   if (current.some((entry) => entry.productId === productId && entry.email === email)) return;
@@ -61,13 +78,16 @@ export async function notifyInterest(
   await apiFetch<JoinWaitlistResponse>("/waitlist", {
     method: "POST",
     token,
-    body: { productId, email, size },
+    body: { productId, email, size, name },
   });
 
   // Só chega aqui se o backend confirmou (`apiFetch` lança `ApiError` em
   // qualquer resposta que não seja 2xx) - o cache local só espelha um
   // sucesso real, nunca "torce" pra dar certo.
-  waitlistStore.setValue([...current, { productId, email, size, createdAt: new Date().toISOString() }]);
+  waitlistStore.setValue([
+    ...current,
+    { productId, email, name, size, createdAt: new Date().toISOString() },
+  ]);
 }
 
 export { ApiError };

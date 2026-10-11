@@ -72,6 +72,12 @@ export function NotifyMeButton({
 
   const [isOpen, setIsOpen] = useState(size === "lg" && defaultOpen);
   const [email, setEmail] = useState("");
+  // Opcional - pedido do Alfredo em 2026-10-11: ele quer saber QUEM
+  // manifestou interesse, não só o e-mail. Fica de fora do formulário
+  // compacto ("sm", usado no card do grid) pra não disputar espaço com o
+  // próprio e-mail ali - só aparece na variante "lg" (PDP), que já tem
+  // espaço de sobra.
+  const [name, setName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -82,13 +88,19 @@ export function NotifyMeButton({
       : "idle";
   const confirmedEmail = existingEntry?.email ?? (isAuthenticated ? user?.email : email);
 
-  async function submit(emailToUse: string) {
+  async function submit(emailToUse: string, nameToUse?: string) {
     const trimmed = emailToUse.trim();
     if (!trimmed) return;
     setErrorMessage(null);
     setIsSubmitting(true);
     try {
-      await notifyInterest(productId, trimmed, selectedSize ?? undefined, token);
+      await notifyInterest(
+        productId,
+        trimmed,
+        selectedSize ?? undefined,
+        token,
+        nameToUse?.trim() || undefined,
+      );
     } catch (error) {
       // `ApiError.message` já vem em português, pronta pra mostrar (ver
       // `app/catalog/__init__.py` no scathon-api - "produto não está mais
@@ -107,7 +119,7 @@ export function NotifyMeButton({
 
   async function handleGuestSubmit(event: FormEvent) {
     event.preventDefault();
-    await submit(email);
+    await submit(email, isCompact ? undefined : name);
   }
 
   async function handleAuthenticatedClick() {
@@ -204,33 +216,46 @@ export function NotifyMeButton({
     <div className={isCompact ? "mt-2" : undefined}>
       <form
         onSubmit={handleGuestSubmit}
-        className={isCompact ? "flex gap-1.5" : "flex flex-col gap-2 sm:flex-row"}
+        className={isCompact ? "flex gap-1.5" : "flex flex-col gap-2"}
       >
-        <input
-          type="email"
-          required
-          autoFocus
-          maxLength={254}
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          placeholder="seu@email.com"
-          className={
-            isCompact
-              ? "min-w-0 flex-1 rounded-app border border-neutral-300 bg-transparent px-2 py-2 text-xs outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:focus:border-neutral-100"
-              : "w-full flex-1 rounded-app border border-neutral-300 bg-transparent px-3 py-3.5 text-sm outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:focus:border-neutral-100"
-          }
-        />
-        <button
-          type="submit"
-          disabled={status === "submitting"}
-          className={
-            isCompact
-              ? "shrink-0 rounded-app bg-neutral-950 px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-950"
-              : "shrink-0 rounded-app bg-neutral-950 px-6 py-3.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-950"
-          }
-        >
-          {status === "submitting" ? (isCompact ? "..." : "Enviando…") : isCompact ? "OK" : "Avise-me"}
-        </button>
+        {/* Opcional, só na variante "lg" (PDP) - ver o state `name` acima. */}
+        {!isCompact && (
+          <input
+            type="text"
+            maxLength={120}
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Seu nome (opcional)"
+            className="w-full rounded-app border border-neutral-300 bg-transparent px-3 py-3.5 text-sm outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:focus:border-neutral-100"
+          />
+        )}
+        <div className={isCompact ? "flex flex-1 gap-1.5" : "flex flex-col gap-2 sm:flex-row"}>
+          <input
+            type="email"
+            required
+            autoFocus
+            maxLength={254}
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="seu@email.com"
+            className={
+              isCompact
+                ? "min-w-0 flex-1 rounded-app border border-neutral-300 bg-transparent px-2 py-2 text-xs outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:focus:border-neutral-100"
+                : "w-full flex-1 rounded-app border border-neutral-300 bg-transparent px-3 py-3.5 text-sm outline-none placeholder:text-neutral-400 focus:border-neutral-900 dark:border-neutral-700 dark:focus:border-neutral-100"
+            }
+          />
+          <button
+            type="submit"
+            disabled={status === "submitting"}
+            className={
+              isCompact
+                ? "shrink-0 rounded-app bg-neutral-950 px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-950"
+                : "shrink-0 rounded-app bg-neutral-950 px-6 py-3.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-950"
+            }
+          >
+            {status === "submitting" ? (isCompact ? "..." : "Enviando…") : isCompact ? "OK" : "Avise-me"}
+          </button>
+        </div>
       </form>
       {errorMessage && (
         <p className={isCompact ? "mt-1 text-[10px] text-red-600 dark:text-red-400" : "mt-2 text-xs text-red-600 dark:text-red-400"}>
