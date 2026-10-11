@@ -41,7 +41,7 @@ export const categories: Category[] = [
 export const popularCategories: Category[] = [
   { id: "moletons", label: "Moletons", href: "/shop/moletons" },
   { id: "camisetas", label: "Camisetas", href: "/shop/camisetas" },
-  { id: "casacos", label: "Casacos", href: "/shop/casacos" },
+  // { id: "casacos", label: "Casacos", href: "/shop/casacos" },
   { id: "calcas", label: "Calças", href: "/shop/calcas" },
   // { id: "acessorios", label: "Acessórios", href: "/shop/acessorios" },
 ];
