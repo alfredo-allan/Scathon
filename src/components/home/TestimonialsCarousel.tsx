@@ -124,6 +124,19 @@ function TestimonialCard({ review, duplicate = false }: { review: ProductReview;
  * (é exatamente o caso do Alfredo agora) vai crescer esse número com o
  * tempo via convites - o valor de corte (4) é arbitrário, ajustável sem
  * nenhuma outra mudança.
+ *
+ * A fileira estática ficava com `overflow-hidden` herdado do wrapper (que
+ * só existe pra esconder a metade duplicada da esteira e aplicar o
+ * degradê nas bordas) - sem rolagem nenhuma, os cards que não cabem na
+ * tela ficavam cortados e inacessíveis em vez de roláveis (bug reportado
+ * pelo Alfredo em 2026-10-14: sumia a rolagem no mobile com poucas
+ * avaliações, mas "passava despercebido" no desktop porque lá os poucos
+ * cards normalmente já cabem inteiros na tela). Agora o wrapper só usa
+ * `overflow-hidden` + a máscara quando está de fato em modo esteira
+ * (`shouldLoop`); fora disso vira `overflow-x-auto no-scrollbar` (mesmo
+ * padrão de rolagem horizontal já usado em CategoryBar), que permite
+ * arrastar/rolar em qualquer tela onde os cards não couberem - no
+ * desktop, onde já cabem, não aparece barra nem muda nada visualmente.
  */
 const MIN_REVIEWS_TO_LOOP = 4;
 
@@ -144,7 +157,13 @@ export function TestimonialsCarousel({ reviews }: { reviews: ProductReview[] }) 
         O que dizem nossos clientes
       </h2>
 
-      <div className="overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)]">
+      <div
+        className={
+          shouldLoop
+            ? "overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)]"
+            : "overflow-x-auto no-scrollbar"
+        }
+      >
         {shouldLoop ? (
           <div
             role="group"
