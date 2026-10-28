@@ -5,9 +5,12 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
+  useState,
   useSyncExternalStore,
   type ReactNode,
 } from "react";
+import { useRouter } from "next/navigation";
 import type { User } from "@/types";
 import { createPersistedStore } from "@/lib/createPersistedStore";
 import { apiFetch, SESSION_EXPIRED_EVENT } from "@/lib/apiClient";
@@ -81,6 +84,11 @@ export const AuthContext = createContext<AuthContextValue | undefined>(
 );
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
+  const [sessionExpiredNotice, setSessionExpiredNotice] = useState(false);
+  const sessionExpiredNoticeRef = useRef(false);
+  const redirectTimerRef = useRef<number | null>(null);
+
   const session = useSyncExternalStore(
     authStore.subscribe,
     authStore.getSnapshot,
@@ -132,12 +140,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // `useSavedAddresses`/`useInventory`). Limpar a sessão aqui, central,
   // garante que o app inteiro reage do mesmo jeito (volta a mostrar "entrar")
   // não importa qual tela foi a primeira a bater no 401.
+  const goToLogin = useCallback(() => {
+    if (redirectTimerRef.current !== null) {
+      window.clearTimeout(redirectTimerRef.current);
+      redirectTimerRef.current = null;
+    }
+    sessionExpiredNoticeRef.current = false;
+    setSessionExpiredNotice(false);
+    router.replace("/login");
+  }, [router]);
+
   useEffect(() => {
     function handleSessionExpired() {
-      authStore.setValue(EMPTY_SESSION);
+      if (sessionExpiredNoticeRef.current) return;
+      sessionExpiredNoticeRef.current = true;
+      // Reuse the normal logout path so both the client session and the
+      // httpOnly backend cookie are cleared. The request is best-effort and
+      // must not delay the local cleanup or the redirect.
+      logout();
+      setSessionExpiredNotice(true);
+      redirectTimerRef.current = window.setTimeout(goToLogin, 2200);
     }
+
     window.addEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
     return () => window.removeEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
+  }, [goToLogin, logout]);
+
+  useEffect(() => () => {
+    if (redirectTimerRef.current !== null) window.clearTimeout(redirectTimerRef.current);
   }, []);
 
   const value = useMemo<AuthContextValue>(
@@ -153,5 +183,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [session, login, logout, updateUser],
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <>
+      <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+      {sessionExpiredNotice && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/55 px-4 backdrop-blur-sm"
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="session-expired-title"
+          aria-describedby="session-expired-description"
+        >
+          <div className="w-full max-w-md rounded-app border border-neutral-200 bg-white p-6 shadow-2xl dark:border-neutral-700 dark:bg-neutral-950">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500 dark:text-neutral-400">
+              Segurança da conta
+            </p>
+            <h2 id="session-expired-title" className="mt-2 text-xl font-semibold text-neutral-950 dark:text-white">
+              Sua sessão expirou
+            </h2>
+            <p id="session-expired-description" className="mt-3 text-sm leading-6 text-neutral-600 dark:text-neutral-300">
+              Por segurança, sua sessão foi encerrada. Você será redirecionado para entrar novamente.
+            </p>
+            <button
+              type="button"
+              onClick={goToLogin}
+              className="mt-6 w-full rounded-app bg-neutral-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2 dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-200"
+            >
+              Ir para o login
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }
+
