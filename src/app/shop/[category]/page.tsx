@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCategoryBySlug } from "@/data/categories";
-import { getProductsByCategory } from "@/lib/products";
+import { listProducts } from "@/lib/products";
 import { CategoryListing } from "@/components/category/CategoryListing";
 
 interface CategoryPageParams {
@@ -44,7 +44,7 @@ export default async function CategoryPage({
     notFound();
   }
 
-  const products = await getProductsByCategory(category.id, 60);
+  const products = await listProducts({ category: category.id, includeStock: true, revalidate: 60 });
 
   return <CategoryListing category={category} products={products} />;
 }

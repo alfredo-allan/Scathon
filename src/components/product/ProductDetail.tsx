@@ -388,7 +388,6 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
             {isUnavailable ? (
               <NotifyMeButton
                 productId={product.id}
-                productTitle={product.title}
                 size="lg"
                 selectedSize={activeSize}
                 defaultOpen

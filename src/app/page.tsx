@@ -6,7 +6,7 @@ import { ProductGrid } from "@/components/home/ProductGrid";
 import { TestimonialsCarousel } from "@/components/home/TestimonialsCarousel";
 import { heroSlides } from "@/data/hero-slides";
 import { dividerSlides } from "@/data/dividers";
-import { getBestSellers, listProducts } from "@/lib/products";
+import { listProducts } from "@/lib/products";
 import { getFeaturedReviews } from "@/lib/reviews";
 
 // One product grid per catalog "slice", no more. With only a dozen
@@ -41,8 +41,8 @@ export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const [bestSellers, allProducts, featuredReviews] = await Promise.all([
-    getBestSellers(60),
-    listProducts({ revalidate: 60 }),
+    listProducts({ isBestSeller: true, includeStock: true, revalidate: 60 }),
+    listProducts({ includeStock: true, revalidate: 60 }),
     // Avaliações reais (nota alta + comentário) pro carrossel de
     // depoimentos - pedido do Alfredo em 2026-10-11: "apagar os comentários
     // que são fakes do site" (substitui `src/data/testimonials.ts`, apagado).

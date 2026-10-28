@@ -170,7 +170,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
         <div className="mt-auto">
           {isUnavailable ? (
-            <NotifyMeButton productId={product.id} productTitle={product.title} size="sm" />
+            <NotifyMeButton productId={product.id} size="sm" />
           ) : (
             <>
               <ColorSwatches
