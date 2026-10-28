@@ -1,5 +1,8 @@
 import { apiFetch, resolveMediaUrl } from "./apiClient";
 
+/** Product-facing low-stock cutoff, shared with the admin inventory views. */
+export const LOW_STOCK_THRESHOLD = 5;
+
 export interface InventoryItem {
   productId: string;
   slug: string;

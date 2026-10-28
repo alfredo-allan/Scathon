@@ -101,6 +101,8 @@ export interface Product {
    * existing product keeps working unchanged.
    */
   availability?: "in_stock" | "coming_soon";
+  /** Current catalog stock, when supplied by the backend. */
+  stock?: number;
   /**
    * Marks a product for the home page's "Mais Vendidos" curated rail (see
    * `getBestSellers()`); when at least one product sets this, that rail

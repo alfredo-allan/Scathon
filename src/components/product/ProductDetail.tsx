@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { Flame } from "lucide-react";
 import type { Category, Product } from "@/types";
 import { useCart } from "@/hooks/useCart";
 import { useWishlist } from "@/hooks/useWishlist";
@@ -10,6 +11,7 @@ import { getProductReviews, type ProductReviewsPage } from "@/lib/reviews";
 import { ProductGallery } from "./ProductGallery";
 import { ShippingEstimator } from "./ShippingEstimator";
 import { NotifyMeButton } from "./NotifyMeButton";
+import { LOW_STOCK_THRESHOLD } from "@/lib/inventory";
 
 interface ProductDetailProps {
   product: Product;
@@ -47,9 +49,9 @@ const LETTER_SIZE_CHART: Record<string, { chest: string; length: string }> = {
  * tracking-widest labels, no rounded pills or brand green) - and trimmed to
  * mechanics this store actually has. Two things from the reference were
  * deliberately left out rather than faked: the "baixe o app" promo banner
- * (Scathon doesn't have an app) and per-size stock (`sizes` just lists what
- * exists, nothing is shown as sold out, since there's no inventory count to
- * back that up).
+ * (Scathon doesn't have an app). Inventory is product-level today, so sizes
+ * still describe the available variants without pretending to have per-size
+ * balances.
  */
 export function ProductDetail({ product, category, relatedProducts }: ProductDetailProps) {
   const { addItem } = useCart();
@@ -175,6 +177,10 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
 
   const saved = isSaved(product.id);
   const isComingSoon = product.availability === "coming_soon";
+  const isOutOfStock = product.stock === 0;
+  const isUnavailable = isComingSoon || isOutOfStock;
+  const isLowStock =
+    product.stock !== undefined && product.stock > 0 && product.stock <= LOW_STOCK_THRESHOLD;
 
   return (
     <div className="px-4 md:px-8 py-6">
@@ -216,9 +222,9 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
             {product.title}
           </h1>
 
-          {isComingSoon ? (
+          {isUnavailable ? (
             <span className="mt-1.5 inline-block rounded-app border border-neutral-300 px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-neutral-600 dark:border-neutral-700 dark:text-neutral-400">
-              Em breve
+              {isOutOfStock ? "Indisponível" : "Em breve"}
             </span>
           ) : (
             <button
@@ -256,6 +262,12 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
           <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
             ou 10x de {currencyFormatter.format(installmentValue)} sem juros
           </p>
+          {isLowStock && (
+            <p className="mt-3 inline-flex items-center gap-1.5 rounded-app border border-amber-300 bg-amber-50/70 px-2 py-1 text-xs font-medium text-amber-700 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-400">
+              <Flame className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} aria-hidden />
+              Últimas unidades
+            </p>
+          )}
 
           {hasSizes && (
             <div className="mt-6 lg:mt-3">
@@ -373,7 +385,7 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
           )}
 
           <div className="mt-6 flex flex-col gap-3 lg:mt-3 lg:gap-2">
-            {isComingSoon ? (
+            {isUnavailable ? (
               <NotifyMeButton
                 productId={product.id}
                 productTitle={product.title}
@@ -443,7 +455,7 @@ export function ProductDetail({ product, category, relatedProducts }: ProductDet
             </button>
           </div>
 
-          {!isComingSoon && <ShippingEstimator />}
+          {!isUnavailable && <ShippingEstimator />}
 
           <div className="border-t border-neutral-200 dark:border-neutral-800 py-6 lg:py-3">
             <h2 className="text-sm font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">

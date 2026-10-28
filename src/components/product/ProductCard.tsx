@@ -3,11 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { Flame } from "lucide-react";
 import type { Product } from "@/types";
 import { useWishlist } from "@/hooks/useWishlist";
 import { ColorSwatches } from "./ColorSwatches";
 import { StarRating } from "./StarRating";
 import { NotifyMeButton } from "./NotifyMeButton";
+import { LOW_STOCK_THRESHOLD } from "@/lib/inventory";
 
 interface ProductCardProps {
   product: Product;
@@ -53,6 +55,10 @@ export function ProductCard({ product }: ProductCardProps) {
   const showSwap = isHovered && !hasManualColorSelection && Boolean(product.hoverImageUrl);
   const productHref = `/shop/${product.category}/${product.slug}`;
   const isComingSoon = product.availability === "coming_soon";
+  const isOutOfStock = product.stock === 0;
+  const isUnavailable = isComingSoon || isOutOfStock;
+  const isLowStock =
+    product.stock !== undefined && product.stock > 0 && product.stock <= LOW_STOCK_THRESHOLD;
   const isLiked = isSaved(product.id);
 
   return (
@@ -72,9 +78,9 @@ export function ProductCard({ product }: ProductCardProps) {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {isComingSoon ? (
+        {isUnavailable ? (
           <span className="absolute left-2 top-2 z-10 rounded-app border border-neutral-900 bg-white/90 px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-neutral-900 dark:border-neutral-100 dark:bg-neutral-950/90 dark:text-neutral-100">
-            Em breve
+            {isOutOfStock ? "Indisponível" : "Em breve"}
           </span>
         ) : (
           product.isNew && (
@@ -82,6 +88,12 @@ export function ProductCard({ product }: ProductCardProps) {
               Novo
             </span>
           )
+        )}
+        {isLowStock && (
+          <span className="absolute bottom-2 left-2 z-10 inline-flex items-center gap-1 rounded-app border border-amber-300 bg-amber-50/90 px-2 py-1 text-[10px] font-medium text-amber-800 backdrop-blur-sm dark:border-amber-900 dark:bg-amber-950/90 dark:text-amber-300">
+            <Flame className="h-3 w-3 shrink-0" strokeWidth={1.75} aria-hidden />
+            Últimas unidades
+          </span>
         )}
 
         {/* "Curtir" the product photo - a lightweight, photo-first way to
@@ -157,7 +169,7 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
 
         <div className="mt-auto">
-          {isComingSoon ? (
+          {isUnavailable ? (
             <NotifyMeButton productId={product.id} productTitle={product.title} size="sm" />
           ) : (
             <>

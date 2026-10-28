@@ -28,9 +28,9 @@ interface NotifyMeButtonProps {
 }
 
 /**
- * "Notify me when available" control for a `coming_soon` product (see
- * `Product.availability`) - the standard e-commerce pattern for a product
- * that can be browsed but not yet bought: capture an email, confirm, done.
+ * "Notify me when available" control for a product that can be browsed but
+ * not bought yet (`coming_soon` or zero stock) - capture an email, confirm,
+ * done.
  *
  * Same component powers both the compact card badge/button and the full
  * PDP buy-box control (`size` picks which), so the interaction and its

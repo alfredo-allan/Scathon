@@ -36,6 +36,7 @@ interface ApiProductSummary {
   isNew: boolean;
   isBestSeller: boolean;
   availability: "in_stock" | "coming_soon";
+  stock?: number;
   imageUrl: string | null;
   coverImage: string | null;
   hoverImageUrl: string | null;
@@ -90,6 +91,7 @@ function mapSummary(product: ApiProductSummary): Product {
     isNew: product.isNew,
     isBestSeller: product.isBestSeller,
     availability: product.availability,
+    stock: product.stock,
     imageUrl: resolveMediaUrl(product.imageUrl) ?? "",
     coverImage: resolveMediaUrl(product.coverImage) ?? undefined,
     hoverImageUrl: resolveMediaUrl(product.hoverImageUrl) ?? undefined,
@@ -107,6 +109,7 @@ function mapDetail(product: ApiProductDetail): Product {
       product.specimenImages.length > 0
         ? product.specimenImages.map((url) => resolveMediaUrl(url) ?? url)
         : undefined,
+    stock: product.stock,
   };
 }
 

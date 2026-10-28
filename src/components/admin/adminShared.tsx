@@ -3,9 +3,9 @@
 import Image from "next/image";
 import { useEffect } from "react";
 import type { OrderStatus, PaymentStatus } from "@/lib/adminOrders";
+import { LOW_STOCK_THRESHOLD } from "@/lib/inventory";
 
-/** Below this stock count, `<AdminInventoryTab/>`/`<AdminOverviewTab/>` flag a product as "estoque baixo" instead of waiting for it to hit zero. */
-export const LOW_STOCK_THRESHOLD = 5;
+export { LOW_STOCK_THRESHOLD };
 
 export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   processando: "Processando",
