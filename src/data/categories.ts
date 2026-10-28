@@ -39,11 +39,12 @@ export const categories: Category[] = [
 // categoria", esta lista precisa voltar a ser buscada de `GET /categories`
 // em vez de mantida à mão feito agora.
 export const popularCategories: Category[] = [
-  { id: "moletons", label: "Moletons", href: "/shop/moletons" },
+  { id: "moletons", label: "Blusa de Moletom", href: "/shop/moletons" },
   { id: "camisetas", label: "Camisetas", href: "/shop/camisetas" },
   // { id: "casacos", label: "Casacos", href: "/shop/casacos" },
   { id: "calcas", label: "Calças", href: "/shop/calcas" },
-  
+  { id: "Bermudas", label: "Bermudas", href: "/shop/bermudas" },
+
   // { id: "acessorios", label: "Acessórios", href: "/shop/acessorios" },
 ];
 
