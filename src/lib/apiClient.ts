@@ -47,6 +47,11 @@
  */
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://srv2027628.hstgr.cloud/api/v1";
+const BROWSER_API_BASE_URL = "/api/backend";
+
+function getApiBaseUrl(): string {
+  return typeof window === "undefined" ? API_BASE_URL : BROWSER_API_BASE_URL;
+}
 
 /** Nome do evento disparado em `window` quando uma chamada autenticada volta 401 - ver o doc comment acima. `<AuthContext/>` é quem escuta. */
 export const SESSION_EXPIRED_EVENT = "scathon:session-expired";
@@ -163,7 +168,7 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
 
   let response: Response;
   try {
-    response = await fetch(`${API_BASE_URL}${path}`, {
+    response = await fetch(`${getApiBaseUrl()}${path}`, {
       method,
       headers,
       credentials: "include",

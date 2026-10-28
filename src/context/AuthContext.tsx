@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import type { User } from "@/types";
 import { createPersistedStore } from "@/lib/createPersistedStore";
 import { apiFetch, SESSION_EXPIRED_EVENT } from "@/lib/apiClient";
+import { getCurrentUser } from "@/lib/auth";
 
 interface AuthSession {
   /**
@@ -88,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [sessionExpiredNotice, setSessionExpiredNotice] = useState(false);
   const sessionExpiredNoticeRef = useRef(false);
   const redirectTimerRef = useRef<number | null>(null);
+  const bootstrappedSessionRef = useRef<string | null>(null);
 
   const session = useSyncExternalStore(
     authStore.subscribe,
@@ -166,6 +168,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
   }, [goToLogin, logout]);
 
+  useEffect(() => {
+    if (!session.token || !session.user || bootstrappedSessionRef.current === session.token) return;
+    bootstrappedSessionRef.current = session.token;
+
+    getCurrentUser(session.token)
+      .then(updateUser)
+      .catch((error: unknown) => {
+        // A network interruption should not log the visitor out. A 401 is
+        // handled centrally by apiFetch via SESSION_EXPIRED_EVENT.
+        if (error instanceof Error && "status" in error && error.status === 401) return;
+      });
+  }, [session.token, session.user, updateUser]);
+
   useEffect(() => () => {
     if (redirectTimerRef.current !== null) window.clearTimeout(redirectTimerRef.current);
   }, []);
@@ -217,4 +232,3 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     </>
   );
 }
-

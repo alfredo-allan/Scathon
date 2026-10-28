@@ -78,6 +78,12 @@ export async function loginRequest(email: string, password: string): Promise<Aut
   return { token: data.token, csrfToken: data.csrfToken, user: mapUser(data.user) };
 }
 
+/** Revalidates a persisted browser session after a reload/navigation. */
+export async function getCurrentUser(token: string): Promise<User> {
+  const data = await apiFetch<{ user: ApiUser }>("/auth/me", { token });
+  return mapUser(data.user);
+}
+
 export interface RegisterInput {
   email: string;
   password: string;
