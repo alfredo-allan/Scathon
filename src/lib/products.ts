@@ -118,6 +118,8 @@ export interface ListProductsParams {
   isNew?: boolean;
   isBestSeller?: boolean;
   perPage?: number;
+  /** Fetch live detail balances for storefront stock badges. */
+  includeStock?: boolean;
   /** Server Components only - ver o doc comment de `ApiFetchOptions.revalidate`. */
   revalidate?: number | false;
 }
@@ -134,7 +136,18 @@ export async function listProducts(params: ListProductsParams = {}): Promise<Pro
   const data = await apiFetch<ProductsListResponse>(`/products?${query.toString()}`, {
     revalidate: params.revalidate,
   });
-  return data.items.map(mapSummary);
+  const products = data.items.map(mapSummary);
+  if (!params.includeStock || products.every((product) => product.stock !== undefined)) {
+    return products;
+  }
+
+  const details = await Promise.all(
+    products.map((product) => getProductBySlug(product.slug, params.revalidate)),
+  );
+  return products.map((product, index) => ({
+    ...product,
+    stock: details[index]?.stock,
+  }));
 }
 
 export async function getBestSellers(revalidate?: number | false): Promise<Product[]> {

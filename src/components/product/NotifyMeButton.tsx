@@ -6,7 +6,6 @@ import { ApiError, notifyInterest, waitlistStore } from "@/lib/waitlist";
 
 interface NotifyMeButtonProps {
   productId: string;
-  productTitle: string;
   /**
    * `"sm"` is the compact, collapsed-by-default variant used on
    * `<ProductCard/>` (space is tight in a grid tile). `"lg"` is the full
@@ -49,7 +48,6 @@ interface NotifyMeButtonProps {
  */
 export function NotifyMeButton({
   productId,
-  productTitle,
   size = "lg",
   selectedSize,
   defaultOpen = false,
@@ -86,8 +84,6 @@ export function NotifyMeButton({
     : isSubmitting
       ? "submitting"
       : "idle";
-  const confirmedEmail = existingEntry?.email ?? (isAuthenticated ? user?.email : email);
-
   async function submit(emailToUse: string, nameToUse?: string) {
     const trimmed = emailToUse.trim();
     if (!trimmed) return;
@@ -155,10 +151,7 @@ export function NotifyMeButton({
         {isCompact ? (
           <span>Já sabemos do seu interesse</span>
         ) : (
-          <span>
-            Já sabemos do seu interesse - vamos te avisar em <strong>{confirmedEmail}</strong>{" "}
-            assim que <strong>{productTitle}</strong> chegar.
-          </span>
+          <span>Avise-me quando estiver disponível</span>
         )}
       </div>
     );
@@ -185,7 +178,7 @@ export function NotifyMeButton({
               : "Confirmando…"
             : isCompact
               ? "Avise-me"
-              : `Avise-me em ${user.email}`}
+              : "Avise-me quando estiver disponível"}
         </button>
         {errorMessage && (
           <p className="text-[10px] text-red-600 dark:text-red-400">{errorMessage}</p>
