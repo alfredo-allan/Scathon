@@ -5,6 +5,7 @@ import { useState } from "react";
 import { formatCep, isCompleteCep, lookupAddressByCep, type ViaCepAddress } from "@/lib/viaCep";
 import { getShippingQuotes, type ShippingQuote } from "@/lib/melhorEnvio";
 import { useSavedAddresses } from "@/hooks/useSavedAddresses";
+import { useCart } from "@/hooks/useCart";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -28,6 +29,7 @@ export function ShippingEstimator() {
   const [address, setAddress] = useState<ViaCepAddress | null>(null);
   const [quotes, setQuotes] = useState<ShippingQuote[]>([]);
   const { addresses: savedAddresses } = useSavedAddresses();
+  const { items } = useCart();
 
   async function runLookup(rawCep: string) {
     if (!isCompleteCep(rawCep)) {
@@ -63,6 +65,7 @@ export function ShippingEstimator() {
   }
 
   const cheapestQuote = quotes.length > 0 ? [...quotes].sort((a, b) => a.price - b.price)[0] : null;
+  const hasCartItems = items.some((item) => item.quantity > 0);
 
   return (
     <div className="border-t border-neutral-200 dark:border-neutral-800 py-6 lg:py-3">
@@ -138,9 +141,18 @@ export function ShippingEstimator() {
                 {currencyFormatter.format(cheapestQuote.price)}
               </span>{" "}
               ({cheapestQuote.carrier} {cheapestQuote.service}).{" "}
-              <Link href="/cart" className="underline underline-offset-2 hover:text-neutral-900 dark:hover:text-neutral-100">
-                Ver todas as opções no carrinho
-              </Link>
+              {hasCartItems ? (
+                <Link
+                  href="/cart"
+                  className="underline underline-offset-2 hover:text-neutral-900 dark:hover:text-neutral-100"
+                >
+                  Ver todas as opções no carrinho
+                </Link>
+              ) : (
+                <span className="text-neutral-500 dark:text-neutral-400">
+                  Adicione um produto ao carrinho para fazer uma cotação real.
+                </span>
+              )}
               .
             </p>
           ) : (
