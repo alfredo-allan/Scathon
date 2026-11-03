@@ -11,6 +11,7 @@ import { formatDocument } from "@/lib/documentValidation";
 import { submitCheckout, type PaymentMethod } from "@/lib/mercadoPago";
 import { PixPaymentModal } from "./PixPaymentModal";
 import { RecipientDocumentModal } from "./RecipientDocumentModal";
+import { getLoginHref } from "@/lib/authRedirect";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -74,8 +75,10 @@ export function CheckoutView() {
   // esse efeito não dispara de novo por conta própria.
   useEffect(() => {
     if (selection.method === "melhor_envio" && selection.confirmedAt && !recipientDocument) {
-      setIsDocumentModalOpen(true);
+      const timer = window.setTimeout(() => setIsDocumentModalOpen(true), 0);
+      return () => window.clearTimeout(timer);
     }
+    return undefined;
   }, [selection.method, selection.confirmedAt, recipientDocument]);
 
   function handleDocumentConfirmed(digits: string) {
@@ -136,7 +139,7 @@ export function CheckoutView() {
         <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 text-center">
           <p className="text-sm text-neutral-600 dark:text-neutral-400">Entre na sua conta para finalizar a compra.</p>
           <Link
-            href="/login"
+            href={getLoginHref("/checkout")}
             className="rounded-app bg-neutral-950 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
           >
             Entrar

@@ -4,6 +4,7 @@ import { BrandMarquee } from "@/components/home/BrandMarquee";
 import { CategoryDividerCarousel } from "@/components/home/CategoryDividerCarousel";
 import { ProductGrid } from "@/components/home/ProductGrid";
 import { TestimonialsCarousel } from "@/components/home/TestimonialsCarousel";
+import { AuthInvite } from "@/components/home/AuthInvite";
 import { heroSlides } from "@/data/hero-slides";
 import { dividerSlides } from "@/data/dividers";
 import { listProducts } from "@/lib/products";
@@ -56,6 +57,7 @@ export default async function Home() {
     <>
       <HeroCarousel slides={heroSlides} />
       <TrustBadges />
+      <AuthInvite />
 
       {/* Placed right after <TrustBadges/> - Alfredo pointed at that
           section when asking for this, and it reads as a natural ramp-up

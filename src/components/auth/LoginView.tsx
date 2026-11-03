@@ -11,10 +11,16 @@ import { saveAddress } from '@/lib/addresses'
 import { formatCep, isCompleteCep, lookupAddressByCep, type ViaCepAddress } from '@/lib/viaCep'
 import { formatPhone, isCompletePhone } from '@/lib/phone'
 import { readImageAsDataUrl } from '@/lib/imageFile'
+import { getSafeReturnPath } from '@/lib/authRedirect'
 
 type Mode = 'entrar' | 'criar' | 'esqueci'
 type CepStatus = 'idle' | 'loading' | 'done' | 'invalid'
 type ForgotStep = 'pedir' | 'confirmar'
+
+interface LoginViewProps {
+  returnPath?: string | null
+  initialMode?: Exclude<Mode, 'esqueci'>
+}
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -45,12 +51,12 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
  * exists already but wiring every address-reading screen to it is a
  * separate pass, not part of connecting login).
  */
-export function LoginView() {
+export function LoginView({ returnPath, initialMode = 'entrar' }: LoginViewProps) {
   const router = useRouter()
   const { isAuthenticated, user, login, logout } = useAuth()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const [mode, setMode] = useState<Mode>('entrar')
+  const [mode, setMode] = useState<Mode>(initialMode)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -86,6 +92,8 @@ export function LoginView() {
   // passo 1 quanto pro "senha alterada" que aparece de volta na aba
   // "Entrar" depois do passo 2 - ver `handleForgotConfirm`.
   const [infoMessage, setInfoMessage] = useState<string | null>(null)
+
+  const destinationAfterAuth = getSafeReturnPath(returnPath)
 
   function switchMode(next: Mode) {
     setMode(next)
@@ -260,7 +268,7 @@ export function LoginView() {
         }
 
         login(csrfToken, user)
-        router.push(user.role === 'admin' ? '/admin' : '/')
+        router.push(user.role === 'admin' ? (returnPath ? destinationAfterAuth : '/admin') : destinationAfterAuth)
       } catch (err) {
         setIsSubmitting(false)
         setError(err instanceof ApiError ? err.message : 'Não foi possível entrar agora. Tente de novo em instantes.')
@@ -329,7 +337,7 @@ export function LoginView() {
       })
 
       login(csrfToken, user)
-      router.push('/')
+      router.push(destinationAfterAuth)
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Não foi possível criar sua conta agora. Tente de novo em instantes.')
     } finally {

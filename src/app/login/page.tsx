@@ -6,6 +6,16 @@ export const metadata: Metadata = {
   description: "Entre na sua conta ou crie uma nova conta Scathon.",
 };
 
-export default function LoginPage() {
-  return <LoginView />;
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string; mode?: string }>;
+}) {
+  const params = await searchParams;
+  return (
+    <LoginView
+      returnPath={typeof params.from === "string" ? params.from : null}
+      initialMode={params.mode === "criar" ? "criar" : "entrar"}
+    />
+  );
 }

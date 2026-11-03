@@ -12,6 +12,7 @@ import { formatCep, isCompleteCep, lookupAddressByCep, type ViaCepAddress } from
 import { getShippingQuotes, type ShippingQuote } from "@/lib/melhorEnvio";
 import { SELLER_WHATSAPP_NUMBER } from "@/lib/layoutConstants";
 import type { DeliveryMethod } from "@/lib/checkoutShipping";
+import { getLoginHref } from "@/lib/authRedirect";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -251,7 +252,7 @@ export function CartView() {
                 Entre na sua conta pra escolher o endereço de entrega e continuar.
               </p>
               <Link
-                href="/login"
+                href={getLoginHref("/cart")}
                 className="mt-3 inline-block rounded-app bg-neutral-950 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
               >
                 Entrar
