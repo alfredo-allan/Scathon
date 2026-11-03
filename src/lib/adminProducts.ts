@@ -72,6 +72,29 @@ export async function createCategory(
   return data.category;
 }
 
+export async function updateCategory(
+  token: string,
+  id: string,
+  payload: { label: string },
+): Promise<AdminCategory> {
+  const data = await apiFetch<{ category: AdminCategory }>(
+    `/admin/categories/${encodeURIComponent(id)}`,
+    {
+      method: "PATCH",
+      token,
+      body: payload,
+    },
+  );
+  return data.category;
+}
+
+export async function deleteCategory(token: string, id: string): Promise<void> {
+  await apiFetch<unknown>(`/admin/categories/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
 interface RawProductDetail {
   id: string;
   slug: string;

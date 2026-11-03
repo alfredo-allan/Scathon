@@ -7,11 +7,13 @@ import { listProducts } from "@/lib/products";
 import {
   createProduct,
   createCategory,
+  deleteCategory,
   deleteProduct,
   getAdminProductDetail,
   listCategories,
   resolveProductImageUrl,
   updateProduct,
+  updateCategory,
   uploadProductImage,
   type AdminCategory,
   type AdminProductDetail,
@@ -136,6 +138,12 @@ export function AdminProductsTab() {
         </button>
       </div>
 
+      <CategoryManager
+        categories={categories}
+        token={token}
+        onChange={setCategories}
+      />
+
       <div className="flex flex-col divide-y divide-neutral-100 rounded-app border border-neutral-200 dark:divide-neutral-900 dark:border-neutral-800">
         {products.map((product) => {
           const thumb = resolveProductImageUrl(product.coverImage ?? product.imageUrl);
@@ -170,6 +178,281 @@ export function AdminProductsTab() {
           </p>
         )}
       </div>
+    </div>
+  );
+}
+
+function CategoryManager({
+  categories,
+  token,
+  onChange,
+}: {
+  categories: AdminCategory[];
+  token: string | null;
+  onChange: (categories: AdminCategory[]) => void;
+}) {
+  const [editing, setEditing] = useState<AdminCategory | null>(null);
+  const [deleting, setDeleting] = useState<AdminCategory | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleEdit(label: string) {
+    if (!token || !editing) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const updated = await updateCategory(token, editing.id, { label: label.trim() });
+      onChange(categories.map((category) => (category.id === updated.id ? updated : category)));
+      setEditing(null);
+    } catch (caught) {
+      setError(categoryError(caught, "editar"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!token || !deleting) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await deleteCategory(token, deleting.id);
+      onChange(categories.filter((category) => category.id !== deleting.id));
+      setDeleting(null);
+    } catch (caught) {
+      setError(categoryError(caught, "excluir"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="rounded-app border border-neutral-200 p-4 dark:border-neutral-800">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-neutral-900 dark:text-neutral-100">
+            Categorias
+          </h2>
+          <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+            O slug permanece estável para não quebrar URLs e referências de produtos.
+          </p>
+        </div>
+        <span className="text-xs text-neutral-500 dark:text-neutral-400">
+          {categories.length} {categories.length === 1 ? "categoria" : "categorias"}
+        </span>
+      </div>
+
+      <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {categories.map((category) => (
+          <div
+            key={category.id}
+            className="flex items-center justify-between gap-3 rounded-app border border-neutral-200 px-3 py-2 dark:border-neutral-800"
+          >
+            <div className="min-w-0">
+              <p className="truncate text-sm text-neutral-900 dark:text-neutral-100">{category.label}</p>
+              <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">/{category.id}</p>
+            </div>
+            <div className="flex shrink-0 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  setEditing(category);
+                }}
+                className="text-xs font-semibold uppercase tracking-widest text-neutral-700 underline underline-offset-4 dark:text-neutral-300"
+              >
+                Editar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  setDeleting(category);
+                }}
+                className="text-xs font-semibold uppercase tracking-widest text-red-600 underline underline-offset-4 dark:text-red-400"
+              >
+                Excluir
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {categories.length === 0 && (
+        <p className="mt-4 text-sm text-neutral-500 dark:text-neutral-400">Nenhuma categoria cadastrada.</p>
+      )}
+      {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
+
+      {editing && (
+        <CategoryEditModal
+          category={editing}
+          busy={busy}
+          onClose={() => setEditing(null)}
+          onSubmit={handleEdit}
+        />
+      )}
+      {deleting && (
+        <CategoryDeleteModal
+          category={deleting}
+          busy={busy}
+          onClose={() => setDeleting(null)}
+          onConfirm={handleDelete}
+        />
+      )}
+    </section>
+  );
+}
+
+function categoryError(caught: unknown, action: "editar" | "excluir"): string {
+  if (!(caught instanceof ApiError)) {
+    return `Não foi possível ${action} a categoria agora. Tente novamente.`;
+  }
+  if (caught.status === 401) return "Sua sessão expirou. Entre novamente para continuar.";
+  if (caught.status === 403) return "Sua conta não tem permissão para gerenciar categorias.";
+  if (caught.status === 404) return "Essa categoria não existe mais. Atualize a lista e tente novamente.";
+  if (caught.status === 409 && caught.code === "category_has_products") {
+    return "Não é possível excluir: mova ou apague os produtos dessa categoria primeiro.";
+  }
+  if (caught.status === 409) return "A categoria entrou em conflito com outro cadastro.";
+  if (caught.status === 400 || caught.status === 422) {
+    return caught.message || "Confira os dados informados.";
+  }
+  return `Não foi possível ${action} a categoria agora. Tente novamente.`;
+}
+
+function CategoryEditModal({
+  category,
+  busy,
+  onClose,
+  onSubmit,
+}: {
+  category: AdminCategory;
+  busy: boolean;
+  onClose: () => void;
+  onSubmit: (label: string) => void;
+}) {
+  const [label, setLabel] = useState(category.label);
+  return (
+    <ModalShell title="Editar categoria" onClose={onClose}>
+      <p className="text-sm text-neutral-600 dark:text-neutral-400">
+        Altere apenas o nome. O slug <strong>{category.id}</strong> permanece estável.
+      </p>
+      <form
+        className="mt-5 flex flex-col gap-4"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (label.trim()) onSubmit(label);
+        }}
+      >
+        <Field label="Nome da categoria">
+          <input
+            autoFocus
+            className={inputClass}
+            value={label}
+            onChange={(event) => setLabel(event.target.value)}
+          />
+        </Field>
+        <ModalActions busy={busy} submitLabel="Salvar" onClose={onClose} />
+      </form>
+    </ModalShell>
+  );
+}
+
+function CategoryDeleteModal({
+  category,
+  busy,
+  onClose,
+  onConfirm,
+}: {
+  category: AdminCategory;
+  busy: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <ModalShell title="Excluir categoria" onClose={onClose}>
+      <p className="text-sm text-neutral-600 dark:text-neutral-400">
+        Excluir <strong>{category.label}</strong>? Essa ação não pode ser desfeita. Se houver produtos vinculados,
+        a API bloqueará a exclusão.
+      </p>
+      <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <button type="button" onClick={onClose} className={secondaryButtonClass}>
+          Cancelar
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={onConfirm}
+          className="rounded-app bg-red-600 px-4 py-2.5 text-xs font-semibold uppercase tracking-widest text-white disabled:opacity-50"
+        >
+          {busy ? "Excluindo…" : "Excluir categoria"}
+        </button>
+      </div>
+    </ModalShell>
+  );
+}
+
+function ModalShell({
+  title,
+  onClose,
+  children,
+}: {
+  title: string;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 px-4 py-6 backdrop-blur-sm"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="category-modal-title"
+        className="w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-6 shadow-xl dark:border-neutral-700 dark:bg-neutral-950 sm:p-8"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <h3 id="category-modal-title" className="text-lg font-semibold text-neutral-950 dark:text-neutral-50">
+            {title}
+          </h3>
+          <button type="button" onClick={onClose} aria-label="Fechar" className="text-2xl text-neutral-500">
+            ×
+          </button>
+        </div>
+        <div className="mt-4">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+const secondaryButtonClass =
+  "rounded-app border border-neutral-300 px-4 py-2.5 text-xs font-semibold uppercase tracking-widest text-neutral-800 dark:border-neutral-700 dark:text-neutral-100";
+
+function ModalActions({
+  busy,
+  submitLabel,
+  onClose,
+}: {
+  busy: boolean;
+  submitLabel: string;
+  onClose: () => void;
+}) {
+  return (
+    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <button type="button" onClick={onClose} className={secondaryButtonClass}>
+        Cancelar
+      </button>
+      <button
+        type="submit"
+        disabled={busy}
+        className="rounded-app bg-neutral-950 px-4 py-2.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-950"
+      >
+        {busy ? "Salvando…" : submitLabel}
+      </button>
     </div>
   );
 }
