@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
-import { popularCategories } from "@/data/categories";
+import { listPublicCategories } from "@/lib/categories";
+import type { Category } from "@/types";
 
 interface DrawerMenuProps {
   open: boolean;
@@ -18,6 +19,9 @@ interface DrawerMenuProps {
 export function DrawerMenu({ open, onClose }: DrawerMenuProps) {
   const { isAuthenticated, isAdmin, user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [categoriesError, setCategoriesError] = useState(false);
 
   // Lock body scroll while the drawer is open.
   useEffect(() => {
@@ -26,6 +30,31 @@ export function DrawerMenu({ open, onClose }: DrawerMenuProps) {
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = original;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    Promise.resolve()
+      .then(() => {
+        if (cancelled) return null;
+        setIsLoadingCategories(true);
+        setCategoriesError(false);
+        return listPublicCategories(false);
+      })
+      .then((nextCategories) => {
+        if (!cancelled && nextCategories) setCategories(nextCategories);
+      })
+      .catch(() => {
+        if (!cancelled) setCategoriesError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingCategories(false);
+      });
+
+    return () => {
+      cancelled = true;
     };
   }, [open]);
 
@@ -68,15 +97,32 @@ export function DrawerMenu({ open, onClose }: DrawerMenuProps) {
         </div>
 
         <nav className="flex-1 overflow-y-auto px-4 py-4">
-          <ul className="flex flex-col gap-3 text-sm font-medium tracking-wide uppercase">
-            {popularCategories.map((category) => (
-              <li key={category.id}>
-                <Link href={category.href} onClick={onClose}>
-                  {category.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <div aria-live="polite">
+            {isLoadingCategories && (
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">Carregando categorias…</p>
+            )}
+            {!isLoadingCategories && categoriesError && (
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                Não foi possível carregar as categorias agora.
+              </p>
+            )}
+            {!isLoadingCategories && !categoriesError && categories.length > 0 && (
+              <ul className="flex flex-col gap-3 text-sm font-medium tracking-wide uppercase">
+                {categories.map((category) => (
+                  <li key={category.id}>
+                    <Link href={category.href} onClick={onClose}>
+                      {category.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {!isLoadingCategories && !categoriesError && categories.length === 0 && (
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                Nenhuma categoria disponível.
+              </p>
+            )}
+          </div>
 
           {/*
             "Minha Conta", "Entrar / Criar Conta" and "Painel Admin" all
