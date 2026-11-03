@@ -6,7 +6,7 @@ import { LogIn, UserPlus, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
-const DISMISS_KEY = "scathon:auth-invite-dismissed";
+const DISMISS_KEY = "scathon:auth-invite-modal-dismissed";
 let dismissedInMemory = false;
 
 function getDismissedSnapshot() {
