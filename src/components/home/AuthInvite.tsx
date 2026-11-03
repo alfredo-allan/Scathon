@@ -58,9 +58,6 @@ export function AuthInvite() {
     if (!isOpen || isAuthenticated || isDismissed) return;
 
     closeButtonRef.current?.focus();
-    const timer = window.setTimeout(() => {
-      dismiss();
-    }, 5000);
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") dismiss();
@@ -68,7 +65,6 @@ export function AuthInvite() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => {
-      window.clearTimeout(timer);
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [isOpen, isAuthenticated, isDismissed, dismiss]);
