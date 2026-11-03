@@ -84,9 +84,8 @@ export function AuthInvite() {
         aria-modal="true"
         aria-labelledby="auth-invite-title"
         aria-describedby="auth-invite-description"
-        className="relative w-full max-w-md overflow-hidden rounded-app border border-neutral-200 bg-white shadow-2xl motion-safe:animate-auth-invite-enter dark:border-neutral-700 dark:bg-neutral-950"
+        className="relative w-full max-w-md overflow-hidden rounded-2xl border border-neutral-300/70 bg-white shadow-[0_18px_45px_rgba(0,0,0,0.12)] motion-safe:animate-auth-invite-enter sm:max-w-2xl dark:border-neutral-700/80 dark:bg-neutral-950 dark:shadow-[0_18px_45px_rgba(0,0,0,0.38)]"
       >
-        <div className="absolute inset-x-0 top-0 h-1 bg-neutral-950 dark:bg-neutral-100" />
         <button
           ref={closeButtonRef}
           type="button"
@@ -96,7 +95,7 @@ export function AuthInvite() {
         >
           <X className="h-4 w-4" aria-hidden="true" />
         </button>
-        <div className="flex items-center justify-center border-b border-neutral-200 bg-neutral-50 px-8 py-5 dark:border-neutral-800 dark:bg-neutral-900">
+        <div className="flex items-center justify-center border-b border-neutral-200/80 bg-neutral-50 px-8 py-4 dark:border-neutral-800/80 dark:bg-neutral-900">
           <Image
             src="/branding/BrandigLogoDark.png"
             alt="Scathon"
@@ -112,17 +111,19 @@ export function AuthInvite() {
             className="hidden h-12 w-auto object-contain dark:block"
           />
         </div>
-        <div className="p-6 text-center sm:p-8">
-          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-neutral-100 text-neutral-800 dark:bg-neutral-900 dark:text-neutral-100">
+        <div className="p-6 text-center sm:flex sm:items-center sm:gap-8 sm:p-8 sm:text-left">
+          <div className="mx-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-800 dark:bg-neutral-900 dark:text-neutral-100 sm:mx-0">
             <UserPlus className="h-5 w-5" aria-hidden="true" />
           </div>
-          <h2 id="auth-invite-title" className="mt-4 text-lg font-semibold text-neutral-950 dark:text-neutral-50">
-            Tenha uma experiência mais completa
-          </h2>
-          <p id="auth-invite-description" className="mt-2 text-sm leading-6 text-neutral-600 dark:text-neutral-400">
-            Entre ou crie sua conta para acompanhar pedidos e agilizar suas próximas compras. Você pode fechar e continuar navegando sem se identificar.
-          </p>
-          <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
+          <div className="mt-4 min-w-0 sm:mt-0 sm:flex-1">
+            <h2 id="auth-invite-title" className="text-lg font-semibold text-neutral-950 dark:text-neutral-50">
+              Tenha uma experiência mais completa
+            </h2>
+            <p id="auth-invite-description" className="mt-2 text-sm leading-6 text-neutral-600 dark:text-neutral-400">
+              Entre ou crie sua conta para acompanhar pedidos e agilizar suas próximas compras. Você pode fechar e continuar navegando sem se identificar.
+            </p>
+          </div>
+          <div className="mt-6 flex flex-col gap-2 sm:mt-0 sm:w-40 sm:shrink-0">
             <Link
               href="/login?mode=criar"
               className="inline-flex items-center justify-center gap-1.5 rounded-app bg-neutral-950 px-4 py-3 text-xs font-semibold uppercase tracking-widest text-neutral-50 transition-opacity hover:opacity-85 dark:bg-neutral-100 dark:text-neutral-950"
