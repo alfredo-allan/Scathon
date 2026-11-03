@@ -211,61 +211,7 @@ export function LoginView({ returnPath, initialMode = 'entrar' }: LoginViewProps
       setError(null)
       setIsSubmitting(true)
       try {
-        const { token, csrfToken, user } = await loginRequest(trimmedEmail, password)
-
-        // Also asks the Next.js server to open a real, signed session (see
-        // `POST /api/auth/login`) - this is what `src/proxy.ts` actually
-        // checks before letting anyone into `/admin`, independent of the
-        // client-side `login(...)` below. It re-verifies the JWT we just
-        // got from the backend (server-to-server, via `GET /api/v1/auth/me`)
-        // rather than trusting anything from this response directly -
-        // awaited before navigating so the cookie is already set by the
-        // time an admin account is routed straight to `/admin`. A customer
-        // account just gets `ok: false` here - harmless, since it never
-        // needed the cookie to begin with.
-        //
-        // SECURITY NOTE (2026-10-11): `token` (the real JWT) is used ONLY
-        // for this one server-to-server call, right here, transiently - it
-        // is never persisted. The backend already set it as an httpOnly
-        // cookie on its own response (see `app/auth/jwt_utils.py`), which is
-        // what authenticates every future call to the Flask API; what this
-        // component persists below is `csrfToken`, not `token` (see
-        // `<AuthContext/>`'s doc comment for why).
-        //
-        // For the seeded admin account, though, `ok: true` here is not
-        // optional: it's the only thing that actually gets the visitor past
-        // `src/proxy.ts`'s server-side gate. Silently swallowing a failed or
-        // non-ok response here (as an earlier version of this function did)
-        // meant an admin login could look 100% successful client-side -
-        // `login(...)` still ran, `/account` still showed "Admin Scathon" -
-        // while `/admin` bounced back to `/login` every single time, because
-        // no real cookie was ever issued. That exact symptom (SESSION_SECRET
-        // missing in the Vercel production env, see `.env.example` and
-        // `@/lib/session`'s `getSecretKey`) is what this check now surfaces
-        // as a real error instead of a silent, confusing loop.
-        let serverSessionConfirmed = false
-        try {
-          const response = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token })
-          })
-          const data: unknown = await response.json().catch(() => null)
-          serverSessionConfirmed = response.ok && typeof data === 'object' && data !== null && (data as { ok?: unknown }).ok === true
-        } catch {
-          // Offline/network hiccup - treated the same as any other non-ok
-          // response below (blocking only for the admin account).
-        }
-
-        if (user.role === 'admin' && !serverSessionConfirmed) {
-          setIsSubmitting(false)
-          setError(
-            'Não foi possível abrir sua sessão de administrador no servidor (é isso que protege /admin - ver src/proxy.ts). ' +
-              'Tente novamente em instantes; se persistir, confirme se a variável de ambiente SESSION_SECRET está configurada ' +
-              'em produção (Vercel: Project Settings -> Environment Variables - ver .env.example).'
-          )
-          return
-        }
+        const { csrfToken, user } = await loginRequest(trimmedEmail, password)
 
         login(csrfToken, user)
         router.push(user.role === 'admin' ? (returnPath ? destinationAfterAuth : '/admin') : destinationAfterAuth)

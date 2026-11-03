@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { getCurrentUser } from '@/lib/auth'
 import { AdminOverviewTab } from './AdminOverviewTab'
 import { AdminOrdersTab } from './AdminOrdersTab'
 import { AdminInventoryTab } from './AdminInventoryTab'
@@ -62,7 +63,30 @@ const TABS: Array<{ id: TabId; label: string }> = [
  * uma aba client-side sem autorização de verdade por trás.
  */
 export function AdminView() {
-  const { user, isAuthenticated, isAdmin } = useAuth()
+  const { user, token, isAuthenticated, isAdmin, logout } = useAuth()
+  const [verifiedAdmin, setVerifiedAdmin] = useState<boolean | null>(null)
+  useEffect(() => {
+    let active = true
+    if (!isAuthenticated || !user || !isAdmin || !token) {
+      setVerifiedAdmin(false)
+      return () => {
+        active = false
+      }
+    }
+    getCurrentUser(token)
+      .then((currentUser) => {
+        if (active) setVerifiedAdmin(currentUser.role === 'admin')
+      })
+      .catch(() => {
+        if (active) {
+          setVerifiedAdmin(false)
+          logout()
+        }
+      })
+    return () => {
+      active = false
+    }
+  }, [isAuthenticated, isAdmin, token, user, logout])
   // Pousa direto na aba "Integrações" quando a URL chega com `?melhorEnvio=
   // ...` - é o redirect de volta do OAuth da Melhor Envio (`GET /webhooks/
   // melhor-envio/oauth-callback` no backend); sem isso, o admin aprovaria o
@@ -73,11 +97,11 @@ export function AdminView() {
     typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('melhorEnvio') ? 'integracoes' : 'visao-geral'
   )
 
-  if (!isAuthenticated || !user) {
+  if (!isAuthenticated || !user || verifiedAdmin === null) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
         <p className="text-sm text-neutral-600 dark:text-neutral-400">
-          Você precisa entrar com uma conta de administrador pra ver o painel.
+          {verifiedAdmin === null ? 'Verificando sua autorização…' : 'Você precisa entrar com uma conta de administrador pra ver o painel.'}
         </p>
         <Link
           href="/login"
@@ -88,7 +112,7 @@ export function AdminView() {
     )
   }
 
-  if (!isAdmin) {
+  if (!isAdmin || !verifiedAdmin) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
         <p className="text-sm text-neutral-600 dark:text-neutral-400">Sua conta ({user.email}) não tem acesso ao painel administrativo.</p>
