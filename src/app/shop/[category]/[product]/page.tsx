@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getCategoryBySlug } from "@/data/categories";
+import { getPublicCategoryBySlug } from "@/lib/categories";
 import { getProductBySlug, listProducts } from "@/lib/products";
 import { ProductDetail } from "@/components/product/ProductDetail";
 
@@ -38,7 +38,7 @@ export default async function ProductPage({
 }) {
   const { category: categorySlug, product: productSlug } = await params;
 
-  const category = getCategoryBySlug(categorySlug);
+  const category = await getPublicCategoryBySlug(categorySlug);
   const product = await getProductBySlug(productSlug);
 
   // A valid product under the wrong category slug (typo'd or stale link)

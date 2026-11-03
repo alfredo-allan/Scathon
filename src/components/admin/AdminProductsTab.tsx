@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { listProducts } from "@/lib/products";
 import {
   createProduct,
+  createCategory,
   deleteProduct,
   getAdminProductDetail,
   listCategories,
@@ -16,6 +17,7 @@ import {
   type AdminProductDetail,
   type AdminProductPayload,
 } from "@/lib/adminProducts";
+import { ApiError } from "@/lib/apiClient";
 import type { ColorVariant, Product } from "@/types";
 
 const currencyFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -107,11 +109,10 @@ export function AdminProductsTab() {
         slug={activeSlug === "new" ? null : activeSlug}
         token={token}
         categories={categories}
-        onCancel={() => setActiveSlug(null)}
-        onSaved={() => {
-          setActiveSlug(null);
-          load();
+        onCategoryCreated={(newCategory) => {
+          setCategories((current) => [...current, newCategory]);
         }}
+        onCancel={() => setActiveSlug(null)}
         onDeleted={() => {
           setActiveSlug(null);
           load();
@@ -200,16 +201,16 @@ function ProductForm({
   slug,
   token,
   categories,
+  onCategoryCreated,
   onCancel,
-  onSaved,
   onDeleted,
 }: {
   mode: FormMode;
   slug: string | null;
   token: string | null;
   categories: AdminCategory[];
+  onCategoryCreated: (category: AdminCategory) => void;
   onCancel: () => void;
-  onSaved: () => void;
   onDeleted: () => void;
 }) {
   const [isLoadingDetail, setIsLoadingDetail] = useState(mode === "edit");
@@ -228,6 +229,7 @@ function ProductForm({
   const [slugTouched, setSlugTouched] = useState(false);
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("");
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [description, setDescription] = useState("");
   const [availability, setAvailability] = useState<"in_stock" | "coming_soon">("in_stock");
   const [isNew, setIsNew] = useState(false);
@@ -252,8 +254,6 @@ function ProductForm({
   useEffect(() => {
     if (mode !== "edit" || !slug) return;
     let cancelled = false;
-    setIsLoadingDetail(true);
-    setLoadError(null);
     getAdminProductDetail(slug)
       .then((detail: AdminProductDetail) => {
         if (cancelled) return;
@@ -286,10 +286,6 @@ function ProductForm({
       cancelled = true;
     };
   }, [mode, slug]);
-
-  useEffect(() => {
-    if (!slugTouched) setSlugField(slugify(title));
-  }, [title, slugTouched]);
 
   function buildPayload(): AdminProductPayload {
     return {
@@ -411,7 +407,14 @@ function ProductForm({
 
       <div className="grid gap-4 md:grid-cols-2">
         <Field label="Título">
-          <input className={inputClass} value={title} onChange={(e) => setTitle(e.target.value)} />
+          <input
+            className={inputClass}
+            value={title}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              if (!slugTouched) setSlugField(slugify(e.target.value));
+            }}
+          />
         </Field>
         <Field label="Slug (URL)">
           <input
@@ -433,7 +436,17 @@ function ProductForm({
           />
         </Field>
         <Field label="Categoria">
-          <select className={inputClass} value={category} onChange={(e) => setCategory(e.target.value)}>
+          <select
+            className={inputClass}
+            value={category}
+            onChange={(e) => {
+              if (e.target.value === "__create_category__") {
+                setIsCategoryModalOpen(true);
+                return;
+              }
+              setCategory(e.target.value);
+            }}
+          >
             <option value="" disabled>
               Selecione…
             </option>
@@ -442,6 +455,7 @@ function ProductForm({
                 {cat.label}
               </option>
             ))}
+            <option value="__create_category__">+ Criar categoria</option>
           </select>
         </Field>
         <Field label="Estoque">
@@ -482,7 +496,7 @@ function ProductForm({
         </label>
         <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
           <input type="checkbox" checked={isBestSeller} onChange={(e) => setIsBestSeller(e.target.checked)} />
-          Destacar em "Mais Vendidos"
+          Destacar em &quot;Mais Vendidos&quot;
         </label>
       </div>
 
@@ -695,6 +709,147 @@ function ProductForm({
           </div>
         )}
       </div>
+
+      {isCategoryModalOpen && (
+        <CreateCategoryModal
+          token={token}
+          onClose={() => setIsCategoryModalOpen(false)}
+          onCreated={(newCategory) => {
+            onCategoryCreated(newCategory);
+            setCategory(newCategory.id);
+            setIsCategoryModalOpen(false);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function CreateCategoryModal({
+  token,
+  onClose,
+  onCreated,
+}: {
+  token: string | null;
+  onClose: () => void;
+  onCreated: (category: AdminCategory) => void;
+}) {
+  const [label, setLabel] = useState("");
+  const [slug, setSlug] = useState("");
+  const [slugTouched, setSlugTouched] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const suggestedSlug = slugTouched ? slug : slugify(label);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const cleanLabel = label.trim();
+    const cleanSlug = suggestedSlug.trim() || slugify(cleanLabel);
+    if (!token) {
+      setError("Sua sessão de administrador expirou. Entre novamente.");
+      return;
+    }
+    if (!cleanLabel || !cleanSlug) {
+      setError("Informe o nome e o slug da categoria.");
+      return;
+    }
+
+    setIsSaving(true);
+    setError(null);
+    try {
+      const created = await createCategory(token, { id: cleanSlug, label: cleanLabel });
+      onCreated(created);
+    } catch (caught) {
+      if (caught instanceof ApiError) {
+        if (caught.status === 401) setError("Sua sessão expirou. Entre novamente para criar categorias.");
+        else if (caught.status === 403) setError("Sua conta não tem permissão para criar categorias.");
+        else if (caught.status === 409) setError("Já existe uma categoria com esse slug.");
+        else if (caught.status === 400 || caught.status === 422) {
+          setError(caught.message || "Confira o nome e o slug informados.");
+        } else setError("Não foi possível criar a categoria agora. Tente novamente.");
+      } else {
+        setError("Não foi possível criar a categoria agora. Tente novamente.");
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 px-4 py-6 backdrop-blur-sm"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <form
+        onSubmit={handleSubmit}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="create-category-title"
+        className="w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-6 shadow-xl dark:border-neutral-700 dark:bg-neutral-950 sm:p-8"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 id="create-category-title" className="text-lg font-semibold text-neutral-950 dark:text-neutral-50">
+              Criar categoria
+            </h3>
+            <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+              A API valida o slug final antes de salvar.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Fechar criação de categoria"
+            className="rounded-full p-2 text-neutral-500 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-900"
+          >
+            ×
+          </button>
+        </div>
+        <div className="mt-6 flex flex-col gap-4">
+          <Field label="Nome da categoria">
+            <input
+              autoFocus
+              className={inputClass}
+              value={label}
+              onChange={(event) => setLabel(event.target.value)}
+              placeholder="Ex.: Bermudas"
+            />
+          </Field>
+          <Field label="Slug">
+            <input
+              className={inputClass}
+              value={suggestedSlug}
+              onChange={(event) => {
+                setSlugTouched(true);
+                setSlug(event.target.value);
+              }}
+              placeholder="bermudas"
+            />
+          </Field>
+        </div>
+        {error && <p className="mt-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
+        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-app border border-neutral-300 px-4 py-2.5 text-xs font-semibold uppercase tracking-widest text-neutral-800 dark:border-neutral-700 dark:text-neutral-100"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="flex items-center justify-center gap-2 rounded-app bg-neutral-950 px-4 py-2.5 text-xs font-semibold uppercase tracking-widest text-neutral-50 disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-950"
+          >
+            {isSaving && <Spinner />}
+            Criar categoria
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import type { ColorVariant } from "@/types";
 import { apiFetch, resolveMediaUrl } from "./apiClient";
+import { listPublicCategories } from "./categories";
 
 /**
  * CRUD de catálogo pro painel admin (`POST/PATCH/DELETE /api/v1/admin/
@@ -54,14 +55,21 @@ export interface AdminProductDetail extends AdminProductPayload {
   id: string;
 }
 
-interface CategoriesResponse {
-  items: AdminCategory[];
-}
-
 /** `GET /categories` - pública, sem token (mesma rota que um futuro seletor de categoria na loja usaria). Alimenta o `<select>` de categoria do formulário de produto. */
 export async function listCategories(): Promise<AdminCategory[]> {
-  const data = await apiFetch<CategoriesResponse>("/categories");
-  return data.items;
+  return listPublicCategories();
+}
+
+export async function createCategory(
+  token: string,
+  payload: { id: string; label: string },
+): Promise<AdminCategory> {
+  const data = await apiFetch<{ category: AdminCategory }>("/admin/categories", {
+    method: "POST",
+    token,
+    body: payload,
+  });
+  return data.category;
 }
 
 interface RawProductDetail {

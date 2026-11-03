@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getCategoryBySlug } from "@/data/categories";
+import { getPublicCategoryBySlug } from "@/lib/categories";
 import { listProducts } from "@/lib/products";
 import { CategoryListing } from "@/components/category/CategoryListing";
 
@@ -20,7 +20,7 @@ export async function generateMetadata({
   params: Promise<CategoryPageParams>;
 }): Promise<Metadata> {
   const { category: slug } = await params;
-  const category = getCategoryBySlug(slug);
+  const category = await getPublicCategoryBySlug(slug);
 
   if (!category) {
     return { title: "Categoria não encontrada — Scathon" };
@@ -38,7 +38,7 @@ export default async function CategoryPage({
   params: Promise<CategoryPageParams>;
 }) {
   const { category: slug } = await params;
-  const category = getCategoryBySlug(slug);
+  const category = await getPublicCategoryBySlug(slug, 60);
 
   if (!category) {
     notFound();
